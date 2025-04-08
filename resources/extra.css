@@ -10,9 +10,11 @@ details > summary {
 }
 
 .figure > .figcaption {
-  text-align: center;
+  text-align: left;
 }
 
-.quarto-figure-center {
-  text-align: center;
+.quarto-float-caption {
+  text-align: left;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
