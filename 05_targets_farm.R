@@ -1,19 +1,21 @@
-suppressMessages(suppressWarnings(library(targets)))
-suppressMessages(suppressWarnings(library(crew)))
-suppressMessages(suppressWarnings(library(mirai)))
-suppressMessages(suppressWarnings(library(arrow)))
-suppressMessages(suppressWarnings(library(sf)))
-suppressMessages(suppressWarnings(library(dplyr)))
-suppressMessages(suppressWarnings(library(tidyr)))
-suppressMessages(suppressWarnings(library(terra))) # do not remove
-suppressMessages(suppressWarnings(library(magrittr)))
-suppressMessages(suppressWarnings(library(conflicted)))
-conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+suppressMessages(suppressWarnings(suppressPackageStartupMessages({
+  library(targets)
+  library(crew)
+  library(mirai)
+  library(arrow)
+  library(sf)
+  library(dplyr)
+  library(tidyr)
+  library(terra) # do not remove
+  library(magrittr)
+  library(conflicted)
+  conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+})))
 
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "future", "furrr", "ggplot2", "matrixStats", "tibble"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 3),
+  controller = crew_controller_local(workers = 16),
   workspace_on_error = TRUE
 )
 
@@ -40,7 +42,7 @@ list(
       read_parquet() %>% 
       filter(!farm_id %in% farms_to_omit) %>% 
       distinct(farm_id) %>% 
-      slice_sample(n = 1125) %>%
+      # slice_sample(n = 350) %>%
       as.vector() %>% unlist() %>% unname()
   ),
   tar_target(
@@ -61,9 +63,11 @@ list(
       mutate(t_start = case_when(lat > 0 ~ times_N['t_start'], TRUE ~ times_S['t_start']),
              t_end = case_when(lat > 0 ~ times_N['t_end'], TRUE ~ times_S['t_end']))
   ),
-  tar_target(farm_times, 
-             c(farm_coords$t_start[farm_coords$farm_ID == farm_IDs], farm_coords$t_end[farm_coords$farm_ID == farm_IDs], dt = 1),
-             pattern = farm_IDs),
+  tar_target(
+    farm_times, 
+    c(farm_coords$t_start[farm_coords$farm_ID == farm_IDs], farm_coords$t_end[farm_coords$farm_ID == farm_IDs], dt = 1),
+    pattern = farm_IDs
+  ),
   tar_target(farm_temp, farm_ts_data$temp_c[farm_times['t_start']:farm_times['t_end']], pattern = map(farm_ts_data, farm_times)),
   
   ## Species parameters -------------------------------------------------------------------------------------------
@@ -145,220 +149,55 @@ list(
         Lipids = feed_params_lipids
       ),
       times = farm_times,
-      N_pop = N_population/2,
+      N_pop = N_population,
       nruns = pop_params['nruns']
     ),
     pattern = cross(map(feed_types, feed_params_proteins, feed_params_carbs, feed_params_lipids), 
                     map(farm_IDs, farm_temp, farm_times, N_population))
   ),
 
-  tar_target(CommSize, farm_harvest_size$weight[farm_harvest_size$farm_ID == farm_IDs], pattern = farm_IDs),
-  tar_target(
-    days_to_CommSize,
-    data.frame(
-      farm_ID = farm_IDs,
-      feed = feed_types,
-      Ub = days_to_CS(weight_stat = (main_farm_growth[[1]][,1] + main_farm_growth[[1]][,2]), days = 1:455, CS = CommSize),
-      Mean = days_to_CS(weight_stat = main_farm_growth[[1]][,1], days = 1:455, CS = CommSize),
-      Lb = days_to_CS(weight_stat = (main_farm_growth[[1]][,1] - main_farm_growth[[1]][,2]), days = 1:455, CS = CommSize)
-    ),
-    pattern = map(main_farm_growth, cross(feed_types, map(farm_IDs, CommSize))), 
-    deployment = "main"
-  ),
+  # [1] "main_farm_growth_weight_stat"
+  # [2] "main_farm_growth_biomass_stat"
+  # [3] "main_farm_growth_dw_stat"
+  # [4] "main_farm_growth_SGR_stat"
+  # [5] "main_farm_growth_E_somat_stat"
+  # [6] "main_farm_growth_P_excr_stat"
+  # [7] "main_farm_growth_L_excr_stat"
+  # [8] "main_farm_growth_C_excr_stat"
+  # [9] "main_farm_growth_P_uneat_stat"
+  # [10] "main_farm_growth_L_uneat_stat"
+  # [11] "main_farm_growth_C_uneat_stat"
+  # [12] "main_farm_growth_ing_act_stat"
+  # [13] "main_farm_growth_anab_stat"
+  # [14] "main_farm_growth_catab_stat"
+  # [15] "main_farm_growth_NH4_stat"
+  # [16] "main_farm_growth_O2_stat"
+  # [17] "main_farm_growth_food_prov_stat"
+  # [18] "main_farm_growth_rel_feeding_stat"
+  # [19] "main_farm_growth_T_response_stat"
   
+  ## Cohorts data -------------------------------------------------------------------------------------------------
+  # All this does is take main_farm_growth and overlay it onto itself 3 times for 3 different cohorts
   tar_target(
-    cohorts_biomass,
+    cohorts_data,
     command = {
-     df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[2]])
-     df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-     df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-     df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-     df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>% 
-       mutate(farm_ID = farm_IDs, feed = feed_types)
+      cohorts_data <- list()
+      df0 <- matrix(farm_times["t_start"]:farm_times["t_end"], 548, 1)
+      stat_names <- c("weight", "biomass", "dw", "SGR", "E_somat", "P_excr", "L_excr", "C_excr", "P_uneat", "L_uneat", "C_uneat", "ing_act", "anab", "catab", "NH4", "O2", "food_prov", "rel_feeding", "T_response")
+      for (i in c(2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17)) {
+        df1 <- df2 <- df3 <- cbind(df0, main_farm_growth[[i]], matrix(1, nrow(df0), 1), matrix(1:nrow(df0), nrow(df0), 1))
+        colnames(df1) <- colnames(df2) <- colnames(df3) <- c("yday", "mean", "sd", "cohort", "prod_day")
+        df2[,'cohort'] <- 2
+        df2[,'yday'] <- df2[,'yday']+365
+        df3[,'cohort'] <- 3
+        df3[,'yday'] <- df3[,'yday']+365+365
+        cohorts_data[[i]] <- rbind(df1, df2, df3) %>% 
+          as.data.frame() %>% tibble::remove_rownames() %>% 
+          mutate(farm_ID = farm_IDs, feed = feed_types, stat = stat_names[i])
+      }
+      cohorts_data[!sapply(cohorts_data, is.null)]
     },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_dw,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[3]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_SGR,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[4]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_P_excr,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[6]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_L_excr,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[7]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_C_excr,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[8]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_P_uneat,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[9]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_L_uneat,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[10]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_C_uneat,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[11]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_ing_act,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[12]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_O2,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[15]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_NH4,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[16]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_food_prov,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[17]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_total_excr_mat,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[20]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
-    deployment = "main"
-  ),
-  tar_target(
-    cohorts_total_uneat_mat,
-    command = {
-      df0 <- cbind(matrix(121:(121+547),548,1), main_farm_growth[[21]])
-      df2 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365+365, cohort = 3, prod_days = 1:nrow(df0))
-      df1 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(V1 = V1+365, cohort = 2, prod_days = 1:nrow(df0))
-      df0 <- df0 %>% as.data.frame() %>% remove_rownames() %>% mutate(cohort = 1, prod_days = 1:nrow(df0))
-      df <- rbind(df0, df1, df2) %>% rename(days = V1, mean = V2, sd = V3) %>% relocate(prod_days, .after = days) %>%
-        mutate(farm_ID = farm_IDs, feed = feed_types)
-    },
-    pattern = map(main_farm_growth, cross(feed_types, farm_IDs)), 
+    pattern = map(main_farm_growth, cross(feed_types, map(farm_IDs, farm_times))), 
     deployment = "main"
   )
 )

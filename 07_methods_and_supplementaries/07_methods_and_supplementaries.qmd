@@ -57,13 +57,11 @@ pacman::p_load(char = packs)
 
 conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
 
-source(here("src/spatial_templates.R"))
-source(here("src/model_functions.R"))
+source(here("00_model_functions.R"))
 
 # Sys.setenv(TAR_PROJECT = "project_main")
-base_path <- file.path("C:", "Users", "treimer", "Documents", "R-temp-files", "local_to_global_mariculture_modelling")
-targets_store <- file.path(base_path, "targets", "_targets_individual")
-farm_IDs <- tar_read(farm_IDs, store = targets_store)
+indi_store <- here() %>% file.path("04_targets_individual")
+farm_IDs <- tar_read(farm_IDs, store = indi_store)
 b1 <- sample(length(farm_IDs), 100, replace = F)
 b2 <- b1 + length(farm_IDs)
 b3 <- b2 + length(farm_IDs)
@@ -86,10 +84,10 @@ b <- c(b1, b2, b3)
 #| code-summary: Load and cache data to avoid spending a long time on it every render.
 
 # This is the full idealised year (2 years?) of temperature data
-sst <- file.path(base_path, "data", "_general_data", "SST", "farm_SST_extracted.parquet") %>% read_parquet()
+sst <- here() %>% file.path("data", "_general_data", "SST", "farm_SST_extracted.parquet") %>% read_parquet()
 
 # This is the actual temperature curve for the farming period
-farm_temp <- tar_read(example_individual, store = targets_store, branches = b1)
+farm_temp <- tar_read(example_individual, store = indi_store, branches = b1)
 ```
 
 Originally, all salmon were transferred to grow-out cages (model began) on January 1st. This isn't particularly realistic. Now, all farms begin the modelling period in spring (1st of May in the northern hemisphere, 1st of October in the southern hemisphere).
@@ -111,11 +109,11 @@ farm_temp %>%
 ```{r weight-related-data}
 #| code-summary: Load and cache data to avoid spending a long time on it every render.
 
-species_params <- tar_read(species_params, store = targets_store)
-pop_params <- tar_read(pop_params, store = targets_store)
-weight <- tar_read(example_individual, store = targets_store, branches = b) %>% select(farm_ID, weight, days, prod_days, feed)
-SGR <- tar_read(example_individual, store = targets_store, branches = b) %>% select(farm_ID, SGR, days, prod_days, feed)
-FCR <- tar_read(example_individual, store = targets_store, branches = b) %>% select(farm_ID, FCR, days, prod_days, feed)
+species_params <- tar_read(species_params, store = indi_store)
+pop_params <- tar_read(pop_params, store = indi_store)
+weight <- tar_read(example_individual, store = indi_store, branches = b) %>% select(farm_ID, weight, days, prod_days, feed)
+SGR <- tar_read(example_individual, store = indi_store, branches = b) %>% select(farm_ID, SGR, days, prod_days, feed)
+FCR <- tar_read(example_individual, store = indi_store, branches = b) %>% select(farm_ID, FCR, days, prod_days, feed)
 
 weight_smolt <- weight %>% 
   filter(prod_days == 152 & feed == "reference") %>% 
@@ -184,7 +182,7 @@ FCR %>%
 ```{r fig-functional-response-to-temperature}
 #| fig-cap: Metabolic response of all salmon to temperature within the model.
 
-df <- data.frame(water_temp = seq(-5, 30, 0.25))
+df <- data.frame(water_temp = seq(0, 30, 0.25))
 df$resp <- exp(species_params['pk']*df$water_temp)
 
 df %>% 
@@ -232,9 +230,9 @@ df %>%
 ```{r feed-raw-data}
 #| code-summary: Load and cache data to avoid spending a long time on it every render.
 
-feed_params_protein <- tar_read(feed_params_protein, store = targets_store)
-feed_params_carbs <- tar_read(feed_params_carbs, store = targets_store)
-feed_params_lipids <- tar_read(feed_params_lipids, store = targets_store)
+feed_params_protein <- tar_read(feed_params_protein, store = indi_store)
+feed_params_carbs <- tar_read(feed_params_carbs, store = indi_store)
+feed_params_lipids <- tar_read(feed_params_lipids, store = indi_store)
 ```
 
 Incorporated the individual digestibility of each ingredient and switched to tracking ingredients separately instead of feed – this unfortunately makes the model run slower but I think it will be worth it once the digestibility coefficients from the experiments are incorporated.
@@ -317,9 +315,9 @@ I set up some “example fish” to speed up future model adjustments – basica
 #| code-summary: Load and cache data to avoid spending a long time on it every render.
 
 #c(b1, b2, b3))
-ing_pot <- tar_read(example_individual, store = targets_store, branches = b1) %>% select(farm_ID, ing_pot, days, prod_days, feed)
-ing_act <- tar_read(example_individual, store = targets_store, branches = b1) %>% select(farm_ID, ing_act, days, prod_days, feed)
-food_prov <- tar_read(example_individual, store = targets_store, branches = b1) %>% select(farm_ID, food_prov, days, prod_days, feed)
+ing_pot <- tar_read(example_individual, store = indi_store, branches = b1) %>% select(farm_ID, ing_pot, days, prod_days, feed)
+ing_act <- tar_read(example_individual, store = indi_store, branches = b1) %>% select(farm_ID, ing_act, days, prod_days, feed)
+food_prov <- tar_read(example_individual, store = indi_store, branches = b1) %>% select(farm_ID, food_prov, days, prod_days, feed)
 ```
 
 Within the model, salmon have a maximum ingestion potential (based on their weight and individualised feeding rate). The actual food ingested is 97% of their ingestion potential (food encounter efficiency) or the total food provided, whichever is less. @fig-food-prov-theoretical shows an example of how food provided scales with potential individual ingestion.
@@ -375,7 +373,7 @@ prov %>%
 #| code-summary: lsdkjfk
 #| eval: true
 
-params <- tar_read(sens_all_params, store = targets_store)
+params <- tar_read(sens_all_params, store = indi_store)
 pnames <- names(params)
 ```
 

@@ -1,15 +1,17 @@
-suppressMessages(suppressWarnings(library(targets)))
-suppressMessages(suppressWarnings(library(crew)))
-suppressMessages(suppressWarnings(library(mirai)))
-suppressMessages(suppressWarnings(library(arrow)))
-suppressMessages(suppressWarnings(library(sf)))
-suppressMessages(suppressWarnings(library(dplyr)))
-suppressMessages(suppressWarnings(library(tidyr)))
-suppressMessages(suppressWarnings(library(terra))) # do not remove
-suppressMessages(suppressWarnings(library(magrittr)))
-suppressMessages(suppressWarnings(library(conflicted)))
-suppressMessages(suppressWarnings(library(units)))
-conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+suppressMessages(suppressWarnings(suppressPackageStartupMessages({
+  library(targets)
+  library(crew)
+  library(mirai)
+  library(arrow)
+  library(sf)
+  library(dplyr)
+  library(tidyr)
+  library(terra) # do not remove
+  library(magrittr)
+  library(conflicted)
+  library(units)
+  conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+})))
 
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "future", "furrr", "ggplot2", "matrixStats", "tibble"), 
@@ -113,33 +115,33 @@ list(
   ),
   
 ## Example individuals --------------------------------------------------------------------------------------------
-  tar_target(
-    example_individual,
-    command = {
-      df <- fish_growth(
-        pop_params = pop_params,
-        species_params = species_params,
-        water_temp = farm_temp,
-        feed_params = list(
-          Proteins = feed_params_protein,
-          Carbohydrates = feed_params_carbs,
-          Lipids = feed_params_lipids
-        ),
-        times = farm_times,
-        init_weight = pop_params["meanW"],
-        ingmax = pop_params["meanImax"]
-      )
-      df %>% 
-        as.data.frame() %>% remove_rownames() %>% 
-        mutate(SGR = 100 * (exp((log(weight)-log(weight[1]))/(days-days[1])) - 1),
-               FCR = food_prov/dw) %>% 
-        mutate(days = as.integer(days), farm_ID = as.integer(farm_IDs), feed = as.factor(feed_types)) %>% 
-        group_by(farm_ID, feed) %>% 
-        mutate(prod_days = days - min(days)+1) %>% 
-        ungroup()
-    },
-    pattern = cross(map(farm_IDs, farm_temp, farm_times), map(feed_types, feed_params_protein, feed_params_carbs, feed_params_lipids))
-  ),
+  # tar_target(
+  #   example_individual,
+  #   command = {
+  #     df <- fish_growth(
+  #       pop_params = pop_params,
+  #       species_params = species_params,
+  #       water_temp = farm_temp,
+  #       feed_params = list(
+  #         Proteins = feed_params_protein,
+  #         Carbohydrates = feed_params_carbs,
+  #         Lipids = feed_params_lipids
+  #       ),
+  #       times = farm_times,
+  #       init_weight = pop_params["meanW"],
+  #       ingmax = pop_params["meanImax"]
+  #     )
+  #     df %>% 
+  #       as.data.frame() %>% remove_rownames() %>% 
+  #       mutate(SGR = 100 * (exp((log(weight)-log(weight[1]))/(days-days[1])) - 1),
+  #              FCR = food_prov/dw) %>% 
+  #       mutate(days = as.integer(days), farm_ID = as.integer(farm_IDs), feed = as.factor(feed_types)) %>% 
+  #       group_by(farm_ID, feed) %>% 
+  #       mutate(prod_days = days - min(days)+1) %>% 
+  #       ungroup()
+  #   },
+  #   pattern = cross(map(farm_IDs, farm_temp, farm_times), map(feed_types, feed_params_protein, feed_params_carbs, feed_params_lipids))
+  # ),
 
   tar_target(
     farm_harvest_size,

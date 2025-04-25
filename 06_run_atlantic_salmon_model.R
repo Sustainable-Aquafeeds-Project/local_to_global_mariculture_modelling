@@ -1,31 +1,35 @@
 # Setup -----------------------------------------------------------------------------------------------------------
-# library(tidyverse)
-library(magrittr)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(ggplot2)
-library(terra)
-library(qs)
-library(here)
-library(sf)
-library(purrr)
-library(furrr)
-library(targets)
-library(future)
-library(arrow)
-library(readxl)
-library(units)
-library(conflicted)
-conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
+suppressPackageStartupMessages({
+  library(magrittr)
+  library(dplyr)
+  library(tidyr)
+  library(stringr)
+  library(ggplot2)
+  library(terra)
+  library(qs)
+  library(here)
+  library(sf)
+  library(purrr)
+  library(furrr)
+  library(targets)
+  library(future)
+  library(arrow)
+  library(readxl)
+  library(units)
+  library(tictoc)
+  library(conflicted)
+  conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
+})
 
 # functions
 source("00_model_functions.R")
 
 # species paths
 this_species <- "atlantic_salmon"
-this_path <- sprintf("data/%s", this_species)
-
+this_path <- file.path("data", this_species)
+fig_path <- file.path(this_path, "figures")
+prod_path <- file.path(this_path, "data_products")
+  
 # STEP 1: Temperature forcings ------------------------------------------------------------------------------------
 # You don't need to do this again unless you make changes - all the important stuff is saved
 # Prep temperature forcings for each farm site
@@ -121,7 +125,7 @@ mean_farm_temp <- farm_list %>%
   })
 
 farms_to_omit <- mean_farm_temp %>% 
-  filter(mean_temp < 4) %>% 
+  filter(mean_temp <= 6) %>% 
   pull(farm_id)
 
 qsave(x = farms_to_omit, 
@@ -132,20 +136,20 @@ qsave(x = farms_to_omit,
 ## Example individuals --------------------------------------------------------------------------------------------
 Sys.setenv(TAR_PROJECT = "project_individual")
 # tar_visnetwork()
-tar_make(reporter = "summary", seconds_meta_append = 300)
-tar_prune()
+tar_make(reporter = "balanced", seconds_meta_append = 300)
+# tar_prune()
 
 farm_IDs <- tar_read(farm_IDs)
-sens_all_params <- tar_read(sens_all_params)
+sens_params_names <- tar_read(sens_params_names)
 patt <- data.frame(
-  farm_ID = rep(farm_IDs, each = length(sens_all_params)*3),
-  param = rep(rep(1:length(sens_all_params), each = 3), times = length(farm_IDs)),
-  factor = rep(c(0.9,1,1.1), times = length(sens_all_params)*length(farm_IDs))
+  farm_ID = rep(farm_IDs, each = length(sens_params_names)*3),
+  param = rep(rep(1:length(sens_params_names), each = 3), times = length(farm_IDs)),
+  factor = rep(c(0.9,1,1.1), times = length(sens_params_names)*length(farm_IDs))
 )
 patt$br <- 1:nrow(patt)
 
 wt_ls <- dw_ls <- excr_ls <- uneat_ls <- list()
-for (p in 1:length(sens_all_params)) {
+for (p in 1:length(sens_params_names)) {
   br <- patt[patt$param == p, ]
   sens <- tar_read(sens_individual, branches = br$br)
   sens$farm_ID <- br$farm_ID
@@ -188,529 +192,420 @@ uneat_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", 
 ## Farm growth ----------------------------------------------------------------------------------------------------
 Sys.setenv(TAR_PROJECT = "project_farm")
 # tar_visnetwork()
-tar_make(reporter = "summary", seconds_meta_append = 300)
+tar_validate()
 # tar_prune()
+upd <- tar_outdated(branches = F)
+tar_make(reporter = "balanced", seconds_meta_append = 300)
 
 farm_IDs <- tar_read(farm_IDs)
 feed_types <- tar_read(feed_types)
-stats <- c("weight", "biomass", "dw", "SGR", "E_somat", "P_excr", "L_excr", "C_excr", "P_uneat", "L_uneat", "C_uneat", "ing_act", "anab", "catab", "O2", "NH4", "food_prov", "rel_feeding", "T_response", "total_excr_mat", "total_uneat_mat")
-
-overwrite <- F
-
-for (f in 1:length(farm_IDs)) {
-  for (i in 1:length(stats)) {
-    fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_farm", paste0(paste("farmID", fixnum(farm_IDs[f]), stats[i], sep = "_"), ".parquet"))
-    if (overwrite == T | !file.exists(fname)) {
-      df <- list(
-        tar_read(main_farm_growth, branches = f)[[i]] %>%
-          as.data.frame() %>%
-          rename(mean = V1, sd = V2) %>% 
-          mutate(feed = feed_types[1], days = 1:548),
-        tar_read(main_farm_growth, branches = length(farm_IDs) + f)[[i]] %>%
-          as.data.frame() %>%
-          rename(mean = V1, sd = V2) %>% 
-          mutate(feed = feed_types[2], days = 1:548),
-        tar_read(main_farm_growth, branches = 2*length(farm_IDs) + f)[[i]] %>%
-          as.data.frame() %>%
-          rename(mean = V1, sd = V2) %>% 
-          mutate(feed = feed_types[3], days = 1:548)
-      ) %>% bind_rows() %>% 
-        relocate(days, .before = mean) %>% 
-        mutate(farm_ID = farm_IDs[f], feed = factor(feed, levels = feed_types)) %>% 
-        write_parquet(fname)
-    }
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_biomass", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_biomass, branches = f), 
-      tar_read(cohorts_biomass, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_biomass, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-     write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_dw", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_dw, branches = f), 
-      tar_read(cohorts_dw, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_dw, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_SGR", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_SGR, branches = f), 
-      tar_read(cohorts_SGR, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_SGR, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_O2", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_O2, branches = f), 
-      tar_read(cohorts_O2, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_O2, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_P_uneat", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_P_uneat, branches = f), 
-      tar_read(cohorts_P_uneat, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_P_uneat, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_C_uneat", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_C_uneat, branches = f), 
-      tar_read(cohorts_C_uneat, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_C_uneat, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_total_uneat", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_total_uneat_mat, branches = f), 
-      tar_read(cohorts_total_uneat_mat, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_total_uneat_mat, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_ing_act", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_ing_act, branches = f), 
-      tar_read(cohorts_ing_act, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_ing_act, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_food_prov", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_food_prov, branches = f), 
-      tar_read(cohorts_food_prov, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_food_prov, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_NH4", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_NH4, branches = f), 
-      tar_read(cohorts_NH4, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_NH4, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_L_uneat", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_L_uneat, branches = f), 
-      tar_read(cohorts_L_uneat, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_L_uneat, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_P_excr", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_P_excr, branches = f), 
-      tar_read(cohorts_P_excr, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_P_excr, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_L_excr", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_L_excr, branches = f), 
-      tar_read(cohorts_L_excr, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_L_excr, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_C_excr", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_C_excr, branches = f), 
-      tar_read(cohorts_C_excr, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_C_excr, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  fname <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort", paste0(paste("farmID", fixnum(farm_IDs[f]), "cohorts_total_excr", sep = "_"), ".parquet"))
-  if (overwrite == T | !file.exists(fname)) {
-    df <- list(
-      tar_read(cohorts_total_excr_mat, branches = f), 
-      tar_read(cohorts_total_excr_mat, branches = length(farm_IDs) + f), 
-      tar_read(cohorts_total_excr_mat, branches = 2*length(farm_IDs) + f)
-    ) %>% bind_rows() %>% 
-      filter(days <= 1095 & days > 365) %>% 
-      mutate(feed = factor(feed, levels = feed_types)) %>% 
-      write_parquet(fname)
-  }
-  
-  print(paste("Farm", f, "of", length(farm_IDs), "(", farm_IDs[f], ")", " finished and saved at", Sys.time()))
-}
-
-# Analysis & plotting ---------------------------------------------------------------------------------------------
-data_path <- file.path("data", "atlantic_salmon", "data_products")
-
-## Farm production ------------------------------------------------------------------------------------------------
-biom_farms <- file.path(data_path, "model_outputs_farm") %>% 
-  str_subset("biomass")
-
-## Feed diffs -----------------------------------------------------------------------------------------------------
-
-## Plots ----------------------------------------------------------------------------------------------------------
-### Example individuals -------------------------------------------------------------------------------------------
-files <- file.path("data_processed", "example_individual", "raw") %>% list.files(full.names = T)
-p0 <- read_parquet(files[1]) %>% 
-  ggplot(aes(x = days, y = value, colour = feed)) +
-  geom_line(linewidth = 0.5) +
-  scale_x_continuous(breaks = seq(0, 730, by = 182)) +
-  scale_colour_brewer(palette = "Set2") +
-  theme_classic() +
-  theme(legend.position = "none",
-        text = element_text(family = "sans", colour = "black", size = 12))
 
 overwrite <- T
 
-# Not plotted:
-# food_enc
-# ing_pot
-# rel_feeding
-# E_somat
+dest_path_1 <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_farm")
+dest_path_2 <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort")
 
-max <- tar_read(ind_max_weight) %>% unname() %>% set_units("g") %>% set_units("kg") %>% drop_units() %>% ceiling()
-min <- tar_read(ind_min_dw) %>% unname() %>% set_units("g") %>% set_units("kg") %>% drop_units() %>% floor()
-weight_fnms <- str_subset(files, "weight")
-for (i in 1:length(weight_fnms)){
-  fname <- weight_fnms[i] %>% str_replace_all("raw", "plots/weight") %>% str_replace_all(".parquet", ".png")
+for (fid in 1:length(farm_IDs)) {
+  tic()
+  ### Process raw outputs -----------------------------------------------------------------------------------------
+  # Seperate the different portions of the list - all diets for one farm in each file
+  stats <- c("weight_stat", "biomass_stat", "dw_stat", "SGR_stat", "E_somat_stat", "P_excr_stat", "L_excr_stat", "C_excr_stat", "P_uneat_stat", "L_uneat_stat", "C_uneat_stat", "ing_act_stat", "anab_stat", "catab_stat", "NH4_stat", "O2_stat", "food_prov_stat", "rel_feeding_stat", "T_response_stat")
   
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(weight_fnms[i])
-    df$value <- set_units(df$value, "g") %>% set_units("kg") %>% drop_units()
-    p <- p0 %+% df + 
-      scale_y_continuous(breaks = seq(0, 8, 2), limits = c(min, max)) +
-      labs(x = "Day of production", y = "Individual weight (kg)")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
+  fnames_farms <- file.path(dest_path_1, paste0(paste("farmID", fixnum(farm_IDs[fid]), stats, sep = "_"), ".parquet"))
   
-    print(paste(i, "of", length(weight_fnms), "plots saved"))
-  }
-}
-
-max <- tar_read(ind_max_dw) %>% unname() %>% ceiling()
-min <- tar_read(ind_min_dw) %>% unname() %>% floor()
-dw_fnms <- str_subset(files, "dw")
-for (i in 1:length(dw_fnms)){
-  fname <- dw_fnms[i] %>% str_replace_all("raw", "plots/dw") %>% str_replace_all(".parquet", ".png")
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(dw_fnms[i])
-    p <- p0 %+% df + 
-      scale_y_continuous(breaks = seq(-6, 12, 2), limits = c(-6,max)) +
-      geom_hline(aes(yintercept = 0), linetype = "dotted") +
-      labs(x = "Day of production", y = expression("Weight change (g d"^-1*")"))
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
+  if (overwrite == T | any(!file.exists(fnames_farms))) {
+    df_1 <- tar_read(main_farm_growth, branches = fid)
+    df_2 <- tar_read(main_farm_growth, branches = length(farm_IDs) + fid)
+    df_3 <- tar_read(main_farm_growth, branches = 2*length(farm_IDs) + fid)
     
-    print(paste(i, "of", length(dw_fnms), "plots saved"))
+    for (st in seq_along(stats)) {
+      if (overwrite == T | !file.exists(fnames_farms[st])) {
+        df <- list(
+          df_1[[st]] %>%
+            as.data.frame() %>%
+            rename(mean = V1, sd = V2) %>% 
+            mutate(feed = feed_types[1], days = 1:548),
+          df_2[[st]] %>%
+            as.data.frame() %>%
+            rename(mean = V1, sd = V2) %>% 
+            mutate(feed = feed_types[2], days = 1:548),
+          df_3[[st]] %>%
+            as.data.frame() %>%
+            rename(mean = V1, sd = V2) %>% 
+            mutate(feed = feed_types[3], days = 1:548)
+        ) %>% bind_rows() %>% 
+          relocate(days, .before = mean) %>% 
+          mutate(farm_ID = farm_IDs[fid], 
+                 feed = factor(feed, levels = c("past", "reference", "future"))) %>% 
+          write_parquet(fnames_farms[st])
+      }
+    }
+    rm(df, df_1, df_2, df_3)
   }
-}
 
-max <- tar_read(farm_max_T_response) %>% unname() %>% max() %>% set_units("g") %>% set_units("kg") %>% drop_units() %>% ceiling()
-Tresp_fnms <- str_subset(files, "T_response")
-for (i in 1:length(Tresp_fnms)){
-  fname <- Tresp_fnms[i] %>% str_replace_all("raw", "plots/T_response") %>% str_replace_all(".parquet", ".png")
+  fnames_cohorts <- c(
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_biomass", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_dw", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_SGR", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_P_excr", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_C_excr", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_L_excr", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_P_uneat", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_C_uneat", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_L_uneat", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_ing_act", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_NH4", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_O2", sep = "_"), ".parquet")),
+    file.path(dest_path_2, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts_food_prov", sep = "_"), ".parquet"))
+  )
+  stat_levels <- c("biomass", "dw", "SGR", "P_excr", "C_excr", "L_excr", "P_uneat", "C_uneat", "L_uneat", "ing_act", "NH4", "O2", "food_prov")
+
+  df_1 <- tar_read(cohorts_data, branches = fid)
+  df_2 <- tar_read(cohorts_data, branches = length(farm_IDs) + fid)
+  df_3 <- tar_read(cohorts_data, branches = 2*length(farm_IDs) + fid)
   
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(Tresp_fnms[i])
-    p <- p0 %+% df + 
-      scale_y_continuous(breaks = seq(0, 4, 0.5), limits = c(1, 2.75)) +
-      labs(x = "Day of production", y = "Temperature response")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
+  for (fn in seq_along(fnames_cohorts)) {
+    if (overwrite == T | !file.exists(fnames_cohorts[fn])) {
+      df <- list(
+        df_1[[fn]], 
+        df_2[[fn]], 
+        df_3[[fn]]
+      ) %>% bind_rows() %>% 
+        # filter(yday <= 1095 & yday > 365) %>% 
+        mutate(feed = factor(feed, levels = feed_types),
+               stat = factor(stat, levels = stat_levels)) %>% 
+        write_parquet(fnames_cohorts[fn])
+    }
   }
-}
-
-Pexcr_fnms <- str_subset(files, "P_excr")
-for (i in 1:length(Pexcr_fnms)){
-  fname <- Pexcr_fnms[i] %>% str_replace_all("raw", "plots/P_excr") %>% str_replace_all(".parquet", ".png")
+  rm(df, df_1, df_2, df_3)
   
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(Pexcr_fnms[i])
-    p <- p0 %+% df + 
-      scale_y_continuous(breaks = seq(0, 4, 0.2), limits = c(0, 1)) +
-      labs(x = "Day of production", y = expression("Protein excreted (g d"^-1*")"))
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
+  t <- toc(quiet = T)$callback_msg
+  print(paste0("Finished processing farm_ID ", farm_IDs[fid], " -- ", round(100*fid/length(farm_IDs),2), "% done -- ", t))
 }
 
-Lexcr_fnms <- str_subset(files, "L_excr")
-for (i in 1:length(Lexcr_fnms)){
-  fname <- Lexcr_fnms[i] %>% str_replace_all("raw", "plots/L_excr") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(Lexcr_fnms[i])
-    p <- p0 %+% df + 
-      scale_y_continuous(breaks = seq(0, 4, 0.05), limits = c(0, 0.2)) +
-      labs(x = "Day of production", y = expression("Lipid excreted (g d"^-1*")"))
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
+# Analysis & plotting ---------------------------------------------------------------------------------------------
+## Harvest size ---------------------------------------------------------------------------------------------------
+pdata <- tar_read(farm_harvest_size, store = "04_targets_individual")
+write_parquet(pdata, file.path("data", "atlantic_salmon", "data_products", "harvest_size.parquet"))
+
+# p <- pdata %>% 
+#   mutate(weight = weight %>% set_units("g") %>% set_units("kg")) %>% 
+#   select(c(farm_ID, weight)) %>% 
+#   ggplot(aes(x = weight)) +
+#   geom_histogram(binwidth = 0.25, colour = "black", fill = "salmon", alpha = 0.5) +
+#   scale_y_continuous(limits = c(0,500)) +
+#   labs(y = "Frequency", x = "Harvest weight") +
+#   theme_classic() +
+#   theme(legend.position = "none", aspect.ratio = 0.75)
+# 
+# ggsave(
+#   plot = p, 
+#   filename = file.path("data/atlantic_salmon/data_products/figures", paste0("harvest_size.png")),
+#   height = 150, width = 200, units = "mm"
+# )
+
+## Previously processed data --------------------------------------------------------------------------------------
+Sys.setenv(TAR_PROJECT = "project_farm")
+farm_IDs <- tar_read(farm_IDs)
+feed_types <- tar_read(feed_types)
+data_path_1 <- file.path(prod_path, "model_outputs_farm")
+data_path_2 <- file.path(prod_path, "model_outputs_cohort")
+dest_path_1 <- file.path(prod_path, "figures", "farms")
+dest_path_2 <- file.path(prod_path, "figures", "cohorts")
+
+make_label <- function(lab){lab %>% str_remove_all("_stat") %>% str_replace_all("_", " ") %>% str_to_title()}
+
+farm_stats <- c("weight_stat", "biomass_stat", "dw_stat", "SGR_stat", "E_somat_stat", "P_excr_stat", "L_excr_stat", "C_excr_stat", "P_uneat_stat", "L_uneat_stat", "C_uneat_stat", "ing_act_stat", "anab_stat", "catab_stat", "NH4_stat", "O2_stat", "food_prov_stat", "rel_feeding_stat", "T_response_stat")
+
+# List all the files output from targets processing
+farm_files <- list()
+for (s in seq_along(farm_stats)) {
+  farm_files[[s]] <- list.files(data_path_1, full.names = T) %>% 
+    str_subset(farm_stats[s])
 }
 
-Cexcr_fnms <- str_subset(files, "C_excr")
-for (i in 1:length(Cexcr_fnms)){
-  fname <- Cexcr_fnms[i] %>% str_replace_all("raw", "plots/C_excr") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(Cexcr_fnms[i])
-    p <- p0 %+% df + 
-      scale_y_continuous(breaks = seq(0, 4, 0.2), limits = c(0, 1.2)) +
-      labs(x = "Day of production", y = expression("Carbohydrate excreted (g d"^-1*")"))
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
+## Save farm seperate plots ---------------------------------------------------------------------------------------
+# for (ff in seq_along(farm_files)) {
+#   fig_path <- file.path(dest_path_1, farm_stats[[ff]])
+#   if (!dir.exists(fig_path)) {dir.create(fig_path)}
+#   
+#   for (fid in seq_along(farm_IDs)) {
+#     png_name <- file.path(fig_path, paste0(farm_stats[ff], "_", fixnum(farm_IDs[fid]), ".png"))
+#     
+#     if (overwrite == T | !file.exists(png_name)) {
+#       df <- farm_files[[ff]] %>%
+#         str_subset(fixnum(farm_IDs[fid])) %>%
+#         read_parquet()
+#       
+#       if (farm_stats[ff] %in% c("weight_stat", "biomass_stat")) {
+#         df$mean = set_units(set_units(df$mean, "g"), "kg")
+#         df$sd   = set_units(set_units(df$sd, "g"), "kg")
+#       } else if (farm_stats[ff] %in% c("E_somat_stat")) {
+#         df$mean = set_units(df$mean, "J")
+#         df$sd   = set_units(df$sd, "J")
+#       } else if (farm_stats[ff] %in% c("anab_stat", "catab_stat")) {
+#         df$mean = set_units(df$mean, "J d-1")
+#         df$sd   = set_units(df$sd, "J d-1")
+#       } else if (farm_stats[ff] %in% c("SGR_stat", "rel_feeding_stat", "T_response_stat")) {
+#         df$mean = df$mean
+#         df$sd   = df$sd
+#       } else {
+#         df$mean = set_units(df$mean, "g d-1")
+#         df$sd   = set_units(df$sd, "g d-1")
+#       }
+#       
+#       p <- df %>% 
+#         ggplot(aes(x = days, y = mean, ymin = mean-sd, ymax = mean+sd, colour = feed, fill = feed)) +
+#         geom_line(linewidth = 0.75) +
+#         geom_ribbon(alpha = 0, linetype = "dashed") +
+#         scale_colour_brewer(palette = "Set1") +
+#         scale_fill_brewer(palette = "Set1") +
+#         scale_x_continuous(breaks = seq(0, 550, 100)) +
+#         theme_classic() +
+#         theme(aspect.ratio = 0.75, legend.position = "none") +
+#         labs(x = "Day of production", y = make_label(farm_stats[ff]))
+#         
+#       ggsave(
+#         plot = p, 
+#         filename = png_name,
+#         height = 150, width = 200, units = "mm"
+#       )
+#     }
+#   }
+#   print(paste0("Finished processing all farms, stat ", ff, " -- ", round(100*ff/length(farm_files),2), "% done"))
+# }
 
-Puneat_fnms <- str_subset(files, "P_uneat")
-for (i in 1:length(Puneat_fnms)){
-  fname <- Puneat_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(Puneat_fnms[i])
-    df$value <- set_units(df$value, "g d-1") %>% drop_units()
-    p <- p0 %+% df + labs(x = "Day of production", y = "Protein uneaten")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
-Luneat_fnms <- str_subset(files, "L_uneat")
-for (i in 1:length(Luneat_fnms)){
-  fname <- Luneat_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(Luneat_fnms[i])
-    df$value <- set_units(df$value, "g d-1") %>% drop_units()
-    p <- p0 %+% df + labs(x = "Day of production", y = "Lipid uneaten")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
-Cuneat_fnms <- str_subset(files, "C_uneat")
-for (i in 1:length(Cuneat_fnms)){
-  fname <- Cuneat_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(Cuneat_fnms[i])
-    df$value <- set_units(df$value, "g d-1") %>% drop_units()
-    p <- p0 %+% df + labs(x = "Day of production", y = "Carbohydrate uneaten")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
-prov_fnms <- str_subset(files, "food_prov")
-for (i in 1:length(prov_fnms)){
-  fname <- prov_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(prov_fnms[i])
-    df$value <- set_units(df$value, "g d-1") %>% drop_units()
-    p <- p0 %+% df + labs(x = "Day of production", y = "Food provided")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
-act_fnms <- str_subset(files, "ing_act")
-for (i in 1:length(act_fnms)){
-  fname <- act_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(act_fnms[i])
-    df$value <- set_units(df$value, "g d-1") %>% drop_units()
-    p <- p0 %+% df + labs(x = "Day of production", y = "Food ingested")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
-assim_fnms <- str_subset(files, "E_assim")
-for (i in 1:length(assim_fnms)){
-  fname <- assim_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(assim_fnms[i])
-    df$value <- set_units(df$value, "J d-1") %>% drop_units()
-    p <- p0 %+% df + labs(x = "Day of production", y = "Energy assimilated")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
-O2_fnms <- str_subset(files, "O2")
-for (i in 1:length(O2_fnms)){
-  fname <- O2_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(O2_fnms[i])
-    df$value <- set_units(df$value, "g d-1") %>% drop_units()
-    p <- p0 %+% df + labs(x = "Day of production", y = "Oxygen consumption")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
-NH4_fnms <- str_subset(files, "NH4")
-for (i in 1:length(NH4_fnms)){
-  fname <- NH4_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(NH4_fnms[i])
-    df$value <- set_units(df$value, "g d-1") %>% drop_units()
-    p <- p0 %+% df + labs(x = "Day of production", y = expression("NH"_4*"produced"))
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
-SGR_fnms <- str_subset(files, "SGR")
-for (i in 1:length(SGR_fnms)){
-  fname <- SGR_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
-  
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(SGR_fnms[i])
-    p <- p0 %+% df + labs(x = "Day of production", y = "SGR")
-    ggsave(plot = p, filename = fname, height = 4.5, width = 7)
-  }
-}
-
+## Combine some stats ---------------------------------------------------------------------------------------------
 ### Farms ---------------------------------------------------------------------------------------------------------
-files <- file.path("data_processed", "farm_growth", "raw") %>% list.files(full.names = T)
-p0 <- read_parquet(files[1]) %>% 
-  ggplot(aes(x = days, y = mean, ymin = mean-sd, ymax = mean+sd, colour = feed, fill = feed)) +
-  geom_line(linewidth = 0.5) +
-  geom_ribbon(alpha = 0.25) + 
-  theme_classic() +
-  theme(text = element_text(family = "sans", colour = "black", size = 12))
+farm_files <- farm_files %>% 
+  Reduce(c, .) %>% 
+  str_subset(".parquet")
 
-weight_fnms <- str_subset(files, "weight")
-for (i in 1:length(weight_fnms)){
-  fname <- weight_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
+# Combined excretion
+print("Starting farm total excretion processing...")
+path_2 <- file.path("data", "atlantic_salmon", "data_products", "figures", "farms", "total_excr_stat")
+if (!dir.exists(path_2)) {dir.create(path_2)}
+for (fid in seq_along(farm_IDs)) {
+  # Total excretion (carbs, lipis, and fats)
+  par_name <- file.path(data_path_1, paste0("total_excr_stat_", fixnum(farm_IDs[fid]), ".parquet"))
+  png_name <- file.path(path_2, paste0("total_excr_stat_", fixnum(farm_IDs[fid]), ".png"))
   
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(weight_fnms[i])
-    df$mean <- set_units(df$mean, "g") %>% set_units("kg")
-    df$sd <- set_units(df$sd, "g") %>% set_units("kg")
-    p <- p0 %+% df + labs(x = "Day of production", y = "Individual weight")
-    ggsave(plot = p, filename = fname)
+  if (overwrite == T | any(!file.exists(par_name), !file.exists(png_name))) {
+    fnms <- farm_files %>% 
+      str_subset(fixnum(farm_IDs[fid])) %>% 
+      str_subset("excr_stat")
+    
+    df <- list(
+      fnms %>% str_subset("C_excr") %>% read_parquet() %>% mutate(stat = "C_excr"),
+      fnms %>% str_subset("L_excr") %>% read_parquet() %>% mutate(stat = "L_excr"),
+      fnms %>% str_subset("P_excr") %>% read_parquet() %>% mutate(stat = "P_excr")
+    ) %>% 
+      bind_rows() %>% 
+      filter(days != max(days)) %>% 
+      write_parquet(par_name)
+    
+    # p <- df %>% 
+    #   group_by(days, feed, farm_ID) %>% 
+    #   reframe(mean = sum(mean, na.rm = T),
+    #           sd = sum(sd, na.rm = T)) %>% 
+    #   mutate(mean = set_units(mean, "g d-1") %>% set_units("kg d-1"),
+    #          sd = set_units(sd, "g d-1") %>% set_units("kg d-1")) %>% 
+    #   ggplot(aes(x = days, y = mean, ymin = mean-sd, ymax = mean+sd, colour = feed, fill = feed)) +
+    #   geom_line(linewidth = 0.75) +
+    #   geom_ribbon(alpha = 0, linetype = "dashed") +
+    #   scale_colour_brewer(palette = "Set1") +
+    #   scale_fill_brewer(palette = "Set1") +
+    #   scale_x_continuous(breaks = seq(0, 550, 100)) +
+    #   theme_classic() +
+    #   theme(aspect.ratio = 0.75, legend.position = "none") +
+    #   labs(x = "Day of production", y = "Total excretion")
+    # 
+    # ggsave(
+    #   plot = p, 
+    #   filename = png_name,
+    #   height = 150, width = 200, units = "mm"
+    # )
+  }
+  if (fid %in% as.integer(seq(0, length(farm_IDs), length.out = 10))) {
+    print(paste0("Finish processing ", fid, " of ", length(farm_IDs), " -- ", round(100*fid/length(farm_IDs),2), "% done"))
   }
 }
 
-biom_fnms <- str_subset(files, "biomass")
-for (i in 1:length(biom_fnms)){
-  fname <- biom_fnms[i] %>% str_replace_all("raw", "plots") %>% str_replace_all(".parquet", ".png")
+# Combined uneaten
+print("Starting farm total uneaten feed processing...")
+path_2 <- file.path("data", "atlantic_salmon", "data_products", "figures", "farms", "total_uneat_stat")
+if (!dir.exists(path_2)) {dir.create(path_2)}
+for (fid in seq_along(farm_IDs)) {
+  # Total uneaten (carbs, lipis, and fats)
+  par_name <- file.path(data_path_1, paste0("total_excr_stat_", fixnum(farm_IDs[fid]), ".parquet"))
+  png_name <- file.path(path_2, paste0("total_excr_stat_", fixnum(farm_IDs[fid]), ".png"))
   
-  if (overwrite == T | !file.exists(fname)) {
-    df <- read_parquet(biom_fnms[i])
-    df$mean <- set_units(df$mean, "g") %>% set_units("t")
-    df$sd <- set_units(df$sd, "g") %>% set_units("t")
-    p <- p0 %+% df + labs(x = "Day of production", y = "Farm biomass")
-    ggsave(plot = p, filename = fname)
+  if (overwrite == T | any(!file.exists(par_name), !file.exists(png_name))) {
+    fnms <- farm_files %>% 
+      str_subset(fixnum(farm_IDs[fid])) %>% 
+      str_subset("uneat_stat")
+    
+    df <- list(
+      fnms %>% str_subset("C_uneat") %>% read_parquet() %>% mutate(stat = "C_uneat"),
+      fnms %>% str_subset("L_uneat") %>% read_parquet() %>% mutate(stat = "L_uneat"),
+      fnms %>% str_subset("P_uneat") %>% read_parquet() %>% mutate(stat = "P_uneat")
+    ) %>% 
+      bind_rows() %>% 
+      filter(days != max(days)) %>% 
+      mutate(stat = as.factor(stat)) %>% 
+      write_parquet(par_name)
+    
+    # p <- df %>% 
+    #   group_by(days, feed, farm_ID) %>% 
+    #   reframe(mean = sum(mean, na.rm = T),
+    #           sd = sum(sd, na.rm = T)) %>% 
+    #   mutate(mean = set_units(mean, "g d-1") %>% set_units("kg d-1"),
+    #          sd = set_units(sd, "g d-1") %>% set_units("kg d-1")) %>% 
+    #   ggplot(aes(x = days, y = mean, ymin = mean-sd, ymax = mean+sd, colour = feed, fill = feed)) +
+    #   geom_line(linewidth = 0.75) +
+    #   geom_ribbon(alpha = 0, linetype = "dashed") +
+    #   scale_colour_brewer(palette = "Set1") +
+    #   scale_fill_brewer(palette = "Set1") +
+    #   scale_x_continuous(breaks = seq(0, 550, 100)) +
+    #   theme_classic() +
+    #   theme(aspect.ratio = 0.75, legend.position = "none") +
+    #   labs(x = "Day of production", y = "Total uneaten")
+    # 
+    # ggsave(
+    #   plot = p, 
+    #   filename = png_name,
+    #   height = 150, width = 200, units = "mm"
+    # )
+  }
+  if (fid %in% as.integer(seq(0, length(farm_IDs), length.out = 10))) {
+    print(paste0("Finish processing ", fid, " of ", length(farm_IDs), " -- ", round(100*fid/length(farm_IDs),2), "% done"))
   }
 }
 
+### Cohorts -------------------------------------------------------------------------------------------------------
+cohort_stats <- c("cohorts_biomass", "cohorts_dw", "cohorts_SGR", "cohorts_O2", "cohorts_P_uneat", "cohorts_C_uneat", "cohorts_L_uneat", "cohorts_food_prov", "cohorts_NH4", "cohorts_P_excr", "cohorts_C_excr", "cohorts_L_excr")
 
+cohort_files <- list()
+for (s in seq_along(cohort_stats)) {
+  cohort_files[[s]] <- list.files(data_path_2, full.names = T) %>% str_subset(cohort_stats[s])
+}
+cohort_files <- cohort_files %>% 
+  Reduce(c, .) %>% 
+  str_subset(".parquet")
 
-# Old stuff -------------------------------------------------------------------------------------------------------
-# STEP 2b - Run model for each location under past feed
-feed_type <- "past"
-farm_list <- 
-  qread(file = sprintf("data/_general_data/farm_locations/%s_locations_w_temps.qs", this_species)) %>% 
-  filter(model_name == this_species) %>% 
-  group_by(farm_id) %>% 
-  group_split()
+# Combined excretion
+print("Starting cohort total excretion processing...")
+path_2 <- file.path("data", "atlantic_salmon", "data_products", "figures", "cohorts", "total_excr_stat")
+if (!dir.exists(path_2)) {dir.create(path_2)}
+for (fid in seq_along(farm_IDs)) {
+  # Total excretion (carbs, lipis, and fats)
+  par_name <- file.path(data_path_2, paste0("total_excr_stat_", fixnum(farm_IDs[fid]), ".parquet"))
+  png_name <- file.path(path_2, paste0("total_excr_stat_", fixnum(farm_IDs[fid]), ".png"))
+  
+  if (overwrite == T | any(!file.exists(par_name), !file.exists(png_name))) {
+    fnms <- cohort_files %>% 
+      str_subset(fixnum(farm_IDs[fid])) %>% 
+      str_subset("excr")
+    
+    df <- list(
+      fnms %>% str_subset("C_excr") %>% read_parquet() %>% mutate(stat = "C_excr"),
+      fnms %>% str_subset("L_excr") %>% read_parquet() %>% mutate(stat = "L_excr"),
+      fnms %>% str_subset("P_excr") %>% read_parquet() %>% mutate(stat = "P_excr")
+    ) %>% 
+      bind_rows() %>% 
+      filter(yday != max(yday)) %>% 
+      mutate(stat = as.factor(stat),
+             cohort = as.factor(cohort)) %>% 
+      write_parquet(par_name)
+    
+    # p <- df %>% 
+    #   group_by(yday, feed, farm_ID) %>% 
+    #   reframe(mean = sum(mean, na.rm = T),
+    #           sd = sum(sd, na.rm = T)) %>% 
+    #   mutate(mean = set_units(mean, "g d-1") %>% set_units("kg d-1"),
+    #          sd = set_units(sd, "g d-1") %>% set_units("kg d-1")) %>% 
+    #   ggplot(aes(x = yday, y = mean, ymin = mean-sd, ymax = mean+sd, colour = feed, fill = feed)) +
+    #   geom_line(linewidth = 0.75) +
+    #   geom_ribbon(alpha = 0, linetype = "dashed") +
+    #   scale_colour_brewer(palette = "Set1") +
+    #   scale_fill_brewer(palette = "Set1") +
+    #   scale_x_continuous(breaks = seq(0, 1600, 200)) +
+    #   theme_classic() +
+    #   theme(aspect.ratio = 0.75, legend.position = "none") +
+    #   labs(x = "Day of production", y = "Total excretion")
+    # 
+    # ggsave(
+    #   plot = p, 
+    #   filename = png_name,
+    #   height = 150, width = 200, units = "mm"
+    # )
+  }
+  if (fid %in% as.integer(seq(0, length(farm_IDs), length.out = 10))) {
+    print(paste0("Finish processing ", fid, " of ", length(farm_IDs), " -- ", round(100*fid/length(farm_IDs),2), "% done"))
+  }
+}
 
-future::plan(strategy = "multisession", workers = parallel::detectCores()-2) #select core cluster
-
-furrr::future_map(.x = farm_list, .f = \(this_farm){
-  this_stocking_N = unique(round(this_farm$stocking_n))
-  this_farm_id <- unique(paste0("farmID_", this_farm$farm_id))
-  out_loader <- data_loader(Path =  this_path, Farm_id = this_farm_id)
-  model_run(Path = this_path, Forcings = out_loader, Feed_type = feed_type, Stocking = this_stocking_N, Farm_id = this_farm_id)
-},
-.options = furrr_options(seed = 123))
-
-# STEP 2c - Run model for each location under future feed
-feed_type <- "future"
-farm_list <- 
-  qread(file = sprintf("data/_general_data/farm_locations/%s_locations_w_temps.qs", this_species)) %>% 
-  filter(model_name == this_species) %>% 
-  group_by(farm_id) %>% 
-  group_split()
-
-future::plan(strategy = "multisession", workers = parallel::detectCores()-2) #select core cluster
-
-furrr::future_map(.x = farm_list, .f = \(this_farm){
-  this_stocking_N = unique(round(this_farm$stocking_n))
-  this_farm_id <- unique(paste0("farmID_", this_farm$farm_id))
-  out_loader <- data_loader(Path =  this_path, Farm_id = this_farm_id)
-  model_run(Path = this_path, Forcings = out_loader, Feed_type = feed_type, Stocking = this_stocking_N, Farm_id = this_farm_id)
-},
-.options = furrr_options(seed = 123))
+# Combined uneaten
+print("Starting cohort total uneaten feed processing...")
+path_2 <- file.path("data", "atlantic_salmon", "data_products", "figures", "cohorts", "total_uneat_stat")
+if (!dir.exists(path_2)) {dir.create(path_2)}
+for (fid in seq_along(farm_IDs)) {
+  # Total uneaten (carbs, lipis, and fats)
+  par_name <- file.path(data_path_2, paste0("total_excr_stat_", fixnum(farm_IDs[fid]), ".parquet"))
+  png_name <- file.path(path_2, paste0("total_excr_stat_", fixnum(farm_IDs[fid]), ".png"))
+  
+  if (overwrite == T | any(!file.exists(par_name), !file.exists(png_name))) {
+    fnms <- cohort_files %>% 
+      str_subset(fixnum(farm_IDs[fid])) %>% 
+      str_subset("uneat")
+    
+    df <- list(
+      fnms %>% str_subset("C_uneat") %>% read_parquet() %>% mutate(stat = "C_uneat"),
+      fnms %>% str_subset("L_uneat") %>% read_parquet() %>% mutate(stat = "L_uneat"),
+      fnms %>% str_subset("P_uneat") %>% read_parquet() %>% mutate(stat = "P_uneat")
+    ) %>% 
+      bind_rows() %>% 
+      filter(yday != max(yday)) %>% 
+      mutate(stat = as.factor(stat),
+             cohort = as.factor(cohort)) %>% 
+      write_parquet(par_name)
+    
+    # p <- df %>% 
+    #   group_by(yday, feed, farm_ID) %>% 
+    #   reframe(mean = sum(mean, na.rm = T),
+    #           sd = sum(sd, na.rm = T)) %>% 
+    #   mutate(mean = set_units(mean, "g d-1") %>% set_units("kg d-1"),
+    #          sd = set_units(sd, "g d-1") %>% set_units("kg d-1")) %>% 
+    #   ggplot(aes(x = yday, y = mean, ymin = mean-sd, ymax = mean+sd, colour = feed, fill = feed)) +
+    #   geom_line(linewidth = 0.75) +
+    #   geom_ribbon(alpha = 0, linetype = "dashed") +
+    #   scale_colour_brewer(palette = "Set1") +
+    #   scale_fill_brewer(palette = "Set1") +
+    #   scale_x_continuous(breaks = seq(0, 550, 100)) +
+    #   theme_classic() +
+    #   theme(aspect.ratio = 0.75, legend.position = "none") +
+    #   labs(x = "Day of production", y = "Total uneaten")
+    # 
+    # ggsave(
+    #   plot = p, 
+    #   filename = png_name,
+    #   height = 150, width = 200, units = "mm"
+    # )
+  }
+  if (fid %in% as.integer(seq(0, length(farm_IDs), length.out = 10))) {
+    print(paste0("Finish processing ", fid, " of ", length(farm_IDs), " -- ", round(100*fid/length(farm_IDs),2), "% done"))
+  }
+}
 
 # Benchmarking ----------------------------------------------------------------------------------------------------
-rbenchmark::benchmark(
-  df = {apportion_feed(provided = 10, ingested = 9,
-                           prop = feed_params[['Carbohydrates']]$proportion,
-                           macro = feed_params[['Carbohydrates']]$ing_carb,
-                           digestibility = feed_params[['Carbohydrates']]$ing_carb_digestibility)},
-  matrix = {apportion_feed_short(provided = 10, ingested = 9,
-                             prop = feed_params[['Carbohydrates']]$proportion,
-                             macro = feed_params[['Carbohydrates']]$ing_carb,
-                             digestibility = feed_params[['Carbohydrates']]$ing_carb_digestibility)},
-  replications = 1000
-)
+# rbenchmark::benchmark(
+#   df = {apportion_feed(provided = 10, ingested = 9,
+#                            prop = feed_params[['Carbohydrates']]$proportion,
+#                            macro = feed_params[['Carbohydrates']]$ing_carb,
+#                            digestibility = feed_params[['Carbohydrates']]$ing_carb_digestibility)},
+#   matrix = {apportion_feed_short(provided = 10, ingested = 9,
+#                              prop = feed_params[['Carbohydrates']]$proportion,
+#                              macro = feed_params[['Carbohydrates']]$ing_carb,
+#                              digestibility = feed_params[['Carbohydrates']]$ing_carb_digestibility)},
+#   replications = 1000
+# )
