@@ -193,7 +193,7 @@ uneat_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", 
 Sys.setenv(TAR_PROJECT = "project_farm")
 # tar_visnetwork()
 tar_validate()
-# tar_prune()
+tar_prune()
 upd <- tar_outdated(branches = F)
 tar_make(reporter = "balanced", seconds_meta_append = 300)
 
