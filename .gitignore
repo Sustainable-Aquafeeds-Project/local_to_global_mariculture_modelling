@@ -50,7 +50,7 @@ po/*~
 rsconnect/
 
 # Atlantic salmon parameters
-data/atlantic_salmon
+data/atlantic_salmon/data_products
 data/_general_data/species_layers
 
 # Processed outputs
