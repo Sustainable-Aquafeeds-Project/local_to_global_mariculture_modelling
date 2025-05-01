@@ -81,117 +81,117 @@ generate_pop <- function(harvest_n, mort, times) {
 }
 
 feeding_rate <- function(water_temp, species_params) {
-    exp(species_params['betac'] * (water_temp - species_params['Toa'])) * 
+  exp(species_params['betac'] * (water_temp - species_params['Toa'])) * 
     ((species_params['Tma'] - water_temp)/(species_params['Tma'] - species_params['Toa']))^
     (species_params['betac'] * (species_params['Tma'] - species_params['Toa']))
 }
 
 food_prov_rate <- function(pop_params, rel_feeding, ing_pot, ing_pot_10) {
-    # Use ifelse vectorization instead of individual if statements
-    ifelse(
-      rel_feeding > 0.1,
-      ing_pot * (1 + rnorm(1, pop_params['overFmean'], pop_params['overFdelta'])),
-      ing_pot_10
-      ) # old formula: 0.25 * 0.066 * weight^0.75
+  # Use ifelse vectorization instead of individual if statements
+  ifelse(
+    rel_feeding > 0.1,
+    ing_pot * (1 + rnorm(1, pop_params['overFmean'], pop_params['overFdelta'])),
+    ing_pot_10
+  ) # old formula: 0.25 * 0.066 * weight^0.75
 }
 
 app_feed <- function(provided, ingested, prop, macro, digestibility) {
-    # Pre-compute common values and use vectorized operations
-    provided_amount <- provided * prop * macro
-    ingested_amount <- ingested * prop * macro
-    assimilated <- ingested_amount * digestibility
-    
-    # Return only necessary values in a numeric vector
-    c(provided = sum(provided_amount),
-      ingested = sum(ingested_amount),
-      uneaten = sum(provided_amount - ingested_amount),
-      assimilated = sum(assimilated),
-      excreted = sum(ingested_amount - assimilated))
+  # Pre-compute common values and use vectorized operations
+  provided_amount <- provided * prop * macro
+  ingested_amount <- ingested * prop * macro
+  assimilated <- ingested_amount * digestibility
+  
+  # Return only necessary values in a numeric vector
+  c(provided = sum(provided_amount),
+    ingested = sum(ingested_amount),
+    uneaten = sum(provided_amount - ingested_amount),
+    assimilated = sum(assimilated),
+    excreted = sum(ingested_amount - assimilated))
 }
 
 fish_growth <- function(pop_params, species_params, water_temp, feed_params, times, init_weight, ingmax) {
-    # Pre-calculate array sizes
-    n_days <- length(times['t_start']:times['t_end'])
+  # Pre-calculate array sizes
+  n_days <- length(times['t_start']:times['t_end'])
+  
+  # Preallocate all vectors at once
+  result <- matrix(0, nrow = n_days, ncol = 22)
+  colnames(result) <- c('days', 'weight', 'dw', 'water_temp', 'T_response', 'P_excr', 
+                        'L_excr', 'C_excr', 'P_uneat', 'L_uneat', 'C_uneat', 'food_prov', 
+                        'food_enc', 'rel_feeding', 'ing_pot', 'ing_act', 'E_assim', 
+                        'E_somat', 'anab', 'catab', 'O2', 'NH4')
+  
+  # Initialize first values
+  result[, 'days'] <- (times['t_start']:times['t_end'])*times['dt']
+  result[1, 'weight'] <- init_weight
+  result[, 'water_temp'] <- water_temp
+  
+  # Main calculation loop
+  for (i in 1:(n_days-1)) {
+    # Temperature response and feeding calculations
+    result[i, 'rel_feeding'] <- feeding_rate(result[i, 'water_temp'], species_params)
+    result[i, 'ing_pot'] <- ingmax * (result[i, 'weight']^species_params['m']) * result[i, 'rel_feeding']
     
-    # Preallocate all vectors at once
-    result <- matrix(0, nrow = n_days, ncol = 22)
-    colnames(result) <- c('days', 'weight', 'dw', 'water_temp', 'T_response', 'P_excr', 
-                         'L_excr', 'C_excr', 'P_uneat', 'L_uneat', 'C_uneat', 'food_prov', 
-                         'food_enc', 'rel_feeding', 'ing_pot', 'ing_act', 'E_assim', 
-                         'E_somat', 'anab', 'catab', 'O2', 'NH4')
+    # Food provision and ingestion
+    result[i, 'food_prov'] <- food_prov_rate(
+      pop_params = pop_params, 
+      rel_feeding = result[i, 'rel_feeding'],
+      ing_pot = result[i, 'ing_pot'],
+      ing_pot_10 = ingmax * (result[i, 'weight']^species_params['m']) * 0.1
+    )
+    result[i, 'food_enc'] <- species_params['eff'] * result[i, 'food_prov']
+    result[i, 'ing_act'] <- min(result[i, 'food_enc'], result[i, 'ing_pot'])
     
-    # Initialize first values
-    result[, 'days'] <- (times['t_start']:times['t_end'])*times['dt']
-    result[1, 'weight'] <- init_weight
-    result[, 'water_temp'] <- water_temp
+    # Energy calculations
+    result[i, 'E_somat'] <- species_params['a'] * result[i, 'weight']^species_params['k']
     
-    # Main calculation loop
-    for (i in 1:(n_days-1)) {
-        # Temperature response and feeding calculations
-        result[i, 'rel_feeding'] <- feeding_rate(result[i, 'water_temp'], species_params)
-        result[i, 'ing_pot'] <- ingmax * (result[i, 'weight']^species_params['m']) * result[i, 'rel_feeding']
-        
-        # Food provision and ingestion
-        result[i, 'food_prov'] <- food_prov_rate(
-          pop_params = pop_params, 
-          rel_feeding = result[i, 'rel_feeding'],
-          ing_pot = result[i, 'ing_pot'],
-          ing_pot_10 = ingmax * (result[i, 'weight']^species_params['m']) * 0.1
-        )
-        result[i, 'food_enc'] <- species_params['eff'] * result[i, 'food_prov']
-        result[i, 'ing_act'] <- min(result[i, 'food_enc'], result[i, 'ing_pot'])
-        
-        # Energy calculations
-        result[i, 'E_somat'] <- species_params['a'] * result[i, 'weight']^species_params['k']
-        
-        # Process feed components - vectorized operations
-        app_carbs <- app_feed(result[i, 'food_prov'], result[i, 'ing_act'],
-                            feed_params[['Carbohydrates']]$proportion,
-                            feed_params[['Carbohydrates']]$macro,
-                            feed_params[['Carbohydrates']]$digest)
-        app_lipids <- app_feed(result[i, 'food_prov'], result[i, 'ing_act'],
-                             feed_params[['Lipids']]$proportion,
-                             feed_params[['Lipids']]$macro,
-                             feed_params[['Lipids']]$digest)
-        app_proteins <- app_feed(result[i, 'food_prov'], result[i, 'ing_act'],
-                               feed_params[['Proteins']]$proportion,
-                               feed_params[['Proteins']]$macro,
-                               feed_params[['Proteins']]$digest)
-        
-        # Store excretion and waste values
-        result[i, c('C_excr', 'L_excr', 'P_excr')] <- c(app_carbs['excreted'], 
-                                                        app_lipids['excreted'], 
-                                                        app_proteins['excreted'])
-        result[i, c('C_uneat', 'L_uneat', 'P_uneat')] <- c(app_carbs['uneaten'], 
-                                                           app_lipids['uneaten'], 
-                                                           app_proteins['uneaten'])
-        
-        # Energy assimilation
-        result[i, 'E_assim'] <- app_carbs['assimilated'] * species_params['epscarb'] +
-                               app_lipids['assimilated'] * species_params['epslip'] +
-                               app_proteins['assimilated'] * species_params['epsprot']
-        
-        # Temperature response and metabolism
-        result[i, 'T_response'] <- exp(species_params['pk'] * result[i, 'water_temp'])
-        result[i, 'anab'] <- result[i, 'E_assim'] * (1 - species_params['alpha'])
-        result[i, 'catab'] <- species_params['epsO2'] * species_params['k0'] * 
-                             result[i, 'T_response'] * (result[i, 'weight']^species_params['n']) * 
-                             species_params['omega']
-        
-        # O2 and NH4 calculations
-        result[i, 'O2'] <- result[i, 'catab'] / species_params['epsO2']
-        result[i, 'NH4'] <- result[i, 'O2'] * 0.06
-        
-        # Weight calculations
-        result[i, 'dw'] <- (result[i, 'anab'] - result[i, 'catab']) / result[i, 'E_somat']
-        result[i + 1, 'weight'] <- result[i, 'weight'] + result[i, 'dw'] * times['dt']
-    }
+    # Process feed components - vectorized operations
+    app_carbs <- app_feed(result[i, 'food_prov'], result[i, 'ing_act'],
+                          feed_params[['Carbohydrates']]$proportion,
+                          feed_params[['Carbohydrates']]$macro,
+                          feed_params[['Carbohydrates']]$digest)
+    app_lipids <- app_feed(result[i, 'food_prov'], result[i, 'ing_act'],
+                           feed_params[['Lipids']]$proportion,
+                           feed_params[['Lipids']]$macro,
+                           feed_params[['Lipids']]$digest)
+    app_proteins <- app_feed(result[i, 'food_prov'], result[i, 'ing_act'],
+                             feed_params[['Proteins']]$proportion,
+                             feed_params[['Proteins']]$macro,
+                             feed_params[['Proteins']]$digest)
     
-    result
+    # Store excretion and waste values
+    result[i, c('C_excr', 'L_excr', 'P_excr')] <- c(app_carbs['excreted'], 
+                                                    app_lipids['excreted'], 
+                                                    app_proteins['excreted'])
+    result[i, c('C_uneat', 'L_uneat', 'P_uneat')] <- c(app_carbs['uneaten'], 
+                                                       app_lipids['uneaten'], 
+                                                       app_proteins['uneaten'])
+    
+    # Energy assimilation
+    result[i, 'E_assim'] <- app_carbs['assimilated'] * species_params['epscarb'] +
+      app_lipids['assimilated'] * species_params['epslip'] +
+      app_proteins['assimilated'] * species_params['epsprot']
+    
+    # Temperature response and metabolism
+    result[i, 'T_response'] <- exp(species_params['pk'] * result[i, 'water_temp'])
+    result[i, 'anab'] <- result[i, 'E_assim'] * (1 - species_params['alpha'])
+    result[i, 'catab'] <- species_params['epsO2'] * species_params['k0'] * 
+      result[i, 'T_response'] * (result[i, 'weight']^species_params['n']) * 
+      species_params['omega']
+    
+    # O2 and NH4 calculations
+    result[i, 'O2'] <- result[i, 'catab'] / species_params['epsO2']
+    result[i, 'NH4'] <- result[i, 'O2'] * 0.06
+    
+    # Weight calculations
+    result[i, 'dw'] <- (result[i, 'anab'] - result[i, 'catab']) / result[i, 'E_somat']
+    result[i + 1, 'weight'] <- result[i, 'weight'] + result[i, 'dw'] * times['dt']
+  }
+  
+  result
 }
 
 farm_growth <- function(pop_params, species_params, feed_params, water_temp, times, N_pop, nruns){
-
+  
   days <- (times['t_start']:times['t_end'])*times['dt']
   
   # Initiate matrices to fill for each population iteration
@@ -234,27 +234,27 @@ farm_growth <- function(pop_params, species_params, feed_params, water_temp, tim
     total_excr_mat[n,]  <- (ind_output[,'P_excr'] + ind_output[,'L_excr'] + ind_output[,'C_excr']) * N_pop[1:length(days)]
     total_uneat_mat[n,] <- (ind_output[,'P_uneat'] + ind_output[,'L_uneat'] + ind_output[,'C_uneat']) * N_pop[1:length(days)]
   }
-
+  
   out_list <- list(
-      weight_stat = cbind(colMeans(weight_mat), colSds(weight_mat)),
-      biomass_stat = cbind(colMeans(biomass_mat), colSds(biomass_mat)),
-      dw_stat = cbind(colMeans(dw_mat), colSds(dw_mat)),
-      SGR_stat = cbind(colMeans(SGR_mat), colSds(SGR_mat)),
-      E_somat_stat = cbind(colMeans(E_somat_mat), colSds(E_somat_mat)),
-      P_excr_stat = cbind(colMeans(P_excr_mat), colSds(P_excr_mat)),
-      L_excr_stat = cbind(colMeans(L_excr_mat), colSds(L_excr_mat)),
-      C_excr_stat = cbind(colMeans(C_excr_mat), colSds(C_excr_mat)),
-      P_uneat_stat = cbind(colMeans(P_uneat_mat), colSds(P_uneat_mat)),
-      L_uneat_stat = cbind(colMeans(L_uneat_mat), colSds(L_uneat_mat)),
-      C_uneat_stat = cbind(colMeans(C_uneat_mat), colSds(C_uneat_mat)),
-      ing_act_stat = cbind(colMeans(ing_act_mat), colSds(ing_act_mat)),
-      anab_stat = cbind(colMeans(anab_mat), colSds(anab_mat)),
-      catab_stat = cbind(colMeans(catab_mat), colSds(catab_mat)),
-      NH4_stat = cbind(colMeans(NH4_mat), colSds(NH4_mat)),
-      O2_stat = cbind(colMeans(O2_mat), colSds(O2_mat)),
-      food_prov_stat = cbind(colMeans(food_prov_mat), colSds(food_prov_mat)),
-      rel_feeding_stat = cbind(colMeans(rel_feeding_mat), colSds(rel_feeding_mat)),
-      T_response_stat = cbind(colMeans(T_response_mat), colSds(T_response_mat))
+    weight_stat = cbind(colMeans(weight_mat), colSds(weight_mat)),
+    biomass_stat = cbind(colMeans(biomass_mat), colSds(biomass_mat)),
+    dw_stat = cbind(colMeans(dw_mat), colSds(dw_mat)),
+    SGR_stat = cbind(colMeans(SGR_mat), colSds(SGR_mat)),
+    E_somat_stat = cbind(colMeans(E_somat_mat), colSds(E_somat_mat)),
+    P_excr_stat = cbind(colMeans(P_excr_mat), colSds(P_excr_mat)),
+    L_excr_stat = cbind(colMeans(L_excr_mat), colSds(L_excr_mat)),
+    C_excr_stat = cbind(colMeans(C_excr_mat), colSds(C_excr_mat)),
+    P_uneat_stat = cbind(colMeans(P_uneat_mat), colSds(P_uneat_mat)),
+    L_uneat_stat = cbind(colMeans(L_uneat_mat), colSds(L_uneat_mat)),
+    C_uneat_stat = cbind(colMeans(C_uneat_mat), colSds(C_uneat_mat)),
+    ing_act_stat = cbind(colMeans(ing_act_mat), colSds(ing_act_mat)),
+    anab_stat = cbind(colMeans(anab_mat), colSds(anab_mat)),
+    catab_stat = cbind(colMeans(catab_mat), colSds(catab_mat)),
+    NH4_stat = cbind(colMeans(NH4_mat), colSds(NH4_mat)),
+    O2_stat = cbind(colMeans(O2_mat), colSds(O2_mat)),
+    food_prov_stat = cbind(colMeans(food_prov_mat), colSds(food_prov_mat)),
+    rel_feeding_stat = cbind(colMeans(rel_feeding_mat), colSds(rel_feeding_mat)),
+    T_response_stat = cbind(colMeans(T_response_mat), colSds(T_response_mat))
   )
   return(out_list)
 }

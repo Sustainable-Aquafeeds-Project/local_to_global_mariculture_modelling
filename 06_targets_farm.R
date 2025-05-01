@@ -15,7 +15,7 @@ suppressMessages(suppressWarnings(suppressPackageStartupMessages({
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "future", "furrr", "ggplot2", "matrixStats", "tibble"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 8),
+  controller = crew_controller_local(workers = 16, seconds_idle = 60),
   workspace_on_error = TRUE
 )
 
@@ -27,13 +27,11 @@ this_species <- "atlantic_salmon"
 species_path <- file.path("data", this_species)
 
 # Global objects --------------------------------------------------------------------------------------------------
-farm_harvest_size <- tar_read(farm_harvest_size, store = "04_targets_individual") %>% 
-  select(c(farm_ID, weight)) %>% 
-  mutate(weight = units::set_units(weight, "g"))
+farm_harvest_size <- tar_read(farm_harvest_size, store = "_targets_individual") %>% 
+  select(c(farm_ID, weight))
 
 # Begin targets pipeline ------------------------------------------------------------------------------------------
 list(
-  ## Farm data -----------------------------------------------------------------------------------------------------
   tar_target(farm_data_file, file.path(gendata_path, "SST", "farm_SST_extracted.parquet"), format = "file"),
   tar_target(farm_coord_file, file.path(gendata_path, "farm_locations", "farm_coords.parquet"), format = "file"),
   tar_target(farms_to_omit_file, sprintf(file.path(gendata_path, "farm_locations", "%s_farms_to_omit.qs"), this_species), format = "file"),
@@ -55,7 +53,7 @@ list(
       filter(farm_id == farm_IDs),
     pattern = farm_IDs
   ),
-  
+
   # starts 1 May in northern hemisphere, 1 October in southern hemisphere
   tar_target(times_N, c("t_start" = 121, "t_end" = 121+547, "dt" = 1)),
   tar_target(times_S, c("t_start" = 274, "t_end" = 274+547, "dt" = 1)),
@@ -94,14 +92,13 @@ list(
     read_parquet(farm_data_file) %>% 
       select(-c(day, temp_c)) %>% 
       filter(farm_id == farm_IDs) %>% 
-      slice_head(n = 1) %>% 
-      mutate(tonnes_per_farm = tonnes_per_farm %>% units::set_units("t") %>% units::set_units("g")),
+      slice_head(n = 1),
     pattern = farm_IDs
   ),
   tar_target(
     N_population, 
     generate_pop(
-      harvest_n = 1.117811 * units::drop_units(farm_static_data$tonnes_per_farm/farm_harvest_size$weight[farm_harvest_size$farm_ID == farm_IDs]),
+      harvest_n = (farm_static_data$tonnes_per_farm*10^6)/farm_harvest_size$weight[farm_harvest_size$farm_ID == farm_IDs],
       mort = pop_params['mortmyt'],
       times = farm_times
     ), 
@@ -158,7 +155,7 @@ list(
     pattern = cross(map(feed_types, feed_params_proteins, feed_params_carbs, feed_params_lipids), 
                     map(farm_IDs, farm_temp, farm_times, N_population))
   ),
-  
+
   # [1] "main_farm_growth_weight_stat"
   # [2] "main_farm_growth_biomass_stat"
   # [3] "main_farm_growth_dw_stat"

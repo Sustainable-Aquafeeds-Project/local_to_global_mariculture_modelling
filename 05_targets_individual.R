@@ -16,7 +16,7 @@ suppressMessages(suppressWarnings(suppressPackageStartupMessages({
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "future", "furrr", "ggplot2", "matrixStats", "tibble"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 10, seconds_idle = 10),
+  controller = crew_controller_local(workers = 15, seconds_idle = 10),
   workspace_on_error = TRUE
 )
 
@@ -82,7 +82,7 @@ list(
     names(vc) <- df$Quantity
     vc[!is.na(vc)]
   }),
-  
+
   # Feed parameters
   tar_target(feed_types, c("reference", "past", "future")),
   tar_target(feed_profile_file, "data/_general_data/diets/feed_profiles_and_composition_Atlantic_salmon.xlsx", format = "file"),
@@ -114,7 +114,7 @@ list(
     iteration = "list"
   ),
   
-  ## Example individuals --------------------------------------------------------------------------------------------
+## Example individuals --------------------------------------------------------------------------------------------
   # tar_target(
   #   example_individual,
   #   command = {
@@ -142,7 +142,7 @@ list(
   #   },
   #   pattern = cross(map(farm_IDs, farm_temp, farm_times), map(feed_types, feed_params_protein, feed_params_carbs, feed_params_lipids))
   # ),
-  
+
   tar_target(
     farm_harvest_size,
     command = {
@@ -169,8 +169,8 @@ list(
     },
     pattern = cross(map(farm_IDs, farm_temp, farm_times))
   ),
-  
-  ## Senstivities ---------------------------------------------------------------------------------------------------
+
+## Senstivities ---------------------------------------------------------------------------------------------------
   tar_target(sens_all_params, 
              command = {
                vc <- c(species_params, pop_params)
@@ -181,7 +181,7 @@ list(
              }),
   tar_target(sens_params_names, names(sens_all_params)),
   tar_target(factors, c(0.9, 1, 1.1)),
-  
+
   tar_target(
     name = sens_adjusted_params,
     command = {
