@@ -5,11 +5,15 @@ library(tictoc)
 library(furrr)
 library(future)
 
-farm_IDs <- tar_read(farm_IDs)[1:10]
+source("00_model_functions.R")
+
+farm_IDs <- tar_read(farm_IDs)
 feed_types <- tar_read(feed_types)
 
 dest_path_farm <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_farm")
+if (!dir.exists(dest_path_farm)) {dir.create(dest_path_farm)}
 dest_path_cohort <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort")
+if (!dir.exists(dest_path_cohort)) {dir.create(dest_path_cohort)}
 
 # Set up parallel processing
 plan(multisession, workers = parallel::detectCores() - 10)
@@ -32,20 +36,19 @@ process_farm <- function(fid) {
     
     walk(seq_along(stats), function(st) {
       if (overwrite == T | !file.exists(fnames_farms[st])) {
-        df <- list(
-          df_1[[st]] %>%
-            as.data.frame() %>%
-            rename(mean = V1, sd = V2) %>% 
-            mutate(feed = feed_types[1], days = 1:548),
-          df_2[[st]] %>%
-            as.data.frame() %>%
-            rename(mean = V1, sd = V2) %>% 
-            mutate(feed = feed_types[2], days = 1:548),
-          df_3[[st]] %>%
-            as.data.frame() %>%
-            rename(mean = V1, sd = V2) %>% 
-            mutate(feed = feed_types[3], days = 1:548)
-        ) %>% bind_rows() %>% 
+        df_11 <- df_1[[st]] %>%
+          as.data.frame() %>%
+          rename(mean = V1, sd = V2) %>% 
+          mutate(feed = feed_types[1], days = 1:548)
+        df_21 <- df_2[[st]] %>%
+          as.data.frame() %>%
+          rename(mean = V1, sd = V2) %>% 
+          mutate(feed = feed_types[2], days = 1:548)
+        df_31 <- df_3[[st]] %>%
+          as.data.frame() %>%
+          rename(mean = V1, sd = V2) %>% 
+          mutate(feed = feed_types[3], days = 1:548)
+        df <- rbind(df_11, df_21, df_31) %>% 
           relocate(days, .before = mean) %>% 
           mutate(farm_ID = farm_IDs[fid], 
                  feed = factor(feed, levels = c("past", "reference", "future"))) %>% 
@@ -57,7 +60,7 @@ process_farm <- function(fid) {
   
   fnames_cohorts <- file.path(dest_path_cohort, paste0(paste("farmID", fixnum(farm_IDs[fid]), "cohorts", cohort_stats, sep = "_"), ".parquet"))
   
-  if (overwrite == T | any(!file.exists(fnames_farms))) {
+  if (overwrite == T | any(!file.exists(fnames_cohorts))) {
     df_1 <- tar_read(cohorts_data, branches = fid)
     df_2 <- tar_read(cohorts_data, branches = length(farm_IDs) + fid)
     df_3 <- tar_read(cohorts_data, branches = 2*length(farm_IDs) + fid)
@@ -70,10 +73,10 @@ process_farm <- function(fid) {
           df_3[[st]] %>% as.data.frame()
         ) %>% bind_rows() %>% 
           mutate(feed = factor(feed, levels = feed_types)) %>% 
-          write_parquet(fnames_farms[st])
+          write_parquet(fnames_cohorts[st])
       }
     })
-    rm(df, df_1, df_2, df_3)
+    rm(df_1, df_2, df_3)
   }
 }
 

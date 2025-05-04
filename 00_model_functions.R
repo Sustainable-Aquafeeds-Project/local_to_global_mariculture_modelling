@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
   library(readxl)
 })
 
+make_label <- function(lab){lab %>% str_remove_all("_stat") %>% str_replace_all("_", " ") %>% str_to_title()}
 fixnum <- function(n, digits = 4) {str_flatten(c(rep("0", digits-nchar(as.character(n))), as.character(n)))}
 meanna <- function(x, ...) mean(x, na.rm = TRUE, ...)
 minna <- function(x, ...) min(x, na.rm = TRUE, ...)

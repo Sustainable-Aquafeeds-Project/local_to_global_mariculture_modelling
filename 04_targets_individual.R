@@ -16,7 +16,7 @@ suppressMessages(suppressWarnings(suppressPackageStartupMessages({
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "future", "furrr", "ggplot2", "matrixStats", "tibble"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 10, seconds_idle = 10),
+  controller = crew_controller_local(workers = parallelly::availableCores()-2, seconds_idle = 10),
   workspace_on_error = TRUE
 )
 
