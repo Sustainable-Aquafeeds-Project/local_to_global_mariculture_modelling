@@ -212,6 +212,21 @@ Sys.setenv(TAR_PROJECT = "project_farm")
 overwrite <- T
 source("11_process_targets_outputs_2.R")
 
+# Final data outputs ----------------------------------------------------------------------------------------------
+excr_fnms <- list.files("data/atlantic_salmon/data_products/processed_cohort", full.names = T) %>% str_subset("total_excr")
+
+excr_ls <- uneat_ls <- list()
+for (f in seq_along(excr_fnms)) {
+  excr_ls[[f]] <- excr_fnms[f] %>% arrow::read_parquet()
+  uneat_ls[[f]] <- uneat_fnms[f] %>% arrow::read_parquet()
+}
+excr_ls %>% bind_rows() %>% 
+  arrow::write_parquet("data/atlantic_salmon/data_products/total_excr_allfarms.parquet")
+uneat_ls %>% bind_rows() %>% 
+  arrow::write_parquet("data/atlantic_salmon/data_products/total_uneat_allfarms.parquet")
+
+source("12_data_analysis.R")
+
 # Benchmarking ----------------------------------------------------------------------------------------------------
 # rbenchmark::benchmark(
 #   df = {apportion_feed(provided = 10, ingested = 9,

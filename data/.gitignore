@@ -1,0 +1,10 @@
+# For managing big data files
+
+# Atlantic salmon parameters
+atlantic_salmon/data_products/model_outputs*
+atlantic_salmon/data_products/processed*
+atlantic_salmon/data_products/total_*
+_general_data/species_layers
+
+
+
