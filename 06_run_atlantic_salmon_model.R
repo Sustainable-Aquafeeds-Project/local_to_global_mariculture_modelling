@@ -184,10 +184,10 @@ for (p in 1:length(sens_params_names)) {
     group_by(adj_param) %>% 
     reframe(sd = sd(sens), sens = mean(sens))
 }
-wt_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", "data_products", "weight_parameter_sensitivity.parquet"))
-dw_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", "data_products", "dw_parameter_sensitivity.parquet"))
-excr_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", "data_products", "excreted_parameter_sensitivity.parquet"))
-uneat_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", "data_products", "uneaten_parameter_sensitivity.parquet"))
+wt_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", "data_products", "sensitivities", "weight_parameter_sensitivity.parquet"))
+dw_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", "data_products", "sensitivities", "dw_parameter_sensitivity.parquet"))
+excr_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", "data_products", "sensitivities", "excreted_parameter_sensitivity.parquet"))
+uneat_ls %>% bind_rows() %>% write_parquet(file.path("data", "atlantic_salmon", "data_products", "sensitivities", "uneaten_parameter_sensitivity.parquet"))
 
 ## Farm growth ----------------------------------------------------------------------------------------------------
 Sys.setenv(TAR_PROJECT = "project_farm")

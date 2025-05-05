@@ -50,12 +50,9 @@ po/*~
 rsconnect/
 
 # Atlantic salmon parameters
-data/atlantic_salmon/data_products
+data/atlantic_salmon/data_products/model_outputs*
+data/atlantic_salmon/data_products/processed*
 data/_general_data/species_layers
-
-# Processed outputs
-data_processed/example_individual
-data_processed/farm_growth
 
 # Confidential data
 XX_confidential/*
