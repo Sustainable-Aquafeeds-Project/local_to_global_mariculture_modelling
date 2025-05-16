@@ -179,6 +179,7 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(ggplot2)
+library(ggh4x)
 library(here)
 library(ggpubr)
 library(patchwork)
@@ -208,14 +209,29 @@ conflicts_prefer(dplyr::select(), dplyr::filter(), dplyr::intersect(), .quiet = 
 
 source(here("00_model_functions.R"))
 
-indi_store <- here() %>% file.path("04_targets_individual")
-farm_store <- here() %>% file.path("05_targets_farm")
+# Input paths
+input_farm_coords_path <- here() %>% file.path("data", "_general_data", "farm_locations")
+input_farm_sst_path <- here() %>% file.path("data", "_general_data", "SST")
+input_species_param_path <- here() %>% file.path("data", "atlantic_salmon", "params")
+input_feed_profile_path <- here() %>% file.path("data", "_general_data", "diets")
 
-species_params <- tar_read(species_params, store = indi_store)
-pop_params <- tar_read(pop_params, store = farm_store)
+# Output paths
+output_farm_data_path <- here() %>% file.path("outputs", "farm_data")
+output_species_data_path <- here() %>% file.path("outputs", "species_data")
+output_sens_data_path <- here() %>% file.path("outputs", "sensitivity_data")
+output_farm_growth_data_path <- here() %>% file.path("outputs", "farm_growth_data")
+output_cohort_growth_data_path <- here() %>% file.path("outputs", "cohort_growth_data")
 
-farm_outputs <- here() %>% file.path("data", "atlantic_salmon", "data_products", "model_outputs_farm")
-coho_outputs <- here() %>% file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort")
+# Filenames
+farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
+species_params_file <- file.path(output_species_data_path, "species_params.qs")
+pop_params_file <- file.path(output_species_data_path, "pop_params.qs")
+feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
+sens_params_file <- file.path(output_species_data_path, "sens_params.qs")
+sens_results_files <- file.path(output_sens_data_path) %>% str_subset("results")
+
+species_params <- qread(species_params_file)
+pop_params <- qread(pop_params_file)
 ```
 
 # Introduction
@@ -264,6 +280,24 @@ To address this gap, we use existing maps of mariculture location with a bioener
 
 ## Farm temperature forcings
 
+```{r farm temperature data}
+farms_to_omit <- file.path(input_farm_coords_path, "atlantic_salmon_farms_to_omit.qs") %>% qs::qread()
+farm_ts_data <- file.path(output_farm_data_path, "farm_ts_data.qs") %>% qs::qread()
+farm_coords <- file.path(output_farm_data_path, "farm_coords.qs") %>% qs::qread()
+farms_geometry <- file.path(output_farm_data_path, "farm_geometry.qs") %>% qs::qread() %>% 
+  rename(farm_ID = farm_id)
+
+farm_temp_means <- farm_ts_data %>% 
+  group_by(farm_ID) %>% 
+  reframe(mean_temp = mean(temp_c)) %>% 
+  merge(farms_geometry, by = "farm_ID") %>% 
+  merge(farm_coords, by = "farm_ID") %>% 
+  dplyr::filter(!farm_ID %in% farms_to_omit)
+
+overall_mean <- mean(farm_temp_means$mean_temp)
+overall_sd <- sd(farm_temp_means$mean_temp)
+```
+
 ```{r fig-farm-mean-temps}
 #| fig-caption: Colours show farm site mean temperature
 
@@ -301,19 +335,7 @@ ggplot(data = worldmap, aes(geometry = geometry)) +
   geom_sf(data = farm_temp_means, aes(colour = temp_c), size = 1.5) +
   coord_sf() +
   theme_classic() 
-```
 
-```{r fig-farm_temp_means-2}
-farm_temp_means %>%
-  mutate(
-    coords = st_coordinates(geometry),
-    longitude = coords[,1],
-    latitude = coords[,2]
-  ) %>%
-  select(-coords) %>% 
-  ggplot(aes(y = temp_c, x = abs(latitude), colour = country)) +
-  geom_point() +
-  labs(x = expression("Absolute latitude ("*degree*")"), y = expression("Temperature ("*degree*"C)")) +
   theme_classic() +
   theme(legend.position = "bottom", legend.title = element_blank())
 ```
@@ -330,19 +352,14 @@ $$
 Where $w=$ is wet weight (t), $t=$ time (d), $A=$ anabolic rate (J t$^{-1}$), $C=$ the catabolic rate (J t$^{-1}$), $\epsilon=$ energy density of body tissues (J t$^{-1}$). 
 Individual models were then upscaled using monte-carlo simulations to simulate size structure in a population. Size differences were achieved through different initial starting weights and ingestion rates for different finfish species. All individuals have a fixed mortality rate to simulate stocking and harvesting. 
 
-* Farms with a mean temperature of $\leq 6^\circ$C were excluded.
-```{r farms omitted}
-farms_to_omit <- here() %>% file.path("data/_general_data/farm_locations/atlantic_salmon_farms_to_omit.qs") %>% 
-  qread()
-```
-
+* Farms with a mean temperature of $\leq 6^\circ$C were excluded - a total of `r as.integer(length(farms_to_omit))` farms.
 
 [Need to put the cohort concept (and harvest timing) in here.]{.aside}
 
 ```{r fig-cohorts}
 #| fig-cap: Example of cohorts
 
-fnms <- coho_outputs %>% 
+fnms <- output_cohort_growth_data_path %>% 
   list.files(full.names = T) %>% 
   str_subset("biomass")
 
@@ -397,18 +414,41 @@ df %>%
   theme(text = element_text(colour = "black", family = "serif", size = 12))
 ```
 
-
 ## Parameterisation for Atlantic salmon
 
 ```{r salmon params}
 #| code-summary: Get parameter and sensitivity data
 #| eval: true
 
-params <- c(pop_params, species_params)
-pnames <- names(params)
-sens_excr <- here() %>% file.path("data", "atlantic_salmon", "data_products", "excreted_parameter_sensitivity.parquet") %>%
-  read_parquet() %>%
-  mutate(adj_param = factor(adj_param, levels = rev(adj_param)))
+params <- file.path(output_species_data_path, "sens_params.qs") %>% qs::qread()
+
+param_names <- tibble::tribble(
+  ~name,        ~lab,
+  "alpha",      bquote(alpha),
+  "epsprot",    bquote(epsilon["P"]),
+  "epslip",     bquote(epsilon["L"]),
+  "epscarb",    bquote(epsilon["C"]),
+  "epsO2",      bquote(epsilon["O"[2]]),
+  "pk",         bquote("pk"),
+  "k0",         bquote("k"[0]),
+  "m",          bquote("m"),
+  "n",          bquote("n"),
+  "betac",      bquote(beta*"C"),
+  "Tma",        bquote("T"["max"]),
+  "Toa",        bquote("T"["opt"]),
+  "Taa",        bquote("T"["min"]),
+  "omega",      bquote(omega),
+  "a",          bquote("a"),
+  "k",          bquote("k"),
+  "eff",        bquote("eff"),
+  "meanW",      bquote(bar("W")),
+  "deltaW",     bquote(Delta*"W"), 
+  "meanImax",   bquote(bar("I"["max"])),
+  "deltaImax",  bquote(Delta*"I"["max"]),
+  "overFmean",  bquote(bar("F")),
+  "overFdelta", bquote(Delta*"F"),
+  "mortmyt",    bquote("mort")
+)
 ```
 
 Table @tbl-params shows the parameter values used to model the growth of farmed Atlantic salmon.
@@ -468,8 +508,8 @@ New method is to take the average predicted individual harvest size for each far
 ```{r fig-harvest-size}
 #| fig-cap: Frequency distribution of harvest sizes across global farms, as predicted by the fish growth model
 
-pdata <- here() %>% file.path("data", "atlantic_salmon", "data_products", "harvest_size.parquet") %>% read_parquet()
-pdata %>% 
+file.path(output_farm_data_path, "farm_harvest_size.qs") %>% 
+  qread() %>% 
   mutate(weight = weight %>% set_units("g") %>% set_units("kg")) %>% 
   select(c(farm_ID, weight)) %>% 
   ggplot(aes(x = weight)) +
