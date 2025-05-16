@@ -1,3 +1,6 @@
+# Disable all linters for this file
+# nolint start
+
 # Setup -----------------------------------------------------------------------------------------------------------
 suppressPackageStartupMessages({
   library(magrittr)
@@ -368,9 +371,4 @@ uneat_diff_kg.t_pc %>%
   facet_grid(~macro) +
   theme_classic()
 
-
-
-
-
-
-
+# nolint end

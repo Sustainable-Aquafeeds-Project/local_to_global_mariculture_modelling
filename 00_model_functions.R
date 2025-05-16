@@ -2,16 +2,27 @@
 ### https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0195732
 ### https://github.com/cran/RAC/tree/master/R
 
+# Disable all linters for this file
+# nolint start
+
 # Load required packages silently
-suppressPackageStartupMessages({
+suppressWarnings(suppressPackageStartupMessages({
   library(qs)
   library(qs2) 
   library(terra)
   library(readxl)
-})
+  library(matrixStats)
+  library(furrr)
+  library(future)
+  library(dplyr)
+}))
 
 make_label <- function(lab){lab %>% str_remove_all("_stat") %>% str_replace_all("_", " ") %>% str_to_title()}
-fixnum <- function(n, digits = 4) {str_flatten(c(rep("0", digits-nchar(as.character(n))), as.character(n)))}
+fixnum <- function(n, digits = 4) {
+  vapply(n, function(x) {
+    str_flatten(c(rep("0", digits-nchar(as.character(x))), as.character(x)))
+  }, character(1))
+}
 meanna <- function(x, ...) mean(x, na.rm = TRUE, ...)
 minna <- function(x, ...) min(x, na.rm = TRUE, ...)
 maxna <- function(x, ...) max(x, na.rm = TRUE, ...)
@@ -192,71 +203,62 @@ fish_growth <- function(pop_params, species_params, water_temp, feed_params, tim
 }
 
 farm_growth <- function(pop_params, species_params, feed_params, water_temp, times, N_pop, nruns){
-  
+    
   days <- (times['t_start']:times['t_end'])*times['dt']
   
-  # Initiate matrices to fill for each population iteration
-  weight_mat <- biomass_mat <- dw_mat <- SGR_mat <- E_somat_mat <- P_excr_mat <-  L_excr_mat <- C_excr_mat <- P_uneat_mat <- L_uneat_mat <- C_uneat_mat <- ing_act_mat <- anab_mat <- catab_mat <- O2_mat <- NH4_mat <- food_prov_mat <- rel_feeding_mat <- T_response_mat <- total_excr_mat <- total_uneat_mat <- 
-    matrix(data = 0, nrow = nruns, ncol = length(days)) 
+  # Generate all random values upfront
+  init_weights <- rnorm(nruns, mean = pop_params['meanW'], sd = pop_params['deltaW'])
+  ingmaxes <- rnorm(nruns, mean = pop_params['meanImax'], sd = pop_params['deltaImax'])
   
-  init_weight <- rnorm(nruns, mean = pop_params['meanW'], sd = pop_params['deltaW'])
-  ingmax <- rnorm(nruns, mean = pop_params['meanImax'], sd = pop_params['deltaImax'])
-  
-  for(n in 1:nruns){
-    ind_output <- fish_growth(
+  # Run parallel simulation for individuals
+  mc_results <- furrr::future_map2(init_weights, ingmaxes, function(init_w, ing_m) {
+    mat <- fish_growth(
       pop_params = pop_params,
       species_params = species_params,
       water_temp = water_temp,
       feed_params = feed_params,
       times = times,
-      init_weight = init_weight[n],
-      ingmax = ingmax[n]
-    )
-    # Append to matrix
-    weight_mat[n,]      <- ind_output[,'weight']
-    biomass_mat[n,]     <- ind_output[,'weight']*N_pop[1:length(days)]
-    dw_mat[n,]          <- ind_output[,'dw']
-    SGR_mat[n,]         <- 100 * (exp((log(weight_mat[n,])-log(weight_mat[n,1]))/(ind_output[,'days'])) - 1)
-    E_somat_mat[n,]     <- ind_output[,'E_somat']
-    P_excr_mat[n,]      <- ind_output[,'P_excr']*N_pop[1:length(days)]
-    L_excr_mat[n,]      <- ind_output[,'L_excr']*N_pop[1:length(days)]
-    C_excr_mat[n,]      <- ind_output[,'C_excr']*N_pop[1:length(days)]
-    P_uneat_mat[n,]     <- ind_output[,'P_uneat']*N_pop[1:length(days)]
-    L_uneat_mat[n,]     <- ind_output[,'L_uneat']*N_pop[1:length(days)]
-    C_uneat_mat[n,]     <- ind_output[,'C_uneat']*N_pop[1:length(days)]
-    ing_act_mat[n,]     <- ind_output[,'ing_act']*N_pop[1:length(days)]
-    anab_mat[n,]        <- ind_output[,'anab']
-    catab_mat[n,]       <- ind_output[,'catab']
-    O2_mat[n,]          <- ind_output[,'O2']
-    NH4_mat[n,]         <- ind_output[,'NH4']*N_pop[1:length(days)]
-    food_prov_mat[n,]   <- ind_output[,'food_prov']*N_pop[1:length(days)]
-    rel_feeding_mat[n,] <- ind_output[,'rel_feeding']
-    T_response_mat[n,]  <- ind_output[,'T_response']
-    total_excr_mat[n,]  <- (ind_output[,'P_excr'] + ind_output[,'L_excr'] + ind_output[,'C_excr']) * N_pop[1:length(days)]
-    total_uneat_mat[n,] <- (ind_output[,'P_uneat'] + ind_output[,'L_uneat'] + ind_output[,'C_uneat']) * N_pop[1:length(days)]
+      init_weight = init_w,
+      ingmax = ing_m
+    ) %>% unname()
+  }, .options = furrr::furrr_options(seed = TRUE), .progress = T)
+  
+  stat_names <- c("days", "weight", "dw", "water_temp", "T_response", "P_excr", "L_excr", "C_excr", "P_uneat", 
+                  "L_uneat", "C_uneat", "food_prov", "food_enc", "rel_feeding", "ing_pot", "ing_act", "E_assim", 
+                  "E_somat", "anab", "catab", "O2", "NH4")
+
+  # Consolidate all individuals into a farm (with population = nruns)
+  all_results <- lapply(1:length(stat_names), function(col_idx) {
+    t(sapply(mc_results, function(mat_idx) {
+      mat_idx[, col_idx]
+    }))
+  }) %>% setNames(stat_names)
+  
+  # Some stats need to be summed/added
+  all_results[["total_excr"]] <- all_results[["P_excr"]] + all_results[["L_excr"]] + all_results[["C_excr"]]
+  all_results[["total_uneat"]] <- all_results[["P_uneat"]] + all_results[["L_uneat"]] + all_results[["C_uneat"]]
+  all_results[["metab"]] <- all_results[["anab"]] - all_results[["catab"]]
+  all_results[["biomass"]] <- all_results[["weight"]]
+  
+  all_results <- lapply(2:length(all_results), function(col_idx) {
+      cbind(colMeans(all_results[[col_idx]]), matrixStats::colSds(all_results[[col_idx]])) %>% 
+      as.matrix() %>% unname()
+  }) %>% setNames(names(all_results)[2:length(names(all_results))])
+
+  # Some stats should be multiplied by the farm population (Npop)
+  pop_names <- c("biomass", "P_excr", "L_excr", "C_excr", "P_uneat", "L_uneat", "C_uneat", "ing_act", 
+                 "total_excr", "total_uneat", "O2", "NH4", "food_prov")
+  for (stat_nm in pop_names) {
+    all_results[[stat_nm]][,1] <- all_results[[stat_nm]][,1] * N_pop[1:length(days)]
+    all_results[[stat_nm]][,2] <- all_results[[stat_nm]][,2] * N_pop[1:length(days)]
   }
   
-  out_list <- list(
-    weight_stat = cbind(colMeans(weight_mat), colSds(weight_mat)),
-    biomass_stat = cbind(colMeans(biomass_mat), colSds(biomass_mat)),
-    dw_stat = cbind(colMeans(dw_mat), colSds(dw_mat)),
-    SGR_stat = cbind(colMeans(SGR_mat), colSds(SGR_mat)),
-    E_somat_stat = cbind(colMeans(E_somat_mat), colSds(E_somat_mat)),
-    P_excr_stat = cbind(colMeans(P_excr_mat), colSds(P_excr_mat)),
-    L_excr_stat = cbind(colMeans(L_excr_mat), colSds(L_excr_mat)),
-    C_excr_stat = cbind(colMeans(C_excr_mat), colSds(C_excr_mat)),
-    P_uneat_stat = cbind(colMeans(P_uneat_mat), colSds(P_uneat_mat)),
-    L_uneat_stat = cbind(colMeans(L_uneat_mat), colSds(L_uneat_mat)),
-    C_uneat_stat = cbind(colMeans(C_uneat_mat), colSds(C_uneat_mat)),
-    ing_act_stat = cbind(colMeans(ing_act_mat), colSds(ing_act_mat)),
-    anab_stat = cbind(colMeans(anab_mat), colSds(anab_mat)),
-    catab_stat = cbind(colMeans(catab_mat), colSds(catab_mat)),
-    NH4_stat = cbind(colMeans(NH4_mat), colSds(NH4_mat)),
-    O2_stat = cbind(colMeans(O2_mat), colSds(O2_mat)),
-    food_prov_stat = cbind(colMeans(food_prov_mat), colSds(food_prov_mat)),
-    rel_feeding_stat = cbind(colMeans(rel_feeding_mat), colSds(rel_feeding_mat)),
-    T_response_stat = cbind(colMeans(T_response_mat), colSds(T_response_mat))
-  )
+  out_list <- lapply(1:length(all_results), function(col_idx) {
+    cbind(days, all_results[[col_idx]]) %>% 
+      as.matrix() %>% unname() 
+  }) %>% setNames(paste0(names(all_results), "_stat"))
+  
   return(out_list)
 }
 
+# nolint end
