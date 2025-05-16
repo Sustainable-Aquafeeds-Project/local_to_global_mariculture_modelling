@@ -508,11 +508,14 @@ file.path(output_farm_data_path, "farm_harvest_size.qs") %>%
   mutate(weight = weight %>% set_units("g") %>% set_units("kg")) %>% 
   select(c(farm_ID, weight)) %>% 
   ggplot(aes(x = weight)) +
-  geom_histogram(binwidth = 0.25, colour = "black", fill = "salmon", alpha = 0.5) +
+  geom_histogram(binwidth = 0.25, colour = "black", fill = "salmon", alpha = 0.75) +
   scale_y_continuous(limits = c(0,500)) +
   labs(y = "Frequency", x = "Harvest weight") +
   theme_classic() +
-  theme(legend.position = "none", aspect.ratio = 0.75)
+  theme(
+    legend.position = "none", 
+    aspect.ratio = 0.75
+  )
 ```
 
 This means that the population estimates aren't actual fish numbers, they're just a method that allows each farm location to approximate of the correct tonnage produced while to allowing comparisons between the different feeds. 
