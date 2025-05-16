@@ -298,46 +298,38 @@ overall_mean <- mean(farm_temp_means$mean_temp)
 overall_sd <- sd(farm_temp_means$mean_temp)
 ```
 
+Mean daily temperatures at the farms globally ranged from  from `r round(min(farm_temp_means$mean_temp), 1)`$^{\circ}$ to `r round(max(farm_temp_means$mean_temp), 1)`$^{\circ}$, with an overall mean of `r round(overall_mean, 1)`$^{\circ}$ ($\pm$ `r round(overall_sd, 1)` SD)
+
 ```{r fig-farm-mean-temps}
-#| fig-caption: Colours show farm site mean temperature
+#| fig-cap: Options for showingf arm site mean temperatures. (Top left) Mean temperature by latitude across countries. (Top right) Distribution of mean temperatures by hemisphere. (Bottom) Global distribution of mean temperatures.
+#| fig-height: 6
+#| fig-width: 6
 
 worldmap <- ne_countries(scale = "medium", returnclass = "sf")
-farms_to_omit <- here() %>% 
-  file.path("data", "_general_data", "farm_locations", "atlantic_salmon_farms_to_omit.qs") %>% 
-  qread()
 
-farms_w_temp_df <- here() %>% 
-  file.path("data", "_general_data", "farm_locations", "atlantic_salmon_locations_w_temps.qs") %>% 
-  qread() %>% 
-  filter(!farm_id %in% farms_to_omit) %>% 
-  mutate(country = as.factor(country),
-         species_group = as.factor(species_group),
-         data_type = as.factor(data_type),
-         data_type_2 = as.factor(data_type_2),
-         model_name = as.factor(model_name),
-         F_CODE = as.factor(F_CODE),
-         day = str_split_i(day, "_", 2) %>% as.integer())
-
-farm_temp_means <- farms_w_temp_df %>% 
-  select(iso3c, country, farm_id, temp_c)
-farm_temp_means_1 <- farms_w_temp_df %>% 
-  filter(day == 1) %>% 
-  select(geometry)
-
-farm_temp_means <- farm_temp_means %>% 
-  group_by(iso3c, country, farm_id) %>% 
-  reframe(temp_c = meanna(temp_c))
-
-farm_temp_means <- cbind(farm_temp_means, farm_temp_means_1)
-
-ggplot(data = worldmap, aes(geometry = geometry)) +
+p1 <- ggplot(data = worldmap, aes(geometry = geometry)) +
   geom_sf(fill = "white", color = "dimgray") +
-  geom_sf(data = farm_temp_means, aes(colour = temp_c), size = 1.5) +
+  geom_sf(data = farm_temp_means, aes(colour = mean_temp), size = 1.5) +
   coord_sf() +
   theme_classic() 
 
+p2 <- farm_temp_means %>% 
+  ggplot(aes(y = mean_temp, x = abs(lat), colour = country)) +
+  geom_point(size = 2.5) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(x = expression("Absolute latitude ("*degree*")"), y = expression("Mean temperature ("*degree*"C)")) +
   theme_classic() +
-  theme(legend.position = "bottom", legend.title = element_blank())
+  theme(legend.position = "top", legend.title = element_blank())
+
+p3 <- farm_temp_means %>% 
+  mutate(hemisphere = case_when(lat < 0 ~ "S", T ~ "N")) %>% 
+  ggplot(aes(x = mean_temp, fill = hemisphere)) +
+  geom_histogram(position = "identity", colour = "black", alpha = 0.5, binwidth = 0.5) +
+  labs(x = expression("Mean temperature ("*degree*"C)"), y = "Frequency") +
+  theme_classic() +
+  theme(legend.position = "top", legend.title = element_blank())
+
+(p2 + p3) / p1 + plot_layout(heights = c(1, 1.5))
 ```
 
 ## Model and approach
