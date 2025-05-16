@@ -473,26 +473,60 @@ Table @tbl-params shows the parameter values used to model the growth of farmed 
 | mort | `r unname(params['mortmyt'])` | d$^{-1}$ | Natural mortality rate | @tvete_towards_2023 |
 : Model growth parameters for Atlantic salmon {#tbl-params}
 
+### Testing parameter sensitivity
+
+Parameter sensitivity was tested by varying each parameter in Table @tbl-params by $\pm 10$% and calculating sensitivity as:
+
+$$
+S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}
+$$
+
+where $S$ is the sensitivity of the measured variable to changes in parameter $p$, and $P_{1.1}$, $P_{0.9}$, and $P_{1}$ are the value of the measured variable when the model is run with parameter $p$ at 110%, 90%, and 100% of its value respectively. 
+
+* All parameters in Table @tbl-params were tested across all farms (all temperatures)
+* Used a population of 100 in each farm
+
+```{r sensitivity data}
+sens_weight <- output_sens_data_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("results") %>% 
+  str_subset("weight") %>% 
+  qs::qread()
+
+sens_excr <- output_sens_data_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("results") %>% 
+  str_subset("total_excr") %>% 
+  qs::qread() 
+
+sens_data <- rbind(sens_weight, sens_excr) %>% 
+  mutate(adj_param = factor(adj_param, levels = param_names$name))
+```
 
 Looking at @fig-param-sens-weight:
 
-* The most sensitive parameter by far is $m$ the weight exponent for anabolism, followed closely by $n$ the weight exponent for catabolism
+* The most sensitive parameter by far is $m$ (the weight exponent for anabolism), followed closely by $n$ the (weight exponent for catabolism)
 * These two are also relatively uncertain, as $m$ was taken from *Salmo trutta* measurements in a fairly old paper [@broekhuizen_modelling_1994] and $n$ was taken from @baldan_r_2018 which did not specifically look at Atlantic salmon. There must be more up-to-date measurements for Atlantic salmon in particular. 
 
 ```{r fig-param-sens-weight}
-#| fig-cap: Impact of varying each model parameter from 0.9-1.1 on total farm excreted nutrients over the whole production period.
+#| fig-cap: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period. 
 
-sens_excr %>% 
-  ggplot(aes(x = adj_param, y = sens, ymin = sens-sd, ymax = sens+sd)) +
-  geom_col(colour = "black", fill = "salmon", alpha = 0.5) +
-  geom_errorbar(width = 0.3) +
+sens_data %>% 
+  ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens - sd_sens, ymax = mean_sens + sd_sens, fill = measure)) +
+  geom_col(position = position_dodge(), width = 0.95, colour = "black", alpha = 0.75) +
+  geom_errorbar(position = position_dodge(width = 0.95), width = 0.3) +
   geom_hline(aes(yintercept = 0), linetype = "dashed") +
-  scale_y_continuous(breaks = seq(-20,30,5)) +
+  scale_y_continuous(breaks = seq(-30,30,5), limits = c(-10,30)) +
+  scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
+  scale_fill_manual(values = c(weight = "salmon", total_excr = "steelblue")) +
+  # scale_fill_manual(values = c("weight" = "salmon", "uneat" = "steelblue", "excr" = "darkgreen")) +
   labs(x = "Adjusted parameter", y = "Sensitivity") +
-  theme_classic() + theme(legend.position = "none", 
+  theme_classic() + 
+  theme(legend.position = "none", 
         strip.text = element_blank(), 
         aspect.ratio = 0.8,
-        text = element_text(size = 12)) +
+        text = element_text(size = 12),
+        axis.title.y = element_blank()) +
   coord_flip()
 ```
 
