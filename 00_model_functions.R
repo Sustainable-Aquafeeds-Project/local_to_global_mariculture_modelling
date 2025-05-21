@@ -221,7 +221,7 @@ farm_growth <- function(pop_params, species_params, feed_params, water_temp, tim
       init_weight = init_w,
       ingmax = ing_m
     ) %>% unname()
-  }, .options = furrr::furrr_options(seed = TRUE), .progress = T)
+  }, .options = furrr::furrr_options(seed = TRUE))
   
   stat_names <- c("days", "weight", "dw", "water_temp", "T_response", "P_excr", "L_excr", "C_excr", "P_uneat", 
                   "L_uneat", "C_uneat", "food_prov", "food_enc", "rel_feeding", "ing_pot", "ing_act", "E_assim", 

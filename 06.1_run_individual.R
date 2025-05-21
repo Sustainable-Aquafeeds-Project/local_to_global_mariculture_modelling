@@ -25,7 +25,7 @@ conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 # plan(multisession, workers = parallelly::availableCores()-1)
 
 # Basic configuration
-overwrite <- F
+overwrite <- T
 this_species <- "atlantic_salmon"
 
 # Directory structure
@@ -52,6 +52,7 @@ dir_create(c(output_farm_data_path,
 
 # Filenames
 farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
+farm_geometry_file <- file.path(output_farm_data_path, "farm_geometry.qs")
 farm_ts_data_file <- file.path(output_farm_data_path, "farm_ts_data.qs")
 species_params_file <- file.path(output_species_data_path, "species_params.qs")
 sens_params_file <- file.path(output_species_data_path, "sens_params.qs")
@@ -60,9 +61,8 @@ feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
 farm_harvest_file <- file.path(output_farm_data_path, "farm_harvest_size.qs")
 
 # Print configuration summary
-message(sprintf("Configuration:\n- Species: %s\n- Parallel workers: %d\n- Overwrite existing: %s\n- Output path: %s",
+message(sprintf("Configuration:\n- Species: %s\n- Overwrite existing: %s\n- Output path: %s",
                this_species,
-               parallelly::availableCores()-2,
                ifelse(overwrite, "yes", "no"),
                output_path))
 
@@ -92,6 +92,14 @@ farm_coords <- file_exists_skip(farm_coords_file, "farm coordinates", function()
              t_start = unname(t_start),
              t_end = unname(t_end)) 
   })
+
+# Also save geometry for later
+file_exists_skip(farm_geometry_file, "farm geometry", function() {
+  file.path(input_farm_coords_path, "atlantic_salmon_locations_w_temps.qs") %>% 
+    qread() %>% 
+    dplyr::filter(day == "day_1") %>% 
+    dplyr::select(farm_id, geometry, country)
+})
 
 # Farm data -------------------------------------------------------------------------------------------------------
 farm_ts_data <- file_exists_skip(farm_ts_data_file, "farm ts data", function() {
@@ -143,7 +151,7 @@ feed_params <- file_exists_skip(feed_params_file, "feed parameters", function() 
           select(-contains("feed")) %>%
           rename(macro = ing_lipid, digest = ing_lipid_digestibility)
       )
-    }) %>% setNames(feed_types)
+    }, .options = furrr::furrr_options(seed = TRUE)) %>% setNames(feed_types)
   })
 
 # Farm harvest size -----------------------------------------------------------------------------------------------
@@ -194,7 +202,6 @@ sens_all_params <- file_exists_skip(sens_params_file, "sensitivity parameters", 
 reference_feed <- feed_params[["reference"]]
 factors <- c(0.9, 1, 1.1)
 sens_params_names <- names(sens_all_params)
-farm_IDs <- farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) %>% sample(10)
 
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
 targets::tar_make(
@@ -228,7 +235,7 @@ for (sm in seq_along(sens_measures)) {
 }
 
 # Finish up -------------------------------------------------------------------------------------------------------
-plan(sequential)
+# plan(sequential)
 message("All done!")
 
 # nolint end
