@@ -1,9 +1,9 @@
 # Targets projects management
-project_individual:
-  script: 04_targets_individual.R
-  store: 04_targets_individual
+project_sensitivities:
+  script: _targets_sensitivities.R
+  store: _targets_sensitivities
   
-project_farm:
-  script: 05_targets_farm.R
-  store: 05_targets_farm
+project_farmruns:
+  script: _targets_farmruns.R
+  store: _targets_farmruns
 
