@@ -99,7 +99,7 @@ window.Quarto = {
 };
 </script>
 
-<link rel="stylesheet" href="../resources/extra.css">
+<link rel="stylesheet" href="extra.css">
 <meta name="citation_title" content="Local to global N input modelling">
 <meta name="citation_author" content="Tormey Reimer">
 <meta name="citation_author" content="Richard S. Cottrell">
@@ -242,6 +242,8 @@ window.Quarto = {
 <meta name="citation_reference" content="citation_title=Geosphere: Spherical trigonometry;,citation_author=Robert J. Hijmans;,citation_publication_date=2022;,citation_cover_date=2022;,citation_year=2022;,citation_fulltext_html_url=https://CRAN.R-project.org/package=geosphere;">
 <meta name="citation_reference" content="citation_title=ncdf4: Interface to unidata netCDF (version 4 or earlier) format data files;,citation_author=David Pierce;,citation_publication_date=2024;,citation_cover_date=2024;,citation_year=2024;,citation_fulltext_html_url=https://CRAN.R-project.org/package=ncdf4;">
 <meta name="citation_reference" content="citation_title=pacman: Package management for R;,citation_author=Tyler W. Rinker;,citation_author=Dason Kurkiewicz;,citation_publication_date=2018;,citation_cover_date=2018;,citation_year=2018;,citation_fulltext_html_url=http://github.com/trinker/pacman;">
+<meta name="citation_reference" content="citation_title=A unifying framework for parallel and distributed processing in r using futures;,citation_author=Henrik Bengtsson;,citation_publication_date=2021;,citation_cover_date=2021;,citation_year=2021;,citation_fulltext_html_url=https://doi.org/10.32614/RJ-2021-048;,citation_issue=2;,citation_doi=10.32614/RJ-2021-048;,citation_volume=13;,citation_journal_title=The R Journal;">
+<meta name="citation_reference" content="citation_title=Furrr: Apply mapping functions in parallel using futures;,citation_author=Davis Vaughan;,citation_author=Matt Dancho;,citation_publication_date=2022;,citation_cover_date=2022;,citation_year=2022;,citation_fulltext_html_url=https://CRAN.R-project.org/package=furrr;">
 </head>
 
 <body>
@@ -330,13 +332,24 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#feeding-rate" id="toc-feeding-rate" class="nav-link" data-scroll-target="#feeding-rate">Feeding rate</a></li>
   </ul></li>
-  <li><a href="#parameterisation-for-atlantic-salmon" id="toc-parameterisation-for-atlantic-salmon" class="nav-link" data-scroll-target="#parameterisation-for-atlantic-salmon">Parameterisation for Atlantic salmon</a></li>
+  <li><a href="#production-parameters" id="toc-production-parameters" class="nav-link" data-scroll-target="#production-parameters">Production parameters</a></li>
+  <li><a href="#parameterisation-for-atlantic-salmon" id="toc-parameterisation-for-atlantic-salmon" class="nav-link" data-scroll-target="#parameterisation-for-atlantic-salmon">Parameterisation for Atlantic salmon</a>
+  <ul class="collapse">
+  <li><a href="#testing-parameter-sensitivity" id="toc-testing-parameter-sensitivity" class="nav-link" data-scroll-target="#testing-parameter-sensitivity">Testing parameter sensitivity</a></li>
+  </ul></li>
   <li><a href="#population-and-biomass-estimates" id="toc-population-and-biomass-estimates" class="nav-link" data-scroll-target="#population-and-biomass-estimates">Population and biomass estimates</a></li>
+  <li><a href="#biomass-produced" id="toc-biomass-produced" class="nav-link" data-scroll-target="#biomass-produced">Biomass produced</a></li>
   <li><a href="#species-vulnerability-layers" id="toc-species-vulnerability-layers" class="nav-link" data-scroll-target="#species-vulnerability-layers">Species vulnerability layers</a></li>
   </ul></li>
-  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
-  <li><a href="#biomass-produced" id="toc-biomass-produced" class="nav-link" data-scroll-target="#biomass-produced">Biomass produced</a></li>
-  <li><a href="#locations" id="toc-locations" class="nav-link" data-scroll-target="#locations">Locations</a></li>
+  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
+  <ul class="collapse">
+  <li><a href="#excreted-faeces" id="toc-excreted-faeces" class="nav-link" data-scroll-target="#excreted-faeces">Excreted faeces</a>
+  <ul class="collapse">
+  <li><a href="#total-amount" id="toc-total-amount" class="nav-link" data-scroll-target="#total-amount">Total amount</a></li>
+  </ul></li>
+  <li><a href="#uneaten-feed-amount-composition" id="toc-uneaten-feed-amount-composition" class="nav-link" data-scroll-target="#uneaten-feed-amount-composition">Uneaten feed (amount &amp; composition)</a></li>
+  <li><a href="#total-nutrients-amount-source" id="toc-total-nutrients-amount-source" class="nav-link" data-scroll-target="#total-nutrients-amount-source">Total nutrients (amount &amp; source)</a></li>
+  </ul></li>
   <li><a href="#statistical-analysis-code-availability" id="toc-statistical-analysis-code-availability" class="nav-link" data-scroll-target="#statistical-analysis-code-availability">Statistical analysis &amp; code availability</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
@@ -387,29 +400,16 @@ window.Quarto = {
 <h1>Methods</h1>
 <section id="farm-temperature-forcings" class="level2">
 <h2 class="anchored" data-anchor-id="farm-temperature-forcings">Farm temperature forcings</h2>
-<div id="cell-fig-farm-mean-temps" class="cell" data-layout-align="center" data-fig-caption="Colours show farm site mean temperature">
+<p>Mean daily temperatures at the farms globally ranged from from 6<span class="math inline">\(^{\circ}\)</span> to 16.7<span class="math inline">\(^{\circ}\)</span>, with an overall mean of 10.1<span class="math inline">\(^{\circ}\)</span> (<span class="math inline">\(\pm\)</span> 1.8 SD). Farms with a mean temperature of <span class="math inline">\(\leq 6^\circ\)</span>C were excluded (4 farms). The total number of farms included in this analysis was therefore 2717.</p>
+<div id="cell-fig-farm-mean-temps" class="cell" data-layout-align="center">
 <div class="cell-output-display">
-<div id="fig-farm-mean-temps" class="quarto-float quarto-figure quarto-figure-center anchored" width="672" data-fig-align="center">
+<div id="fig-farm-mean-temps" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-farm-mean-temps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="08_manuscript_files/figure-html/fig-farm-mean-temps-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: "><img src="08_manuscript_files/figure-html/fig-farm-mean-temps-1.png" id="fig-farm-mean-temps" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="672"></a>
+<a href="manuscript_files/figure-html/fig-farm-mean-temps-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Potential options for showing farm site mean temperatures. Top left: Mean temperature by latitude across countries. Top right: Frequency distribution of mean temperatures by hemisphere. Bottom: global distribution of mean temperatures."><img src="manuscript_files/figure-html/fig-farm-mean-temps-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="576"></a>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-farm-mean-temps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div id="cell-fig-farm_temp_means-2" class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-farm_temp_means-2" class="quarto-float quarto-figure quarto-figure-center anchored" width="672" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-farm_temp_means-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="08_manuscript_files/figure-html/fig-farm_temp_means-2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: "><img src="08_manuscript_files/figure-html/fig-farm_temp_means-2-1.png" id="fig-farm_temp_means-2" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="672"></a>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-farm_temp_means-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-farm-mean-temps-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Potential options for showing farm site mean temperatures. Top left: Mean temperature by latitude across countries. Top right: Frequency distribution of mean temperatures by hemisphere. Bottom: global distribution of mean temperatures.
 </figcaption>
 </figure>
 </div>
@@ -423,30 +423,7 @@ Figure&nbsp;2
 \frac{dw}{dt} = \frac{A-C}{\epsilon}
 \]</span></p>
 <p>Where <span class="math inline">\(w=\)</span> is wet weight (t), <span class="math inline">\(t=\)</span> time (d), <span class="math inline">\(A=\)</span> anabolic rate (J t<span class="math inline">\(^{-1}\)</span>), <span class="math inline">\(C=\)</span> the catabolic rate (J t<span class="math inline">\(^{-1}\)</span>), <span class="math inline">\(\epsilon=\)</span> energy density of body tissues (J t<span class="math inline">\(^{-1}\)</span>). Individual models were then upscaled using monte-carlo simulations to simulate size structure in a population. Size differences were achieved through different initial starting weights and ingestion rates for different finfish species. All individuals have a fixed mortality rate to simulate stocking and harvesting.</p>
-<ul>
-<li>Farms with a mean temperature of <span class="math inline">\(\leq 6^\circ\)</span>C were excluded.</li>
-</ul>
 <div class="page-columns page-full"><p></p><div class="no-row-height column-margin column-container"><span class="margin-aside">Need to put the cohort concept (and harvest timing) in here.</span></div></div>
-<div id="cell-fig-cohorts" class="cell" data-layout-align="center">
-<div class="cell-output cell-output-stdout">
-<pre><code>787.7115 [t]</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code>101.4564 [t]</code></pre>
-</div>
-<div class="cell-output-display">
-<div id="fig-cohorts" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-cohorts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="08_manuscript_files/figure-html/fig-cohorts-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: Example of cohorts"><img src="08_manuscript_files/figure-html/fig-cohorts-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cohorts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3: Example of cohorts
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
 <section id="feeding-rate" class="level3">
 <h3 class="anchored" data-anchor-id="feeding-rate">Feeding rate</h3>
 <div id="cell-fig-functional-response-to-temperature" class="cell" data-layout-align="center">
@@ -454,10 +431,10 @@ Figure&nbsp;3: Example of cohorts
 <div id="fig-functional-response-to-temperature" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-functional-response-to-temperature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="08_manuscript_files/figure-html/fig-functional-response-to-temperature-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Temperature changes in potential ingestion (solid line) and amount of food provided (dashed line), relative to maximum potential ingestion."><img src="08_manuscript_files/figure-html/fig-functional-response-to-temperature-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
+<a href="manuscript_files/figure-html/fig-functional-response-to-temperature-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-2" title="Figure&nbsp;2: Temperature changes in potential ingestion (solid line) and amount of food provided (dashed line), relative to maximum potential ingestion."><img src="manuscript_files/figure-html/fig-functional-response-to-temperature-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-functional-response-to-temperature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4: Temperature changes in potential ingestion (solid line) and amount of food provided (dashed line), relative to maximum potential ingestion.
+Figure&nbsp;2: Temperature changes in potential ingestion (solid line) and amount of food provided (dashed line), relative to maximum potential ingestion.
 </figcaption>
 </figure>
 </div>
@@ -465,13 +442,21 @@ Figure&nbsp;4: Temperature changes in potential ingestion (solid line) and amoun
 </div>
 </section>
 </section>
+<section id="production-parameters" class="level2">
+<h2 class="anchored" data-anchor-id="production-parameters">Production parameters</h2>
+<ul>
+<li>Salmon cohorts were always grown for 548 days</li>
+<li>Salmon cohorts were put out in annually Spring, on day 274 when farm latitude &lt; 0 and day 121 when farm latitude &gt; 0.</li>
+<li>Cohorts were put out every year, such that there was an annual overlap of 183 days where one cohort was nearing harvest and another was being initialised.</li>
+</ul>
+</section>
 <section id="parameterisation-for-atlantic-salmon" class="level2">
 <h2 class="anchored" data-anchor-id="parameterisation-for-atlantic-salmon">Parameterisation for Atlantic salmon</h2>
 <p>Table <a href="#tbl-params" class="quarto-xref">Table&nbsp;1</a> shows the parameter values used to model the growth of farmed Atlantic salmon.</p>
 <div id="tbl-params" class="quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-params-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Table&nbsp;1: Growth parameters for Atlantic salmon
+Table&nbsp;1: Model growth parameters for Atlantic salmon
 </figcaption>
 <div aria-describedby="tbl-params-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <table class="caption-top table">
@@ -521,7 +506,7 @@ Table&nbsp;1: Growth parameters for Atlantic salmon
 <td style="text-align: left;"><span class="citation" data-cites="elliott_energy_1975">Elliott and Davison (<a href="#ref-elliott_energy_1975" role="doc-biblioref">1975</a>)</span></td>
 </tr>
 <tr class="even">
-<td style="text-align: center;"><span class="math inline">\(pk\)</span></td>
+<td style="text-align: center;">pk</td>
 <td style="text-align: center;">0.05</td>
 <td style="text-align: center;">d<span class="math inline">\(^{-1}\)</span></td>
 <td style="text-align: left;">Temperature coefficient for the fasting catabolism</td>
@@ -535,14 +520,14 @@ Table&nbsp;1: Growth parameters for Atlantic salmon
 <td style="text-align: left;"><span class="citation" data-cites="macnaughton_using_2019">Macnaughton et al. (<a href="#ref-macnaughton_using_2019" role="doc-biblioref">2019</a>)</span></td>
 </tr>
 <tr class="even">
-<td style="text-align: center;"><span class="math inline">\(m\)</span></td>
+<td style="text-align: center;">m</td>
 <td style="text-align: center;">0.75</td>
 <td style="text-align: center;">-</td>
 <td style="text-align: left;">Weight exponent for anabolism</td>
 <td style="text-align: left;">Experimentally-derived alue over a range of <em>Oncorhynchus</em>, <em>Perca</em> and <em>Salmo</em> species (temps: 8–13<span class="math inline">\(^{\circ}\)</span>C) <span class="citation" data-cites="broekhuizen_modelling_1994">(<a href="#ref-broekhuizen_modelling_1994" role="doc-biblioref">Broekhuizen et al. 1994</a>)</span></td>
 </tr>
 <tr class="odd">
-<td style="text-align: center;"><span class="math inline">\(n\)</span></td>
+<td style="text-align: center;">n</td>
 <td style="text-align: center;">1</td>
 <td style="text-align: center;">-</td>
 <td style="text-align: left;">Weight exponent for catabolism</td>
@@ -584,21 +569,21 @@ Table&nbsp;1: Growth parameters for Atlantic salmon
 <td style="text-align: left;">Calibrated value from <span class="citation" data-cites="baldan_r_2018">Baldan et al. (<a href="#ref-baldan_r_2018" role="doc-biblioref">2018</a>)</span></td>
 </tr>
 <tr class="odd">
-<td style="text-align: center;"><span class="math inline">\(a\)</span></td>
+<td style="text-align: center;">a</td>
 <td style="text-align: center;">2669</td>
 <td style="text-align: center;">J g tissue<span class="math inline">\(^{-1}\)</span></td>
 <td style="text-align: left;">Energy content of fish tissue</td>
 <td style="text-align: left;">Alt value: 17.02350 (nls model fitted to female Atlantic salmon data extracted and transformed from <span class="citation" data-cites="jonsson_energy_2003 van_tien_development_2016">N. Jonsson and Jonsson (<a href="#ref-jonsson_energy_2003" role="doc-biblioref">2003</a>; <a href="#ref-van_tien_development_2016" role="doc-biblioref">Van Tien et al. 2016</a>)</span></td>
 </tr>
 <tr class="even">
-<td style="text-align: center;"><span class="math inline">\(k\)</span></td>
+<td style="text-align: center;">k</td>
 <td style="text-align: center;">0.1715</td>
 <td style="text-align: center;">-</td>
 <td style="text-align: left;">Weight exponent for energy content</td>
 <td style="text-align: left;">Alt value: 1.65175 (nls model fitted to female Atlantic salmon data extracted and transformed from <span class="citation" data-cites="jonsson_energy_2003 van_tien_development_2016">N. Jonsson and Jonsson (<a href="#ref-jonsson_energy_2003" role="doc-biblioref">2003</a>; <a href="#ref-van_tien_development_2016" role="doc-biblioref">Van Tien et al. 2016</a>)</span></td>
 </tr>
 <tr class="odd">
-<td style="text-align: center;"><span class="math inline">\(eff\)</span></td>
+<td style="text-align: center;">eff</td>
 <td style="text-align: center;">0.97</td>
 <td style="text-align: center;">-</td>
 <td style="text-align: left;">Food ingestion efficiency</td>
@@ -633,7 +618,21 @@ Table&nbsp;1: Growth parameters for Atlantic salmon
 <td style="text-align: left;"><a href="https://www.fao.org/fileadmin/user_upload/affris/docs/tabl10.pdf">FAO</a></td>
 </tr>
 <tr class="even">
-<td style="text-align: center;"><span class="math inline">\(mort\)</span></td>
+<td style="text-align: center;"><span class="math inline">\(\overline{F}\)</span></td>
+<td style="text-align: center;">0.015</td>
+<td style="text-align: center;">g g<span class="math inline">\(^{-1}\)</span> fish$</td>
+<td style="text-align: left;">Overfeeding rate mean</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: center;"><span class="math inline">\(\Delta{F}\)</span></td>
+<td style="text-align: center;">0.0045</td>
+<td style="text-align: center;">g g<span class="math inline">\(^{-1}\)</span> fish$</td>
+<td style="text-align: left;">Overfeeding rate standard deviation</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">mort</td>
 <td style="text-align: center;">5.99798^{-4}</td>
 <td style="text-align: center;">d<span class="math inline">\(^{-1}\)</span></td>
 <td style="text-align: left;">Natural mortality rate</td>
@@ -644,9 +643,20 @@ Table&nbsp;1: Growth parameters for Atlantic salmon
 </div>
 </figure>
 </div>
-<p>Looking at <a href="#fig-param-sens-weight" class="quarto-xref">Figure&nbsp;5</a>:</p>
+<section id="testing-parameter-sensitivity" class="level3">
+<h3 class="anchored" data-anchor-id="testing-parameter-sensitivity">Testing parameter sensitivity</h3>
+<p>Parameter sensitivity was tested by varying each parameter in <a href="#tbl-params" class="quarto-xref">Table&nbsp;1</a> by <span class="math inline">\(\pm 10\)</span>% and calculating sensitivity as:</p>
+<p><span class="math display">\[
+S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}
+\]</span></p>
+<p>where <span class="math inline">\(S\)</span> is the sensitivity of the measured variable to changes in parameter <span class="math inline">\(p\)</span>, and <span class="math inline">\(P_{1.1}\)</span>, <span class="math inline">\(P_{0.9}\)</span>, and <span class="math inline">\(P_{1}\)</span> are the value of the measured variable when the model is run with parameter <span class="math inline">\(p\)</span> at 110%, 90%, and 100% of its value respectively.</p>
 <ul>
-<li>The most sensitive parameter by far is <span class="math inline">\(m\)</span> the weight exponent for anabolism, followed closely by <span class="math inline">\(n\)</span> the weight exponent for catabolism</li>
+<li>All parameters in Table <a href="#tbl-params" class="quarto-xref">Table&nbsp;1</a> were tested across all farms (all temperatures)</li>
+<li>Used a population of 100 in each farm</li>
+</ul>
+<p>Looking at <a href="#fig-param-sens-weight" class="quarto-xref">Figure&nbsp;3</a>:</p>
+<ul>
+<li>The most sensitive parameter by far is <span class="math inline">\(m\)</span> (the weight exponent for anabolism), followed closely by <span class="math inline">\(n\)</span> the (weight exponent for catabolism)</li>
 <li>These two are also relatively uncertain, as <span class="math inline">\(m\)</span> was taken from <em>Salmo trutta</em> measurements in a fairly old paper <span class="citation" data-cites="broekhuizen_modelling_1994">(<a href="#ref-broekhuizen_modelling_1994" role="doc-biblioref">Broekhuizen et al. 1994</a>)</span> and <span class="math inline">\(n\)</span> was taken from <span class="citation" data-cites="baldan_r_2018">Baldan et al. (<a href="#ref-baldan_r_2018" role="doc-biblioref">2018</a>)</span> which did not specifically look at Atlantic salmon. There must be more up-to-date measurements for Atlantic salmon in particular.</li>
 </ul>
 <div id="cell-fig-param-sens-weight" class="cell" data-layout-align="center">
@@ -654,28 +664,29 @@ Table&nbsp;1: Growth parameters for Atlantic salmon
 <div id="fig-param-sens-weight" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-param-sens-weight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="08_manuscript_files/figure-html/fig-param-sens-weight-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;5: Impact of varying each model parameter from 0.9-1.1 on total farm excreted nutrients over the whole production period."><img src="08_manuscript_files/figure-html/fig-param-sens-weight-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
+<a href="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;3: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period."><img src="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-param-sens-weight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5: Impact of varying each model parameter from 0.9-1.1 on total farm excreted nutrients over the whole production period.
+Figure&nbsp;3: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
+</section>
 <section id="population-and-biomass-estimates" class="level2">
 <h2 class="anchored" data-anchor-id="population-and-biomass-estimates">Population and biomass estimates</h2>
-<p>New method is to take the average predicted individual harvest size for each farm, then working backwards with the standard mortality rate to generate a population for each farm that will produce the correct tonnage for each farm. <a href="#fig-harvest-size" class="quarto-xref">Figure&nbsp;6</a> shows the average individual harvest size at each farm as predicted by the fish-growth model, which was used to create the population inputs for the farm-level growth curves.</p>
+<p>New method is to take the average predicted individual harvest size for each farm, then working backwards with the standard mortality rate to generate a population for each farm that will produce the correct tonnage for each farm. <a href="#fig-harvest-size" class="quarto-xref">Figure&nbsp;4</a> shows the average individual harvest size at each farm as predicted by the fish-growth model, which was used to create the population inputs for the farm-level growth curves.</p>
 <div id="cell-fig-harvest-size" class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-harvest-size" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-harvest-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="08_manuscript_files/figure-html/fig-harvest-size-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;6: Frequency distribution of harvest sizes across global farms, as predicted by the fish growth model"><img src="08_manuscript_files/figure-html/fig-harvest-size-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
+<a href="manuscript_files/figure-html/fig-harvest-size-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;4: Frequency distribution of harvest sizes across global farms, as predicted by the fish growth model"><img src="manuscript_files/figure-html/fig-harvest-size-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-harvest-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;6: Frequency distribution of harvest sizes across global farms, as predicted by the fish growth model
+Figure&nbsp;4: Frequency distribution of harvest sizes across global farms, as predicted by the fish growth model
 </figcaption>
 </figure>
 </div>
@@ -683,27 +694,106 @@ Figure&nbsp;6: Frequency distribution of harvest sizes across global farms, as p
 </div>
 <p>This means that the population estimates aren’t actual fish numbers, they’re just a method that allows each farm location to approximate of the correct tonnage produced while to allowing comparisons between the different feeds.</p>
 </section>
+<section id="biomass-produced" class="level2">
+<h2 class="anchored" data-anchor-id="biomass-produced">Biomass produced</h2>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="manuscript_files/figure-html/biomass%20produced-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Modelled vs observed salmon biomass produced"><img src="manuscript_files/figure-html/biomass%20produced-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672" alt="Modelled vs observed salmon biomass produced"></a></p>
+</figure>
+</div>
+<figcaption>Modelled vs observed salmon biomass produced</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
 <section id="species-vulnerability-layers" class="level2">
 <h2 class="anchored" data-anchor-id="species-vulnerability-layers">Species vulnerability layers</h2>
 </section>
 </section>
-<section id="results" class="level1">
+<section id="results" class="level1 page-columns page-full">
 <h1>Results</h1>
 <ul>
-<li>Main point is the difference between feeds.</li>
-<li>This should be expressed in t/t salmon, so farm biomass is also important.</li>
+<li>Main point is the difference between feeds (kg/t salmon).</li>
 <li>Also interesting to see if difference between feeds varies geographically (correlates with mean/median/max temperature?)</li>
 </ul>
+<section id="excreted-faeces" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="excreted-faeces">Excreted faeces</h2>
+<section id="total-amount" class="level3 page-columns page-full">
+<h3 class="anchored" data-anchor-id="total-amount">Total amount</h3>
+<div id="cell-fig-total-excr-diff_perc" class="cell page-columns page-full" data-layout-align="center">
+
+<div class="no-row-height column-margin column-container"><div class="margin-aside">
+<div class="cell-output-display">
+<div id="fig-total-excr-diff_perc" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-total-excr-diff_perc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="manuscript_files/figure-html/fig-total-excr-diff_perc-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;5: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion."><img src="manuscript_files/figure-html/fig-total-excr-diff_perc-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-excr-diff_perc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion.
+</figcaption>
+</figure>
+</div>
+</div>
+</div></div></div>
+<p>There was very little variation in the percentage difference (from reference) excreted with increasing overall excretion (<a href="#fig-total-excr-diff_perc" class="quarto-xref">Figure&nbsp;5</a>), or through time (<a href="#fig-total-excr-diff_perc_2" class="quarto-xref">Figure&nbsp;6</a>). The difference in total excretion for the past feed ranged from -20.5, -20.4–19.4, -19.3% across all farms globally, and for the future feed ranged from 4.3, 4.3-4.8, 4.8%.</p>
+<div id="cell-fig-total-excr-diff_perc_2" class="cell page-columns page-full" data-layout-align="center">
+
+<div class="no-row-height column-margin column-container"><div class="margin-aside">
+<div class="cell-output-display">
+<div id="fig-total-excr-diff_perc_2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-total-excr-diff_perc_2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="manuscript_files/figure-html/fig-total-excr-diff_perc_2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;6: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle."><img src="manuscript_files/figure-html/fig-total-excr-diff_perc_2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-excr-diff_perc_2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+</figcaption>
+</figure>
+</div>
+</div>
+</div></div></div>
+<p>However, the actual difference in excreted faeces varied by feed, time in the production cycle, and location of the farm <a href="#fig-total-excr-act_diff" class="quarto-xref">Figure&nbsp;7</a>.</p>
+<div id="cell-fig-total-excr-act_diff" class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-total-excr-act_diff" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-total-excr-act_diff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="manuscript_files/figure-html/fig-total-excr-act_diff-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;7: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle."><img src="manuscript_files/figure-html/fig-total-excr-act_diff-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="600"></a>
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-excr-act_diff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
 </section>
-<section id="biomass-produced" class="level1">
-<h1>Biomass produced</h1>
 </section>
-<section id="locations" class="level1">
-<h1>Locations</h1>
+<section id="uneaten-feed-amount-composition" class="level2">
+<h2 class="anchored" data-anchor-id="uneaten-feed-amount-composition">Uneaten feed (amount &amp; composition)</h2>
+</section>
+<section id="total-nutrients-amount-source" class="level2">
+<h2 class="anchored" data-anchor-id="total-nutrients-amount-source">Total nutrients (amount &amp; source)</h2>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="manuscript_files/figure-html/patchwork%20map-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9"><img src="manuscript_files/figure-html/patchwork%20map-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
 </section>
 <section id="statistical-analysis-code-availability" class="level1">
 <h1>Statistical analysis &amp; code availability</h1>
-<p>All analysis was conducted in R version 4.2 “Pile of Leaves” <span class="citation" data-cites="R_base">(<a href="#ref-R_base" role="doc-biblioref">R Core Team 2019</a>)</span>. For a full list of R packages used see the lockfile on <a href="https://www.github.com">Github</a>. This manuscript was written in Quarto <span class="citation" data-cites="quarto">(<a href="#ref-quarto" role="doc-biblioref">Allaire et al. 2024</a>)</span> using TinyTex <span class="citation" data-cites="tinytex">(<a href="#ref-tinytex" role="doc-biblioref">Xie 2017</a>)</span> and the acronyms extension <span class="citation" data-cites="acronyms">(<a href="#ref-acronyms" role="doc-biblioref">Chaput 2024</a>)</span>.</p>
+<p>All analysis was conducted in R version 4.4.2 “Pile of Leaves” <span class="citation" data-cites="R_base">(<a href="#ref-R_base" role="doc-biblioref">R Core Team 2019</a>)</span>. Major packages used include terra <span class="citation" data-cites="terra">(<a href="#ref-terra" role="doc-biblioref">Hijmans 2024</a>)</span>, targets <span class="citation" data-cites="targets">(<a href="#ref-targets" role="doc-biblioref">Landau 2021</a>)</span>, future <span class="citation" data-cites="future">(<a href="#ref-future" role="doc-biblioref">Bengtsson 2021</a>)</span>, furrr <span class="citation" data-cites="furrr">(<a href="#ref-furrr" role="doc-biblioref">Vaughan and Dancho 2022</a>)</span>, and the tidyverse <span class="citation" data-cites="tidyverse">(<a href="#ref-tidyverse" role="doc-biblioref">Wickham et al. 2019</a>)</span>. For a full list of R packages used see the lockfile on <a href="https://www.github.com">Github</a>. This manuscript was written in Quarto <span class="citation" data-cites="quarto">(<a href="#ref-quarto" role="doc-biblioref">Allaire et al. 2024</a>)</span> using TinyTex <span class="citation" data-cites="tinytex">(<a href="#ref-tinytex" role="doc-biblioref">Xie 2017</a>)</span> and the acronyms extension <span class="citation" data-cites="acronyms">(<a href="#ref-acronyms" role="doc-biblioref">Chaput 2024</a>)</span>.</p>
 </section>
 <section id="references" class="level1 unnumbered">
 
@@ -716,6 +806,9 @@ Allaire, J. J., Charles Teague, Carlos Scheidegger, Yihui Xie, and Christophe De
 </div>
 <div id="ref-baldan_r_2018" class="csl-entry" role="listitem">
 Baldan, Damiano, Erika Maria Diletta Porporato, Roberto Pastres, and Daniele Brigolin. 2018. <span>‘An <span>R</span> Package for Simulating Growth and Organic Wastage in Aquaculture Farms in Response to Environmental Conditions and Husbandry Practices’</span>. <em>PLOS ONE</em> 13 (5): e0195732. <a href="https://doi.org/10.1371/journal.pone.0195732">https://doi.org/10.1371/journal.pone.0195732</a>.
+</div>
+<div id="ref-future" class="csl-entry" role="listitem">
+Bengtsson, Henrik. 2021. <span>‘A Unifying Framework for Parallel and Distributed Processing in r Using Futures’</span>. <em>The R Journal</em> 13 (2): 208–27. <a href="https://doi.org/10.32614/RJ-2021-048">https://doi.org/10.32614/RJ-2021-048</a>.
 </div>
 <div id="ref-broekhuizen_modelling_1994" class="csl-entry" role="listitem">
 Broekhuizen, N., W. S. C. Gurney, A. Jones, and A. D. Bryant. 1994. <span>‘Modelling <span>Compensatory</span> <span>Growth</span>’</span>. <em>Functional Ecology</em> 8 (6): 770–82. <a href="https://doi.org/10.2307/2390237">https://doi.org/10.2307/2390237</a>.
@@ -732,11 +825,17 @@ Elliott, J. M., and W. Davison. 1975. <span>‘Energy Equivalents of Oxygen Cons
 <div id="ref-handeland_effect_2008" class="csl-entry" role="listitem">
 Handeland, Sigurd O., Albert K. Imsland, and Sigurd O. Stefansson. 2008. <span>‘The Effect of Temperature and Fish Size on Growth, Feed Intake, Food Conversion Efficiency and Stomach Evacuation Rate of <span>Atlantic</span> Salmon Post-Smolts’</span>. <em>Aquaculture</em> 283 (1): 36–42. <a href="https://doi.org/10.1016/j.aquaculture.2008.06.042">https://doi.org/10.1016/j.aquaculture.2008.06.042</a>.
 </div>
+<div id="ref-terra" class="csl-entry" role="listitem">
+Hijmans, Robert J. 2024. <em>Terra: Spatial Data Analysis</em>. <a href="https://CRAN.R-project.org/package=terra">https://CRAN.R-project.org/package=terra</a>.
+</div>
 <div id="ref-jonsson_thermal_2001" class="csl-entry" role="listitem">
 Jonsson, B., T. Forseth, A. J. Jensen, and T. F. Næsje. 2001. <span>‘Thermal Performance of Juvenile <span>Atlantic</span> <span>Salmon</span>, <span>Salmo</span> Salar <span>L</span>.’</span> <em>Functional Ecology</em> 15 (6): 701–11. <a href="https://doi.org/10.1046/j.0269-8463.2001.00572.x">https://doi.org/10.1046/j.0269-8463.2001.00572.x</a>.
 </div>
 <div id="ref-jonsson_energy_2003" class="csl-entry" role="listitem">
 Jonsson, Nina, and Bror Jonsson. 2003. <span>‘Energy Allocation Among Developmental Stages, Age Groups, and Types of <span>Atlantic</span> Salmon (<span>Salmo</span> Salar) Spawners’</span>. <em>Canadian Journal of Fisheries and Aquatic Sciences</em> 60 (5): 506–16. <a href="https://doi.org/10.1139/f03-042">https://doi.org/10.1139/f03-042</a>.
+</div>
+<div id="ref-targets" class="csl-entry" role="listitem">
+Landau, William Michael. 2021. <span>‘The Targets r Package: A Dynamic Make-Like Function-Oriented Pipeline Toolkit for Reproducibility and High-Performance Computing’</span>. <em>Journal of Open Source Software</em> 6 (57): 2959. <a href="https://doi.org/10.21105/joss.02959">https://doi.org/10.21105/joss.02959</a>.
 </div>
 <div id="ref-macnaughton_using_2019" class="csl-entry" role="listitem">
 Macnaughton, Camille J., David Deslauriers, Erinn L. Ipsen, Emily Corey, and Eva C. Enders. 2019. <span>‘Using Meta-Analysis to Derive a Respiration Model for <span>Atlantic</span> Salmon (<span>Salmo</span> Salar) to Assess Bioenergetics Requirements of Juveniles in Two <span>Canadian</span> Rivers’</span>. <em>Canadian Journal of Fisheries and Aquatic Sciences</em> 76 (12): 2225–34. <a href="https://doi.org/10.1139/cjfas-2018-0436">https://doi.org/10.1139/cjfas-2018-0436</a>.
@@ -758,6 +857,12 @@ Vadboncoeur, Émile, Charlotte Nelson, Jennifer R. Hall, Kathy A. Clow, Rebeccah
 </div>
 <div id="ref-van_tien_development_2016" class="csl-entry" role="listitem">
 Van Tien, Nguyen, Dam Thi My Chinh, Tran Thi Mai Huong, Truong Ha Phuong, Simon Irvin, and Brett Glencross. 2016. <span>‘Development of a Nutritional Model to Define the Energy and Protein Requirements of Cobia, <em><span>Rachycentron</span> Canadum</em>’</span>. <em>Aquaculture</em> 463 (October): 193–200. <a href="https://doi.org/10.1016/j.aquaculture.2016.05.037">https://doi.org/10.1016/j.aquaculture.2016.05.037</a>.
+</div>
+<div id="ref-furrr" class="csl-entry" role="listitem">
+Vaughan, Davis, and Matt Dancho. 2022. <em>Furrr: Apply Mapping Functions in Parallel Using Futures</em>. <a href="https://CRAN.R-project.org/package=furrr">https://CRAN.R-project.org/package=furrr</a>.
+</div>
+<div id="ref-tidyverse" class="csl-entry" role="listitem">
+Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy D’Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019. <span>‘Welcome to the <span class="nocase">tidyverse</span>’</span>. <em>Journal of Open Source Software</em> 4 (43): 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>.
 </div>
 <div id="ref-tinytex" class="csl-entry" role="listitem">
 Xie, Yihui. 2017. <span>‘Tinytex: Helper Functions to Install and Maintain TeX Live, and Compile LaTeX Documents’</span>. <a href="https://cran.r-project.org/web/packages/tinytex">https://cran.r-project.org/web/packages/tinytex</a>.
@@ -1185,7 +1290,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"selector":".lightbox","descPosition":"bottom","loop":false,"openEffect":"zoom","closeEffect":"zoom"});
+<script>var lightboxQuarto = GLightbox({"selector":".lightbox","openEffect":"zoom","closeEffect":"zoom","descPosition":"bottom","loop":false});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {

@@ -124,12 +124,12 @@ affiliations:
 # key-points:
 #   - Point 1
 #   - Point 2
-bibliography: ["../resources/refs.bib", "../resources/manual-refs.bib"]
+bibliography: ["refs.bib", "manual-refs.bib"]
 
 format: 
   html:
     theme: simplex
-    css: ["../resources/extra.css"]
+    css: ["extra.css"]
     code-fold: true
     code-overflow: wrap
     toc: true
@@ -147,9 +147,9 @@ format:
   #   link-citations: true
   #   keep-tex: true
   #   template-partials:
-  #     - "../resources/title.tex"
+  #     - "title.tex"
   #   include-in-header:
-  #     file: "../resources/header_extra.tex"
+  #     file: "header_extra.tex"
 
 filters:
   - acronyms
@@ -171,8 +171,9 @@ editor: source
 
 ```{r setup}
 #| include: false
-#| cache: false
 #| eval: true
+#| cache: false
+#| message: false
 
 library(magrittr)
 library(dplyr)
@@ -201,6 +202,10 @@ library(conflicted)
 library(lubridate)
 conflicts_prefer(dplyr::select(), dplyr::filter(), dplyr::intersect(), .quiet = T)
 # This markdown uses TinyTex - install with tinytex::install_tinytex()
+
+install_unit("gfish")
+install_unit("kgfish", "1000 gfish")
+install_unit("tfish", "1000 kgfish")
 ```
 
 ```{r global-variables}
@@ -221,6 +226,7 @@ output_species_data_path <- here() %>% file.path("outputs", "species_data")
 output_sens_data_path <- here() %>% file.path("outputs", "sensitivity_data")
 output_farm_growth_data_path <- here() %>% file.path("outputs", "farm_growth_data")
 output_cohort_growth_data_path <- here() %>% file.path("outputs", "cohort_growth_data")
+data_analysis_path <- here() %>% file.path("outputs", "data_analysis")
 
 # Filenames
 farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
@@ -278,14 +284,22 @@ To address this gap, we use existing maps of mariculture location with a bioener
 
 # Methods
 
+```{r farm info}
+#| code-summary: Get general farm info
+
+farms_to_omit <- file.path(input_farm_coords_path, "atlantic_salmon_farms_to_omit.qs") %>% qs::qread()
+farm_ts_data <- file.path(output_farm_data_path, "farm_ts_data.qs") %>% qs::qread()
+farm_coords <- file.path(output_farm_data_path, "farm_coords.qs") %>% qs::qread() %>% 
+    mutate(hemisphere = case_when(lat < 0 ~ "S", T ~ "N") %>% as.factor()) 
+
+farms_geometry <- file.path(output_farm_data_path, "farm_geometry.qs") %>% qs::qread() %>% 
+  rename(farm_ID = farm_id)
+```
+
 ## Farm temperature forcings
 
 ```{r farm temperature data}
-farms_to_omit <- file.path(input_farm_coords_path, "atlantic_salmon_farms_to_omit.qs") %>% qs::qread()
-farm_ts_data <- file.path(output_farm_data_path, "farm_ts_data.qs") %>% qs::qread()
-farm_coords <- file.path(output_farm_data_path, "farm_coords.qs") %>% qs::qread()
-farms_geometry <- file.path(output_farm_data_path, "farm_geometry.qs") %>% qs::qread() %>% 
-  rename(farm_ID = farm_id)
+#| code-summary: Get the farm temperature forcings
 
 farm_temp_means <- farm_ts_data %>% 
   group_by(farm_ID) %>% 
@@ -296,12 +310,16 @@ farm_temp_means <- farm_ts_data %>%
 
 overall_mean <- mean(farm_temp_means$mean_temp)
 overall_sd <- sd(farm_temp_means$mean_temp)
+
+rm(farm_ts_data)
 ```
 
-Mean daily temperatures at the farms globally ranged from  from `r round(min(farm_temp_means$mean_temp), 1)`$^{\circ}$ to `r round(max(farm_temp_means$mean_temp), 1)`$^{\circ}$, with an overall mean of `r round(overall_mean, 1)`$^{\circ}$ ($\pm$ `r round(overall_sd, 1)` SD)
+Mean daily temperatures at the farms globally ranged from  from `r round(min(farm_temp_means$mean_temp), 1)`$^{\circ}$ to `r round(max(farm_temp_means$mean_temp), 1)`$^{\circ}$, with an overall mean of `r round(overall_mean, 1)`$^{\circ}$ ($\pm$ `r round(overall_sd, 1)` SD).
+Farms with a mean temperature of $\leq 6^\circ$C were excluded (`r as.integer(length(farms_to_omit))` farms). The total number of farms included in this analysis was therefore `r nrow(farm_temp_means)`.
 
 ```{r fig-farm-mean-temps}
-#| fig-cap: Options for showingf arm site mean temperatures. (Top left) Mean temperature by latitude across countries. (Top right) Distribution of mean temperatures by hemisphere. (Bottom) Global distribution of mean temperatures.
+#| fig-cap: |
+#|   Potential options for showing farm site mean temperatures. Top left: Mean temperature by latitude across countries. Top right: Frequency distribution of mean temperatures by hemisphere. Bottom: global distribution of mean temperatures.
 #| fig-height: 6
 #| fig-width: 6
 
@@ -344,12 +362,11 @@ $$
 Where $w=$ is wet weight (t), $t=$ time (d), $A=$ anabolic rate (J t$^{-1}$), $C=$ the catabolic rate (J t$^{-1}$), $\epsilon=$ energy density of body tissues (J t$^{-1}$). 
 Individual models were then upscaled using monte-carlo simulations to simulate size structure in a population. Size differences were achieved through different initial starting weights and ingestion rates for different finfish species. All individuals have a fixed mortality rate to simulate stocking and harvesting. 
 
-* Farms with a mean temperature of $\leq 6^\circ$C were excluded - a total of `r as.integer(length(farms_to_omit))` farms.
-
 [Need to put the cohort concept (and harvest timing) in here.]{.aside}
 
 ```{r fig-cohorts}
 #| fig-cap: Example of cohorts
+#| eval: false
 
 fnms <- output_cohort_growth_data_path %>% 
   list.files(full.names = T) %>% 
@@ -405,6 +422,12 @@ df %>%
   theme_classic() +
   theme(text = element_text(colour = "black", family = "serif", size = 12))
 ```
+
+## Production parameters
+
+* Salmon cohorts were always grown for 548 days
+* Salmon cohorts were put out in annually Spring, on day `r unique(farm_coords$t_start[farm_coords$lat < 0])` when farm latitude < 0 and day `r unique(farm_coords$t_start[farm_coords$lat > 0])` when farm latitude > 0.
+* Cohorts were put out every year, such that there was an annual overlap of 183 days where one cohort was nearing harvest and another was being initialised. 
 
 ## Parameterisation for Atlantic salmon
 
@@ -475,7 +498,7 @@ Table @tbl-params shows the parameter values used to model the growth of farmed 
 
 ### Testing parameter sensitivity
 
-Parameter sensitivity was tested by varying each parameter in Table @tbl-params by $\pm 10$% and calculating sensitivity as:
+Parameter sensitivity was tested by varying each parameter in @tbl-params by $\pm 10$% and calculating sensitivity as:
 
 $$
 S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}
@@ -514,7 +537,7 @@ Looking at @fig-param-sens-weight:
 sens_data %>% 
   ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens - sd_sens, ymax = mean_sens + sd_sens, fill = measure)) +
   geom_col(position = position_dodge(), width = 0.95, colour = "black", alpha = 0.75) +
-  geom_errorbar(position = position_dodge(width = 0.95), width = 0.3) +
+  # geom_errorbar(position = position_dodge(width = 0.95), width = 0.3) +
   geom_hline(aes(yintercept = 0), linetype = "dashed") +
   scale_y_continuous(breaks = seq(-30,30,5), limits = c(-10,30)) +
   scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
@@ -554,54 +577,222 @@ file.path(output_farm_data_path, "farm_harvest_size.qs") %>%
 
 This means that the population estimates aren't actual fish numbers, they're just a method that allows each farm location to approximate of the correct tonnage produced while to allowing comparisons between the different feeds. 
 
+## Biomass produced
+
+```{r biomass produced}
+#| fig-cap: Modelled vs observed salmon biomass produced
+
+coho_biom <- qs::qread(file.path(data_analysis_path, "biomass_produced_comparison.qs"))
+
+coho_biom %>% 
+  ggplot(aes(x = tonnes_per_farm, y = mean, colour = country)) +
+  geom_point(size = 2.5) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  theme_classic() +
+  scale_x_continuous(limits = c(0,1700)) +
+  scale_y_continuous(limits = c(0,1700)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "Modelled biomass produced (t)", x = "Observed biomass produced (t)") +
+  theme_classic() +
+  theme(legend.position = "top", legend.title = element_blank())
+```
+
 ## Species vulnerability layers
 
 # Results
 
-* Main point is the difference between feeds. 
-* This should be expressed in t/t salmon, so farm biomass is also important.
+* Main point is the difference between feeds (kg/t salmon).
 * Also interesting to see if difference between feeds varies geographically (correlates with mean/median/max temperature?)
 
-# Biomass produced
+## Excreted faeces
 
-```{r biomass produced}
-fnms <- farm_outputs %>% 
-  list.files(full.names = T) %>% 
-  str_subset("biomass")
+```{r excreted faeces data}
+#| code-summary: Load and prep all excretion data
 
-dfs <- list()
-for (fid in seq_along(fnms)) {
-  dfs[[fid]] <- fnms[fid] %>% 
-    read_parquet() %>% 
-    filter(days == max(days)) %>% 
-    mutate(mean = mean %>% set_units("g") %>% set_units("t"),
-           sd = sd %>% set_units("g") %>% set_units("t"))
-}
-df <- bind_rows(dfs)
-df_mean <- df %>% 
-  select(-c(days, sd)) %>% 
-  pivot_wider(names_from = feed, values_from = mean) %>% 
-  mutate(future_diff = (future - reference)/reference,
-         past_diff = (past - reference)/reference) %>% 
-  select(-c(reference, past, future)) %>% 
-  pivot_longer(names_to = "feed", values_to = "mean", cols = c(future_diff, past_diff))
-df_sd <- df %>% 
-  select(-c(days, mean)) %>% 
-  pivot_wider(names_from = feed, values_from = sd) %>% 
-  mutate(future_diff = (future - reference)/reference,
-         past_diff = (past - reference)/reference) %>% 
-  select(-c(reference, past, future)) %>% 
-  pivot_longer(names_to = "feed", values_to = "sd", cols = c(future_diff, past_diff))
-df <- merge(df_mean, df_sd, by = c("farm_ID", "feed"))
+fnms <- farmrun_reference_files <- file.path(output_cohort_growth_data_path) %>% 
+  list.files(full.names = T)
+
+# qs::qread(fnms[1]) %>% names()
+weight <- purrr::map_dfr(fnms, function(fnm) {qs::qread(fnm)[["weight_stat"]]})
+biomass <- purrr::map_dfr(fnms, function(fnm) {qs::qread(fnm)[["biomass_stat"]]})
+
+# The following reads in all the total excretion data, pairs it with the farm coordinates, and converts the mean and sd values into values/biomass
+excr_total <- purrr::map_dfr(fnms, function(fnm) {qs::qread(fnm)[["total_excr_stat"]]}) %>% 
+  merge(farm_coords, by = "farm_ID") %>% 
+  merge(biomass, by = c("farm_ID", "feed", "t")) %>% 
+  mutate(sd.x = sd.x/mean.x,
+         sd.y = sd.x/mean.y,
+         mean.x = set_units(mean.x, "g d-1"),
+         mean.y = set_units(mean.y, "gfish"),
+         mean = mean.x/mean.y,
+         sd_pc = sqrt(sd.x^2+sd.y^2),
+         sd = sd_pc * mean,
+         prod_day = case_when(hemisphere == "S" ~ t-(274+365)+1, T ~ t-(121+365)+1)) %>% 
+  select(-c(t_start, t_end, mean.x, mean.y, sd.x, sd.y))
+
+excr_P <- purrr::map_dfr(fnms, function(fnm) {qs::qread(fnm)[["P_excr_stat"]]}) %>% 
+  merge(farm_coords, by = "farm_ID") %>% 
+  merge(biomass, by = c("farm_ID", "feed", "t")) %>% 
+  mutate(sd.x = sd.x/mean.x,
+         sd.y = sd.x/mean.y,
+         mean.x = set_units(mean.x, "g d-1"),
+         mean.y = set_units(mean.y, "gfish"),
+         mean = mean.x/mean.y,
+         sd_pc = sqrt(sd.x^2+sd.y^2),
+         sd = sd_pc * mean) %>% 
+  select(-c(t_start, t_end, mean.x, mean.y, sd.x, sd.y))
+
+excr_L <- purrr::map_dfr(fnms, function(fnm) {qs::qread(fnm)[["L_excr_stat"]]}) %>% 
+  merge(farm_coords, by = "farm_ID") %>% 
+  merge(biomass, by = c("farm_ID", "feed", "t")) %>% 
+  mutate(sd.x = sd.x/mean.x,
+         sd.y = sd.x/mean.y,
+         mean.x = set_units(mean.x, "g d-1"),
+         mean.y = set_units(mean.y, "gfish"),
+         mean = mean.x/mean.y,
+         sd_pc = sqrt(sd.x^2+sd.y^2),
+         sd = sd_pc * mean) %>% 
+  select(-c(t_start, t_end, mean.x, mean.y, sd.x, sd.y))
+
+excr_C <- purrr::map_dfr(fnms, function(fnm) {qs::qread(fnm)[["C_excr_stat"]]}) %>% 
+  merge(farm_coords, by = "farm_ID") %>% 
+  merge(biomass, by = c("farm_ID", "feed", "t")) %>% 
+  mutate(sd.x = sd.x/mean.x,
+         sd.y = sd.x/mean.y,
+         mean.x = set_units(mean.x, "g d-1"),
+         mean.y = set_units(mean.y, "gfish"),
+         mean = mean.x/mean.y,
+         sd_pc = sqrt(sd.x^2+sd.y^2),
+         sd = sd_pc * mean) %>% 
+  select(-c(t_start, t_end, mean.x, mean.y, sd.x, sd.y))
 ```
 
-# Locations
+### Total amount
 
+```{r fig-total-excr-diff_perc, class.chunk = "aside"}
+#| fig-cap: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion.
+
+df <- excr_total %>% 
+  select(-c(sd, sd_pc)) %>% 
+  pivot_wider(names_from = "feed", values_from = "mean") %>% 
+  mutate(past = past-reference,
+         future = future-reference) %>% 
+  pivot_longer(names_to = "feed", values_to = "diff", cols = c(past, future), names_transform = list(feed = as.factor)) %>% 
+  mutate(reference = set_units(reference, "g kgfish-1 d-1"),
+         diff_perc = drop_units(diff/reference)) 
+
+summ <- df %>%
+  group_by(hemisphere, feed) %>% 
+  reframe(mean = 100*meanna(diff_perc) %>% round(3),
+          min = 100*meanna(diff_perc) %>% round(3),
+          max = 100*maxna(diff_perc) %>% round(3))
+
+df %>% 
+  ggplot(aes(x = reference, y = diff_perc, colour = hemisphere)) +
+  geom_point() + 
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_grid(~feed) +
+  theme_classic()
+```
+
+There was very little variation in the percentage difference (from reference) excreted with increasing overall excretion (@fig-total-excr-diff_perc), or through time (@fig-total-excr-diff_perc_2). 
+The difference in total excretion for the past feed ranged from 
+`r summ$min[summ$feed == "past"]`-`r summ$max[summ$feed == "past"]`% across all farms globally, and for the future feed ranged from 
+`r summ$min[summ$feed == "future"]`-`r summ$max[summ$feed == "future"]`%. 
+
+```{r fig-total-excr-diff_perc_2, class.chunk = "aside"}
+#| fig-cap: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+
+df %>% 
+  group_by(prod_day, feed, hemisphere) %>% 
+  reframe(diff_perc_mean = meanna(diff_perc),
+          diff_perc_sd = sdna(diff_perc)) %>% 
+  ggplot(aes(x = prod_day, y = diff_perc_mean, ymin = diff_perc_mean-diff_perc_sd, ymax = diff_perc_mean+diff_perc_sd, 
+             colour = as.factor(hemisphere), fill = as.factor(hemisphere))) +
+  geom_line() + 
+  geom_ribbon(alpha = 0.25) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_grid(~feed) +
+  theme_classic()
+```
+
+However, the actual difference in excreted faeces varied by feed, time in the production cycle, and location of the farm [@fig-total-excr-act_diff].
+
+```{r fig-total-excr-act_diff}
+#| fig-width: 6.25
+#| fig-height: 5.25
+#| fig-cap: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+
+df <- excr_total %>% 
+  select(-c(sd, sd_pc)) %>% 
+  pivot_wider(names_from = "feed", values_from = "mean") %>% 
+  mutate(past = past-reference,
+         future = future-reference) %>% 
+  pivot_longer(names_to = "feed", values_to = "diff", cols = c(past, future), names_transform = list(feed = as.factor)) %>% 
+  mutate(reference = set_units(reference, "g kgfish-1 d-1"),
+         diff = set_units(diff, "kg tfish-1 d-1")) 
+
+summ <- df %>%
+  group_by(hemisphere, feed) %>% 
+  reframe(mean = meanna(diff) %>% round(3),
+          min = meanna(diff) %>% round(3),
+          max = maxna(diff) %>% round(3))
+
+df %>% 
+  group_by(hemisphere, feed, prod_day) %>% 
+  reframe(mean_diff = meanna(diff),
+          sd_diff = sdna(diff) %>% set_units("kg tfish-1 d-1")) %>% 
+  ggplot(aes(x = prod_day, y = mean_diff, ymin = mean_diff-sd_diff, ymax = mean_diff+sd_diff, colour = hemisphere, fill = hemisphere)) +
+  geom_line(linewidth = 0.75) +
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(~feed) +
+  theme_classic()
+```
+
+
+## Uneaten feed (amount & composition)
+
+## Total nutrients (amount & source)
+
+```{r patchwork map}
+worldmap <- ne_countries(scale = "large", returnclass = "sf")
+
+AUS_bounds <- c(144, 149.5, -39.75, -44)
+CAN1_bounds <- c(-132, -122, 47.75, 54.25)
+CAN2_bounds <- c(-70, -54, 43, 48.5)
+CHI_bounds <- c(-77.5, -62.5, -56, -25)
+EUR_bounds <- c(-26, 30, 51, 71)
+
+p_ALL <- ggplot(data = worldmap, aes(geometry = geometry)) +
+  geom_sf(fill = "white", color = "dimgray") +
+  geom_sf(data = farm_temp_means, aes(colour = mean_temp), size = 1.5) +
+  coord_sf() +
+  theme_classic()
+
+no_margins <- function() {
+  theme(legend.position = "none", 
+        plot.margin = margin(),
+        axis.title = element_blank())
+}
+
+p_Aus <- p_ALL + coord_sf(xlim = AUS_bounds[1:2], ylim = AUS_bounds[3:4], expand = FALSE) + no_margins()
+p_Eur <- p_ALL + coord_sf(xlim = EUR_bounds[1:2], ylim = EUR_bounds[3:4], expand = FALSE) + no_margins()
+p_Chi <- p_ALL + coord_sf(xlim = CHI_bounds[1:2], ylim = CHI_bounds[3:4], expand = FALSE) + no_margins()
+p_Can <- p_ALL + coord_sf(xlim = CAN1_bounds[1:2], ylim = CAN1_bounds[3:4], expand = FALSE) + no_margins()
+p_USA <- p_ALL + coord_sf(xlim = CAN2_bounds[1:2], ylim = CAN2_bounds[3:4], expand = FALSE) + no_margins()
+
+subplot <- (p_Eur/p_Aus) + plot_layout(heights = c(1.5, 1))
+finalplot <- (p_Can + p_USA) / (p_Chi + subplot) + 
+  plot_layout(widths = c(1, 1.5), heights = c(1, 2)) &
+  theme(plot.margin = margin(0, 0, 0, 0))
+finalplot
+```
 
 
 # Statistical analysis & code availability
 
-All analysis was conducted in R version `r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
+All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
+Major packages used include terra [@terra], targets [@targets], future [@future], furrr [@furrr], and the tidyverse [@tidyverse].
 For a full list of R packages used see the lockfile on [Github](https://www.github.com).
 This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
 
