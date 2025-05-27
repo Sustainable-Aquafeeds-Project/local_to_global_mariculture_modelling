@@ -25,7 +25,7 @@ conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 # plan(multisession, workers = parallelly::availableCores()-1)
 
 # Basic configuration
-overwrite <- T
+overwrite <- F
 this_species <- "atlantic_salmon"
 
 # Directory structure
@@ -203,16 +203,18 @@ reference_feed <- feed_params[["reference"]]
 factors <- c(0.9, 1, 1.1)
 sens_params_names <- names(sens_all_params)
 
+Sys.setenv(TAR_PROJECT = "project_sensitivities")
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
 targets::tar_make(
-  store = "_targets_sensitivities",
-  script = "_targets_sensitivities.R",
   reporter = "balanced",
   callr_function = NULL
 )
 
 overwrite <- T
-sens_results <- tar_read(tar_sens_results, store = "_targets_sensitivities") %>% 
+sens_results <- rbind(
+  tar_read(tar_sens_results_spec),
+  tar_read(tar_sens_results_pop)
+  ) %>% 
   mutate(measure = as.factor(measure),
          adj_param = factor(adj_param, levels = sens_params_names))
 sens_measures <- levels(sens_results$measure)
