@@ -5,7 +5,7 @@ library(parallelly)
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "tibble"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 10),
+  controller = crew_controller_local(workers = 16),
   workspace_on_error = TRUE
 )
 
@@ -19,8 +19,7 @@ list(
   tar_target(tar_param_names_pop, c("meanW", "deltaW", "meanImax", "deltaImax", "overFmean", "overFdelta")),
   tar_target(
     tar_param_names_spec,
-    sens_params_names[!sens_params_names %in% tar_param_names_pop] %>% 
-    sample(4)
+    sens_params_names[!sens_params_names %in% tar_param_names_pop]
   ),
   
   tar_target(

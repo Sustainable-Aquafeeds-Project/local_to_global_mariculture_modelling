@@ -116,7 +116,6 @@ stat_names <- c("weight_stat", "dw_stat", "water_temp_stat", "T_response_stat", 
 Sys.setenv(TAR_PROJECT = "project_farmruns")
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
 targets::tar_make(
-  names = contains("farmrun"), 
   reporter = "balanced",
   callr_function = NULL,
   seconds_meta_append = 90

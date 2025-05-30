@@ -4,7 +4,7 @@ library(crew)
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "tibble"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 16),
+  controller = crew_controller_local(workers = 10),
   workspace_on_error = TRUE
 )
 
@@ -27,7 +27,7 @@ list(
 # Prepare parameters ----------------------------------------------------------------------------------------------
   tar_target(
     tar_farm_IDs,
-    farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) #%>% sample(500)
+    farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) #%>% sample(750)
   ),
 
   tar_target(
