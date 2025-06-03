@@ -206,7 +206,7 @@ sens_params_names <- names(sens_all_params)
 Sys.setenv(TAR_PROJECT = "project_sensitivities")
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
 targets::tar_make(
-  reporter = "balanced",
+  names = contains("tar_sens_run_spec_"),
   callr_function = NULL
 )
 

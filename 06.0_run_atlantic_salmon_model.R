@@ -36,16 +36,11 @@ source("04_extracting_temperatures.R")
 ## Individuals ----------------------------------------------------------------------------------------------------
 source("06.1_run_individual.R")
 
-### Harvest size ---------------------------------------------------------------------------------------------------
-tar_read(farm_harvest_size, store = "04_targets_individual") %>% 
-  write_parquet(file.path("data", "atlantic_salmon", "data_products", "harvest_size.parquet"))
-
 ## Farm growth ----------------------------------------------------------------------------------------------------
 source("06.2_run_farms.R")
 
 # source("10_process_targets_outputs.R")
 # Analysis --------------------------------------------------------------------------------------------------------
-
 ## Combining previously processed data ----------------------------------------------------------------------------
 Sys.setenv(TAR_PROJECT = "project_farm")
 
