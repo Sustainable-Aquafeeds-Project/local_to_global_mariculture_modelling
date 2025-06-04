@@ -159,7 +159,7 @@ execute:
   echo: false
   warning: false
   message: false
-  cache: false
+  cache: true
   freeze: auto
   
 knitr: 

@@ -3,7 +3,7 @@ project:
   output-dir: docs
 
 manuscript:
-  article: _manuscript.qmd
+  article: manuscript.qmd
   # manuscript-url: # The deployed url for this manuscript
 
 # acronyms:
