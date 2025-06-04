@@ -48,7 +48,7 @@ dir.create(data_analysis_path)
 # * Main point is the difference between feeds. 
 # * This should be expressed in t/t salmon, so farm biomass is also important. 
 # * Also interesting to see if difference between feeds varies geographically (correlates with mean/median/max temperature?)
-remove_unit(symbol = "g_fish", name = "grams of salmon biomass")
+remove_unit("g_fish")
 remove_unit("kg_fish")
 remove_unit("t_fish")
 install_unit(symbol = "g_fish", name = "grams of salmon biomass")
@@ -80,8 +80,8 @@ ggplot(coho_biom, aes(x = tonnes_per_farm, y = mean, colour = country)) +
   geom_point() +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
   theme_classic() +
-  scale_x_continuous(limits = c(0,1700)) +
-  scale_y_continuous(limits = c(0,1700)) +
+  # scale_x_continuous(limits = c(0,1700)) +
+  # scale_y_continuous(limits = c(0,1700)) +
   labs(y = "Modelled biomass produced (t)", x = "Observed biomass produced (t)")
 
 ggsave(file.path(data_analysis_path, "biomass_produced_comparison_plot.png"))
