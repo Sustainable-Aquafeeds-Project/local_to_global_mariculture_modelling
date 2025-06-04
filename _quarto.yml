@@ -6,14 +6,14 @@ manuscript:
   article: _manuscript.qmd
   # manuscript-url: # The deployed url for this manuscript
 
-acronyms:
-  insert_loa: false
-  keys:
-    - shortname: IMTA
-      longname: Integrated Multi-Trophic Aquaculture
-    - shortname: SHOC
-      longname: Sparse Hydrodynamic Ocean Code
-    - shortname: CONNIE3
-      longname: CONNectivity InterfacE, version 3
+# acronyms:
+#   insert_loa: false
+#   keys:
+#     - shortname: IMTA
+#       longname: Integrated Multi-Trophic Aquaculture
+#     - shortname: SHOC
+#       longname: Sparse Hydrodynamic Ocean Code
+#     - shortname: CONNIE3
+#       longname: CONNectivity InterfacE, version 3
   
 notebook-links: false
