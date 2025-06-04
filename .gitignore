@@ -49,3 +49,8 @@ rsconnect/
 # Confidential data
 XX_confidential/*
 
+# Quarto temporary files
+/.quarto/
+_manuscript.rmarkdown
+_manuscript_files/
+_manuscript_cache/
