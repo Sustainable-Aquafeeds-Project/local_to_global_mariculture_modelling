@@ -1,0 +1,1010 @@
+---
+title: "Local to global N input modelling"
+# Author roles: "writing – original draft", "writing – review & editing", "formal analysis", "funding acquisition", "conceptualization", "data curation", "investigation", "methodology", "project administration", "resources", "software", "supervision", "validation", "visualization"
+author:
+  - name: Tormey Reimer
+    orcid: 0000-0002-5983-2798
+    corresponding: true
+    email: tormey.reimer@utas.edu.au
+    role: 
+      - methodology: supporting
+      - analysis: lead
+      - writing: lead
+    affil-id: [1,2]
+  - name: Richard S. Cottrell
+    orcid: 0000-0002-6499-7503
+    corresponding: false
+    roles: 
+      - conceptualization: lead
+      - methodology: lead
+      - writing: supporting
+    # affil-id: [1,2]
+  - name: Alexandra Johne
+    orcid: 0000-0002-2816-7983
+    corresponding: false
+    roles: 
+      - methodology: supporting
+    affil-id: 3
+  - name: Sowdamini Sesha Prasad
+    # orcid: 
+    corresponding: false
+    roles: 
+      - methodology: supporting
+    # affil-id: [3,2]
+  - name: Marceau Cormery
+    # orcid: 
+    corresponding: false
+    roles: 
+      - methodology: supporting
+    # affil-id: [3,2]
+  - name: Gage Clawson
+    # orcid: 
+    corresponding: false
+    roles: 
+      - methodology: supporting
+    # affil-id: [3,2]
+  - name: Scott Hadley
+    # orcid: 
+    corresponding: false
+    roles: 
+      - methodology: supporting
+    # affil-id: [3,2]
+  - name: Helen Hamilton
+    # orcid: 
+    corresponding: false
+    roles: 
+      - conceptualization: supporting
+    # affil-id: [3,2]
+  - name: Benjamin S. Halpern
+    # orcid: 
+    corresponding: false
+    roles: 
+      - conceptualization: supporting
+    # affil-id: [3,2]
+  - name: Catriona Macleod
+    # orcid: 
+    corresponding: false
+    roles: 
+      - conceptualization: supporting
+    # affil-id: [3,2]
+  - name: Camille White
+    # orcid: 
+    corresponding: false
+    roles: 
+      - conceptualization: supporting
+    # affil-id: [3,2]
+  - name: Julia L. Blanchard
+    # orcid: 
+    corresponding: false
+    roles: 
+      - conceptualization: supporting
+      - methodology: supporting
+      - analysis: supporting
+      - editing: supporting
+    # affil-id: [3,2]
+    
+affiliations:
+  - id: 1
+    name: Institute for Marine and Antarctic Studies
+    group: Fisheries & Aquaculture
+    address: 29 Nubeena Crescent
+    city: Taroona
+    region: TAS
+    country: Australia
+    postal-code: 7053
+    url: https://www.imas.utas.edu.au/
+  - id: 2
+    name: Centre for Marine Socioecology
+    url: https://marinesocioecology.org/
+  - id: 1
+    name: Institute for Marine and Antarctic Studies
+    group: Ecology & Biodiversity
+    # address: 29 Nubeena Crescent
+    # city: Taroona
+    # region: TAS
+    # country: Australia
+    # postal-code: 7053
+    url: https://www.imas.utas.edu.au/
+  # - id: 3
+  #   name: Heriott-Watt University, Institute for Life and Earth Sciences
+  #   department: School of Energy, Geoscience, Infrastructure and Society
+  #   address: Franklin Road
+  #   city: Stromness
+  #   region: Orkney
+  #   country: United Kingdom
+  #   postal-code: KW16 3AN
+  #   url: https://www.hw.ac.uk/
+# keywords:
+#   - keyword
+#   - keyword
+# abstract: |
+#   Any new aquaculture venture...
+# plain-language-summary: |
+#   Plain language summary goes here....
+# key-points:
+#   - Point 1
+#   - Point 2
+bibliography: ["refs.bib", "manual-refs.bib"]
+
+format: 
+  html:
+    theme: simplex
+    css: ["extra.css"]
+    code-fold: true
+    code-overflow: wrap
+    toc: true
+    toc-expand: true
+    toc-location: left
+    lang: en-GB
+    grid:
+      sidebar-width: 350px
+      body-width: 1200px
+      margin-width: 250px
+      gutter-width: 2em
+  # pdf:
+  #   papersize: a4
+  #   linestretch: 1.15
+  #   link-citations: true
+  #   keep-tex: true
+  #   template-partials:
+  #     - "title.tex"
+  #   include-in-header:
+  #     file: "header_extra.tex"
+
+# filters:
+#   - acronyms
+  
+execute:
+  eval: true
+  echo: false
+  warning: false
+  message: false
+  cache: false
+  freeze: auto
+  
+knitr: 
+  opts_chunk:
+    fig.align: center
+    fig.width: 8.5
+
+editor: source
+---
+
+```{r setup}
+#| include: false
+#| eval: true
+#| cache: false
+#| message: false
+
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(ggh4x)
+library(here)
+library(ggpubr)
+library(patchwork)
+library(qs)
+library(arrow)
+library(targets)
+library(sf)
+library(terra)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(rnaturalearthhires)
+library(dtplyr)
+library(furrr)
+library(RColorBrewer)
+library(purrr)
+library(future)
+library(readxl)
+library(units)
+library(conflicted)
+library(lubridate)
+library(RColorBrewer)
+conflicts_prefer(dplyr::select(), dplyr::filter(), dplyr::intersect(), .quiet = T)
+# This markdown uses TinyTex - install with tinytex::install_tinytex()
+
+install_unit("gfish")
+install_unit("kgfish", "1000 gfish")
+install_unit("tfish", "1000 kgfish")
+```
+
+```{r global-variables}
+#| include: false
+
+source(here("00_model_functions.R"))
+
+# Input paths
+input_farm_coords_path <- here() %>% file.path("data", "_general_data", "farm_locations")
+input_farm_sst_path <- here() %>% file.path("data", "_general_data", "SST")
+input_species_param_path <- here() %>% file.path("data", "atlantic_salmon", "params")
+input_feed_profile_path <- here() %>% file.path("data", "_general_data", "diets")
+
+# Output paths
+output_farm_data_path <- here() %>% file.path("outputs", "farm_data")
+output_species_data_path <- here() %>% file.path("outputs", "species_data")
+output_sens_data_path <- here() %>% file.path("outputs", "sensitivity_data")
+output_farm_growth_data_path <- here() %>% file.path("outputs", "farm_growth_data")
+output_cohort_growth_data_path <- here() %>% file.path("outputs", "cohort_growth_data")
+data_analysis_path <- here() %>% file.path("outputs", "data_analysis")
+
+# Filenames
+farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
+species_params_file <- file.path(output_species_data_path, "species_params.qs")
+pop_params_file <- file.path(output_species_data_path, "pop_params.qs")
+feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
+sens_params_file <- file.path(output_species_data_path, "sens_params.qs")
+sens_results_files <- file.path(output_sens_data_path) %>% str_subset("results")
+
+species_params <- qread(species_params_file)
+pop_params <- qread(pop_params_file)
+```
+
+# Introduction
+
+[This intro is copied verbatim from work done during one of the early workshops.]{.aside}
+
+Aquaculture is now the dominant form of aquatic animal food (herein ‘seafood’) production and is expected to be the primary way we meet future seafood demand. Freshwater systems will likely continue to provide the majority of farmed seafood but marine aquaculture is also poised to expand substantially in numerous areas. Farmed marine fish and invertebrates are produced near exclusively in coastal waters, and nearly three quarters of this production is dependent on human-made feeds. Nearshore locations and feed inputs are necessary to maintain profitable and productive farming operations but coastal aquaculture generates a number of challenges. In the crowded coastal zone, aquaculture operations can conflict with other stakeholder uses such as recreation, fishing, renewable energy, transport, and tourism. 
+And while farming marine fish typically generates a far smaller nutrient footprint than livestock farming, the overt nature of aquaculture in nearshore regions and evidence of  localised nutrient impacts around fish farms remains a primary public and scientific concern. Identifying strategies that reduce ecosystem impacts from fish farm waste therefore represents an important goal for improving marine aquaculture sustainability and maintaining the sector’s social licence to operate. 
+
+Aquaculture feeds represent an important lever for reducing nutrient waste impacts around fish farms. Like all farmed animals, fish and invertebrates must digest the nutrients contained in feeds before they can be used for growth. Any nutrients left undigested are egested as solid waste, and dissolved wastes are excreted as metabolic waste products. Further, some feed inevitably remains uneaten and is lost to the surrounding ecosystem. Particulate organic matter (both feed and faeces) that settles can simplify benthic communities as the oxygen demand from its decomposition drives the production of sulphides that kill less mobile faunal, encouraging a lower diversity of opportunistic scavengers and the growth of bacterial mats (e.g., Beggiatoa spp). Thus, the chemical composition of the ingredients used in aquaculture feeds and their digestibility for the farmed species has significant implications for the nature and reactivity of the waste generate by marine aquaculture.
+
+Firstly the overall volume of nutrient waste is dictated by the nature and intensity of production, that is the farm size, the density of farmed animals and the feed requirements and efficiency of the species grown. SecondlDeposition of waste is heavily influenced by water depth and current speed at the farming site. Once
+
+As farmed fish and invertebrates are fed, whatever	
+
+Nutand its impact on marine ecosystems is influenced by many factors. 
+* Farm size
+* Depth
+* Current speed
+* Benthic impact - sediment type/faunal assemblages/wider marine community
+* High turnover environments - nitrogen enriched areas
+* Feed influences all of these things
+
+The primary source of organic waste from fed aquaculture production comes from the excretion and faeces of the farmed animals and through uneaten feed that dissolves in the water column or settles on the benthos. The nature and impact of this waste are influenced heavily by the composition of the feeds fed to farmed animals. 
+
+## P2
+
+* Waste from aquaculture farms and it’s impact is influenced by many things but the composition of feeds plays a central role.
+* Waste from aquaculture farms has multiple sources. 
+* The primary source of organic waste comes from the faeces and excretion of the fish or invertebrates.
+* Uneaten feed produced another key source.
+* The nature and impact of this waste are influenced heavily by the composition of the feeds fed to farmed animals
+* Many marine fish are naturally carnivorous so diets used to be high in fishmeal and oil but increasing fishmeal and oil prices along with concerns over the sustainability of marine ingredients have led to a reduction in their use across multiple farmed taxa
+* In lieu of fishmeal and oil, many plant-based ingredients such as soy protein concentrate, canola oil, and wheat gluten have replaced them. 
+* Changes in feed composition influences the digestibility of the nutrients held in each feed and can alter the composition of waste.
+* Of particular concern are changes (increases) to the presence of reactive nitrogen and phosphorus in coastal waters that could have an effect on eutrophication. 
+
+## P3
+
+* Whether or not nutrients lead to eutrophication depends on the sensitivity of the receiving environment
+* Ecosystems that are already enriched through natural processes and whose biota is well adapted to substantial fluxes in available nutrients (e.g. upwelling zones, dynamic coastal communities) may be less sensitive while oligotrophic ecosystem are likely to see considerable changes under nutrient enrichment scenarios.
+* To understand the impact of aquaculture waste under present day or future scenarios we need to quantify the volume, nature, and location of mariculture waste and determine the sensitivity of the receiving environments to that waste. Yet only recent estimates even give us the estimated location of marine farms let alone the volume of nature of the waste produced.
+To address this gap, we use existing maps of mariculture location with a bioenergtic model
+
+# Methods
+## Model and approach
+
+[Unfinished. Need to work out how much should be transposed from @baldan_r_2018. One thing that definitely needs to be stated is the individual ingredient (rather than whole food) tracking, the use of cohorts, and the new method for calculating population.]{.aside}
+
+We adapted the methods of @baldan_r_2018 to create a bioenergetic model that simulates individual growth and farm-scale production for Atlantic salmon and the resultant nutrient waste in the form of excess labile nitrogen and phosphorus. 
+The model simulates growth at an individual level, calculating the change in individual weight through time using:
+
+$$
+\frac{dw}{dt} = \frac{A-C}{\epsilon}
+$$
+
+Where $w=$ is wet weight (t), $t=$ time (d), $A=$ anabolic rate (J t$^{-1}$), $C=$ the catabolic rate (J t$^{-1}$), $\epsilon=$ energy density of body tissues (J t$^{-1}$). 
+Individual models were then upscaled using monte-carlo simulations to simulate size structure in a population. Size differences were achieved through different initial starting weights and ingestion rates for different finfish species. All individuals have a fixed mortality rate to simulate stocking and harvesting. 
+
+## Farm temperature forcings
+
+```{r farm info}
+#| code-summary: Get general farm info
+
+farms_to_omit <- file.path(input_farm_coords_path, "atlantic_salmon_farms_to_omit.qs") %>% qs::qread()
+farm_ts_data <- file.path(output_farm_data_path, "farm_ts_data.qs") %>% qs::qread()
+farm_coords <- file.path(output_farm_data_path, "farm_coords.qs") %>% qs::qread() %>% 
+    mutate(hemisphere = case_when(lat < 0 ~ "S", T ~ "N") %>% as.factor()) 
+
+farms_geometry <- file.path(output_farm_data_path, "farm_geometry.qs") %>% qs::qread() %>% 
+  rename(farm_ID = farm_id)
+
+sorted_countries <- farm_coords %>% 
+  merge(farms_geometry, by = "farm_ID") %>% 
+  group_by(country) %>% 
+  reframe(av_lat = mean(lat)) %>% 
+  arrange(-av_lat) %>% 
+  pull(country) %>% 
+  unique()
+```
+
+```{r farm temperature data}
+#| code-summary: Get the farm temperature forcings
+
+farm_temp_means <- farm_ts_data %>% 
+  group_by(farm_ID) %>% 
+  reframe(mean_temp = mean(temp_c)) %>% 
+  merge(farms_geometry, by = "farm_ID") %>% 
+  merge(farm_coords, by = "farm_ID") %>% 
+  dplyr::filter(!farm_ID %in% farms_to_omit)
+
+overall_mean <- mean(farm_temp_means$mean_temp)
+overall_sd <- sd(farm_temp_means$mean_temp)
+
+rm(farm_ts_data)
+```
+
+Mean daily temperatures at the farms globally ranged from  from `r round(min(farm_temp_means$mean_temp), 1)`$^{\circ}$ to `r round(max(farm_temp_means$mean_temp), 1)`$^{\circ}$, with an overall mean of `r round(overall_mean, 1)`$^{\circ}$ ($\pm$ `r round(overall_sd, 1)` SD).
+Farms with a mean temperature of $\leq 6^\circ$C were excluded (`r as.integer(length(farms_to_omit))` farms). The total number of farms included in this analysis was therefore `r nrow(farm_temp_means)`.
+
+```{r fig-farm-mean-temps}
+#| fig-cap: |
+#|   Potential options for showing farm site mean temperatures. Top left: Mean temperature by latitude across countries. Top right: Frequency distribution of mean temperatures by hemisphere. Bottom: global distribution of mean temperatures.
+#| fig-height: 9
+#| fig-width: 9.5
+
+worldmap <- ne_countries(scale = "medium", returnclass = "sf")
+
+p1 <- ggplot(data = worldmap, aes(geometry = geometry)) +
+  geom_sf(fill = "white", color = "dimgray") +
+  geom_sf(data = farm_temp_means, aes(colour = mean_temp), size = 1.5) +
+  coord_sf() +
+  theme_classic() 
+
+p2 <- farm_temp_means %>% 
+  ggplot(aes(y = mean_temp, x = abs(lat), colour = country)) +
+  geom_point(size = 2) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(x = expression("Absolute latitude ("*degree*")"), y = expression("Mean temperature ("*degree*"C)")) +
+  theme_classic() +
+  theme(legend.position = "top", legend.title = element_blank())
+
+p3 <- farm_temp_means %>% 
+  mutate(hemisphere = case_when(lat < 0 ~ "S", T ~ "N")) %>% 
+  ggplot(aes(x = mean_temp, fill = hemisphere)) +
+  geom_histogram(position = "identity", colour = "black", alpha = 0.5, binwidth = 0.5) +
+  labs(x = expression("Mean temperature ("*degree*"C)"), y = "Frequency") +
+  theme_classic() +
+  theme(legend.position = "top", legend.title = element_blank())
+
+(p2 + p3) / p1 + plot_layout(heights = c(1, 1.5))
+```
+
+```{r patchwork map}
+#| fig-cap: |
+#|   Possibly use a patchwork map to show spatial results?
+#| fig-height: 9
+#| fig-width: 9.5
+
+worldmap <- ne_countries(scale = "large", returnclass = "sf")
+
+AUS_bounds <- c(144, 149.5, -39.75, -44)
+CAN1_bounds <- c(-132, -122, 47.75, 54.25)
+CAN2_bounds <- c(-70, -54, 43, 48.5)
+CHI_bounds <- c(-77.5, -62.5, -56, -25)
+EUR_bounds <- c(-26, 30, 51, 71)
+
+p_ALL <- ggplot(data = worldmap, aes(geometry = geometry)) +
+  geom_sf(fill = "white", color = "dimgray") +
+  geom_sf(data = farm_temp_means, aes(colour = mean_temp), size = 1.5) +
+  coord_sf() +
+  theme_classic()
+
+no_margins <- function() {
+  theme(legend.position = "none", 
+        plot.margin = margin(),
+        axis.title = element_blank())
+}
+
+p_Aus <- p_ALL + coord_sf(xlim = AUS_bounds[1:2], ylim = AUS_bounds[3:4], expand = FALSE) + no_margins()
+p_Eur <- p_ALL + coord_sf(xlim = EUR_bounds[1:2], ylim = EUR_bounds[3:4], expand = FALSE) + no_margins()
+p_Chi <- p_ALL + coord_sf(xlim = CHI_bounds[1:2], ylim = CHI_bounds[3:4], expand = FALSE) + no_margins()
+p_Can <- p_ALL + coord_sf(xlim = CAN1_bounds[1:2], ylim = CAN1_bounds[3:4], expand = FALSE) + no_margins()
+p_USA <- p_ALL + coord_sf(xlim = CAN2_bounds[1:2], ylim = CAN2_bounds[3:4], expand = FALSE) + no_margins()
+
+subplot <- (p_Eur/p_Aus) + plot_layout(heights = c(1.5, 1))
+finalplot <- (p_Can + p_USA) / (p_Chi + subplot) + 
+  plot_layout(widths = c(1, 1.5), heights = c(1, 2)) &
+  theme(plot.margin = margin(0, 0, 0, 0))
+finalplot
+```
+
+
+```{r fig-cohorts}
+#| fig-cap: Example of cohorts
+#| eval: false
+
+fnms <- output_cohort_growth_data_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("biomass")
+
+df <- fnms[1] %>% read_parquet() %>% 
+  filter(feed == "reference") %>% 
+  mutate(mean = set_units(mean, "g") %>% set_units("t"),
+         sd = set_units(sd, "g") %>% set_units("t"))
+
+ggplot(df, aes(x = yday, y = mean, ymin = mean-sd, ymax = mean+sd, colour = as.factor(cohort))) +
+  geom_line(linewidth = 0.75) +
+  geom_ribbon(linetype = "dotted", alpha = 0) +
+  scale_x_continuous(breaks = seq(0, 2000, 200)) +
+  labs(y = "Farm biomass", x = "Day of the year") +
+  theme_classic() +
+  theme(legend.position = "none", aspect.ratio = 0.75)
+
+yrs <- max(df$yday)/365
+harvests <- df %>% 
+  group_by(cohort) %>% 
+  reframe(mean = maxna(mean),
+          sd = maxna(sd))
+
+sum(harvests$mean)/yrs
+mean(harvests$sd)/yrs
+```
+
+### Feeding rate
+
+To detail here:
+
+* Functional response to temperature (species-specific)
+* Overfeeding parameters and how they come into play
+* Deminstration of how feeding response and actual food given vary with temperature?
+
+```{r fig-functional-response-to-temperature}
+#| eval: false
+#| fig-cap: Temperature changes in potential ingestion (solid line) and amount of food provided (dashed line), relative to maximum potential ingestion. 
+
+df <- data.frame(water_temp = seq(-5, 26, 0.25))
+df$feeding <- sapply(FUN = feeding_rate, X = df$water_temp, species_params = species_params)
+df <- df %>% 
+mutate(ing_pot = pop_params['meanImax'] * (pop_params['meanW']^species_params['m']) * feeding,
+       food_prov = NA)
+for (i in 1:nrow(df)) {
+  df$food_prov[i] <- food_prov_rate(pop_params = pop_params, rel_feeding = df$feeding[i], ing_pot = df$ing_pot[i], 
+                                    ing_pot_10 = pop_params['meanImax'] * (pop_params['meanW']^species_params['m']) * 0.1)
+}
+df$ing_pot <- df$ing_pot/maxna(df$ing_pot)
+df$food_prov <- df$food_prov/maxna(df$ing_pot)
+
+df %>% 
+  ggplot(aes(x = water_temp, y = ing_pot)) +
+  geom_line(linewidth = 0.75) +
+  geom_line(aes(y = food_prov), linewidth = 0.75, linetype = "dotted") +
+  scale_y_continuous(breaks = seq(0,1.5,0.25)) +
+  scale_x_continuous(breaks = seq(-5,30,5), limits = c(-5,26)) +
+  labs(x = expression("Water temperature ("*degree*"C)"), y = "Relative food ingested/provided") +
+  theme_classic() +
+  theme(text = element_text(colour = "black", family = "serif", size = 12))
+```
+
+## Production parameters
+
+* Salmon cohorts were always grown for 548 days
+* Salmon cohorts were initialised Spring. This was on day `r unique(farm_coords$t_start[farm_coords$lat < 0])` for farms in the southern hemisphere and day `r unique(farm_coords$t_start[farm_coords$lat > 0])` for farms in the northern hemisphere.
+* Cohorts were initialised anually, such that there was an overlap of 183 days where one cohort was nearing harvest and another was being initialised.
+
+## Parameterisation for Atlantic salmon
+
+```{r salmon params}
+#| code-summary: Get parameter and sensitivity data
+#| eval: true
+
+params <- file.path(output_species_data_path, "sens_params.qs") %>% qs::qread()
+
+param_names <- tibble::tribble(
+  ~name,        ~lab,
+  "alpha",      bquote(alpha),
+  "epsprot",    bquote(epsilon["P"]),
+  "epslip",     bquote(epsilon["L"]),
+  "epscarb",    bquote(epsilon["C"]),
+  "epsO2",      bquote(epsilon["O"[2]]),
+  "pk",         bquote("pk"),
+  "k0",         bquote("k"[0]),
+  "m",          bquote("m"),
+  "n",          bquote("n"),
+  "betac",      bquote(beta*"C"),
+  "Tma",        bquote("T"["max"]),
+  "Toa",        bquote("T"["opt"]),
+  "Taa",        bquote("T"["min"]),
+  "omega",      bquote(omega),
+  "a",          bquote("a"),
+  "k",          bquote("k"),
+  "eff",        bquote("eff"),
+  "meanW",      bquote(bar("W")),
+  "deltaW",     bquote(Delta*"W"), 
+  "meanImax",   bquote(bar("I"["max"])),
+  "deltaImax",  bquote(Delta*"I"["max"]),
+  "overFmean",  bquote(bar("F")),
+  "overFdelta", bquote(Delta*"F"),
+  "mortmyt",    bquote("mort")
+)
+```
+
+tbl-params shows the parameter values used to model the growth of farmed Atlantic salmon.
+
+| Parameter | Value | Units | Description | Reference | 
+|:-------:|:----:|:----:|:----------------|:-------------------------|
+| $\alpha$ | `r unname(params['alpha'])` | - | Feeding catabolism coefficient | *Salvelinus alpinus*, *Oncorhynchus mykiss* (temps: 8–13$^{\circ}$C) [@broekhuizen_modelling_1994] | 
+| $\epsilon_{P}$ | `r unname(params['epsprot'])` | J g protein$^{-1}$ | Energy content of protein | @baldan_r_2018 | 
+| $\epsilon_{L}$ | `r unname(params['epslip'])` | J g lipid$^{-1}$ | Energy content of lipid | @baldan_r_2018 |
+| $\epsilon_{C}$ | `r unname(params['epscarb'])` | J g carbohydrate$^{-1}$ | Energy content of carbohydrate | @baldan_r_2018 |
+| $\epsilon_{O_2}$ | `r unname(params['epsO2'])` | J g O2$^{-1}$ | Energy consumed by the respiration of 1 g of oxygen | @elliott_energy_1975 |
+| pk | `r unname(params['pk'])` | d$^{-1}$ | Temperature coefficient for the fasting catabolism | @macnaughton_using_2019 |
+| $k_0$ | `r unname(params['k0'])` | - | Fasting catabolism at 0 $^{^\circ}$C | @macnaughton_using_2019 |
+| m | `r unname(params['m'])` | - | Weight exponent for anabolism | Experimentally-derived alue over a range of *Oncorhynchus*, *Perca* and *Salmo* species (temps: 8–13$^{\circ}$C) [@broekhuizen_modelling_1994] | 
+| n | `r unname(params['n'])` | - | Weight exponent for catabolism | @baldan_r_2018 |
+| $\beta C$ | `r unname(params['betac'])` | - | Shape coefficient for the feeding function | Fish size range: 2.25 $\pm$ 0.49 – 11.5 $\pm$ 5.29 g, temperature ranges: 5–24$\^{\circ}$C. Coefficent for mean daily energy intake of the moderately fast growing group, 0.4398 (mean fast group), 0.2214 (mean slow group) [@jonsson_thermal_2001] | 
+| $T_{max}$ | `r unname(params['Tma'])` | $^{^\circ}$C | Maximum lethal temperature | Juvenile *Oncorhynchus tshawytscha* (19.8 $\pm$ 0.02 g, acclimation temp: 15$^{^\circ}$C, 19${\circ}$C) [@poletto_unusual_2017] |
+| $T_{opt}$ | `r unname(params['Toa'])` | $^{^\circ}$C | Optimal temperature | Fish size range: 2.25 $\pm$ 0.49 – 11.5 $\pm$ 5.29 g, temperature ranges: 5–24$^{^\circ}$C [@jonsson_thermal_2001]. Alt value: 14°C [@handeland_effect_2008], *Salmo salar* initial size: 77.0 $\pm$ 14.6 g, temps: 6, 10, 14, 18${\circ}$C | 
+| $T_{min}$ | `r unname(params['Taa'])` | $^{^\circ}$C | Lowest feeding temperature | Fish essentially stop feeding when below 2$^{\circ}$C [@vadboncoeur_lowering_2023] | 
+| $\omega$ | `r unname(params['omega'])` | g O2 / g | Oxygen consumption:weight loss ratio | Calibrated value from @baldan_r_2018 | 
+| a | `r unname(params['a'])` | J g tissue$^{-1}$ | Energy content of fish tissue | Alt value: 17.02350 (nls model fitted to female Atlantic salmon data extracted and transformed from @jonsson_energy_2003 [@van_tien_development_2016] |
+| k | `r unname(params['k'])` | - | Weight exponent for energy content | Alt value: 1.65175 (nls model fitted to female Atlantic salmon data extracted and transformed from @jonsson_energy_2003 [@van_tien_development_2016] |
+| eff | `r unname(params['eff'])` | - | Food ingestion efficiency | Range: 95-97% ingestion efficiency [@uglem_does_2020] | 
+| $\overline{W}$ | `r unname(params['meanW'])` | g | Dry weight mean | Range of 100-150 given so used a mean of 125 and sd of 10 which over 1000 draws from a normal distribution delivers a minimum and maximum close to these numbers [@dempsey_estimating_2023] | 
+| $\Delta{W}$ | `r unname(params['deltaW'])` | g | Dry weight standard deviation | Range of 100-150 given so used a mean of 125 and sd of 10 which over 1000 draws from a normal distribution delivers a minimum and maximum close to these numbers [@dempsey_estimating_2023] | 
+| $\overline{I_{max}}$ | `r unname(params['meanImax'])` | g g$^{-1}$ fish day$^{-1}$ | Ingestion rate mean | [FAO](https://www.fao.org/fileadmin/user_upload/affris/docs/tabl10.pdf) |
+| $\Delta{I_{max}}$ | `r unname(params['deltaImax'])` | g g$^{-1}$ fish day$^{-1}$ | Ingestion rate standard deviation | [FAO](https://www.fao.org/fileadmin/user_upload/affris/docs/tabl10.pdf) |
+| $\overline{F}$ | `r unname(params['overFmean'])` | g g$^{-1}$ fish$ | Overfeeding rate mean |    |
+| $\Delta{F}$ | `r unname(params['overFdelta'])` | g g$^{-1}$ fish$ | Overfeeding rate standard deviation |    |
+| mort | `r unname(params['mortmyt'])` | d$^{-1}$ | Natural mortality rate | @tvete_towards_2023 |
+: Model growth parameters for Atlantic salmon {#tbl-params}
+
+### Parameter sensitivity
+
+Parameter sensitivity was tested by varying each parameter in @tbl-params by $\pm 10$% and calculating sensitivity as:
+
+$$
+S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}
+$$
+
+where $S$ is the sensitivity of the measured variable to changes in parameter $p$, and $P_{1.1}$, $P_{0.9}$, and $P_{1}$ are the value of the measured variable when the model is run with parameter $p$ at 110%, 90%, and 100% of its value respectively. 
+
+* All parameters in Table @tbl-params were tested across all farms (all temperatures)
+* Used a population of 100 in each farm
+
+```{r sensitivity data}
+sens_weight <- output_sens_data_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("results") %>% 
+  str_subset("weight") %>% 
+  qs::qread()
+
+sens_excr <- output_sens_data_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("results") %>% 
+  str_subset("total_excr") %>% 
+  qs::qread() 
+
+sens_data <- rbind(sens_weight, sens_excr) %>% 
+  mutate(adj_param = factor(adj_param, levels = param_names$name))
+```
+
+Looking at @fig-param-sens-weight:
+
+* The most sensitive parameter by far is $m$ (the weight exponent for anabolism), followed closely by $n$ the (weight exponent for catabolism)
+* These two are also relatively uncertain, as $m$ was taken from *Salmo trutta* measurements in a fairly old paper [@broekhuizen_modelling_1994] and $n$ was taken from @baldan_r_2018 which did not specifically look at Atlantic salmon. There must be more up-to-date measurements for Atlantic salmon in particular. 
+
+```{r fig-param-sens-weight}
+#| fig-cap: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period. 
+
+sens_data %>% 
+  ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens - sd_sens, ymax = mean_sens + sd_sens, fill = measure)) +
+  geom_col(position = position_dodge(), width = 0.95, colour = "black", alpha = 0.75) +
+  # geom_errorbar(position = position_dodge(width = 0.95), width = 0.3) +
+  geom_hline(aes(yintercept = 0), linetype = "dashed") +
+  scale_y_continuous(breaks = seq(-30,30,5), limits = c(-10,30)) +
+  scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
+  scale_fill_manual(values = c(weight = "salmon", total_excr = "steelblue")) +
+  # scale_fill_manual(values = c("weight" = "salmon", "uneat" = "steelblue", "excr" = "darkgreen")) +
+  labs(x = "Adjusted parameter", y = "Sensitivity") +
+  theme_classic() + 
+  theme(legend.position = "none", 
+        strip.text = element_blank(), 
+        aspect.ratio = 0.8,
+        text = element_text(size = 12),
+        axis.title.y = element_blank()) +
+  coord_flip()
+```
+
+## Modelled experimental feeds {#sec-feeds}
+
+```{r feeds}
+feed_pal <- c("past" = brewer.pal(9, "Set1")[1], "reference" = brewer.pal(9, "Set1")[2], "future" = brewer.pal(9, "Set1")[3])
+feed_params <- file.path(output_species_data_path, "feed_params.qs") %>% qs::qread()
+
+df <- feed_params[["reference"]]
+contribP_1 <- df[["Proteins"]]$proportion*df[["Proteins"]]$macro
+tP_1 <- sum(contribP_1)
+digestP_1 <- sum(df[["Proteins"]]$digest * contribP_1)/tP_1
+
+contribL_1 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
+tL_1 <- sum(contribL_1)
+digestL <- sum(df[["Lipids"]]$digest * contribL_1)/tL_1
+
+contribC_1 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
+tC_1 <- sum(contribC_1)
+digestC_1 <- sum(df[["Carbohydrates"]]$digest * contribC_1)/tC_1
+
+df <- feed_params[["past"]]
+contribP_2 <- df[["Proteins"]]$proportion*df[["Proteins"]]$macro
+tP_2 <- sum(contribP_2)
+digestP_2 <- sum(df[["Proteins"]]$digest * contribP_2)/tP_2
+
+contribL_2 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
+tL_2 <- sum(contribL_2)
+digestL <- sum(df[["Lipids"]]$digest * contribL_2)/tL_2
+
+contribC_2 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
+tC_2 <- sum(contribC_2)
+digestC_2 <- sum(df[["Carbohydrates"]]$digest * contribC_2)/tC_2
+
+df <- feed_params[["future"]]
+contribP_3 <- df[["Proteins"]]$proportion*df[["Proteins"]]$macro
+tP_3 <- sum(contribP_3)
+digestP_3 <- sum(df[["Proteins"]]$digest * contribP_3)/tP_3
+
+contribL_3 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
+tL_3 <- sum(contribL_3)
+digestL <- sum(df[["Lipids"]]$digest * contribL_3)/tL_3
+
+contribC_3 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
+tC_3 <- sum(contribC_3)
+digestC_3 <- sum(df[["Carbohydrates"]]$digest * contribC_3)/tC_3
+```
+
+[Possibly replace this with a better summary of the ingredients that make up each feed, and report these stats in Results under Uneaten feed]{.aside}
+
+* Feed came from [@cottrell_origins_nodate; @cottrell_global_2020]
+* The reference feed is `r round(100*tP_1,1)`% protein, `r round(100*tL_1,1)`% lipid, `r round(100*tC_1,1)`% carbohydrate. 
+* The past feed is `r round(100*tP_2,1)`% protein, `r round(100*tL_2,1)`% lipid, `r round(100*tC_2,1)`% carbohydrate. 
+* The future feed is `r round(100*tP_3,1)`% protein, `r round(100*tL_3,1)`% lipid, `r round(100*tC_3,1)`% carbohydrate. 
+* Within the reference feed, protein is overall `r round(100*digestP_1,1)`% digestible, lipid is overall `r round(100*digestL,1)`% digestible, and carbohydrate is overall `r round(100*digestC_1,1)`% digestible.
+* Within the reference feed, protein is overall `r round(100*digestP_2,1)`% digestible, lipid is overall `r round(100*digestL,1)`% digestible, and carbohydrate is overall `r round(100*digestC_2,1)`% digestible.
+* Within the reference feed, protein is overall `r round(100*digestP_3,1)`% digestible, lipid is overall `r round(100*digestL,1)`% digestible, and carbohydrate is overall `r round(100*digestC_3,1)`% digestible.
+
+## Population and biomass estimates
+
+```{r pop-biom-data}
+coho_biom <- file.path(data_analysis_path, "biomass_produced_comparison.qs") %>% 
+  qs::qread()
+harv_size <- file.path(output_farm_data_path, "farm_harvest_size.qs") %>% 
+  qread()
+
+coho_biom_summ <- coho_biom %>% 
+  mutate(perc_diff = 100*(mean - tonnes_per_farm)/tonnes_per_farm)
+```
+
+Each farm's final population was calculated by dividing the production tonnage required by the average modelled individual harvest size for each farm (when feed reference feed). A population timeseries was the generated using the standard mortality rate (`r unname(params['mortmyt'])` d$^{-1}$). Using this method, a farm's 'population' is not a good representation of the actual number of individuals being farmed, but it ensures each farm location is producing the correct tonnage while allowing comparisons between the different feeds. 
+
+@fig-harvest-size shows the distribution of average individual harvest sizes across farms used to create the population timeseries as predicted by the fish-growth model. 
+
+```{r fig-harvest-size, class.chunk = "aside"}
+#| fig-cap: Frequency distribution of harvest sizes across global farms, as predicted by the fish growth model
+
+harv_size %>% 
+  mutate(weight = weight %>% set_units("g") %>% set_units("kg")) %>% 
+  select(c(farm_ID, weight)) %>% 
+  ggplot(aes(x = weight)) +
+  geom_histogram(binwidth = 0.25, colour = "black", fill = "salmon", alpha = 0.75) +
+  scale_y_continuous(limits = c(0,500)) +
+  labs(y = "Frequency", x = "Harvest weight") +
+  theme_classic() +
+  theme(
+    legend.position = "none", 
+    aspect.ratio = 0.75
+  )
+```
+
+By this method, farm biomass as predicted by the model slightly overestimated farm tonnage. Predicted farm biomass was `r round(min(coho_biom_summ$perc_diff),1)`-`r round(max(coho_biom_summ$perc_diff),1)` higher than tonnage produced (@fig-biomass-produced). This variation was not correlated with mean farm temperature or total tonnage produced (@fig-biomass-variation). 
+
+```{r fig-biomass-variation, class.chunk = "aside"}
+plot(coho_biom_summ$temp_c, coho_biom_summ$perc_diff)
+plot(coho_biom_summ$tonnes_per_farm, coho_biom_summ$perc_diff)
+```
+
+```{r fig-biomass-produced, class.chunk = "aside"}
+#| fig-cap: Modelled vs observed salmon biomass produced
+
+coho_biom %>% 
+  ggplot(aes(x = tonnes_per_farm, y = mean, colour = country)) +
+  geom_point(size = 2.5) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+  theme_classic() +
+  scale_x_continuous(limits = c(0,1700)) +
+  scale_y_continuous(limits = c(0,1700)) +
+  scale_colour_brewer(palette = "Set1") +
+  labs(y = "Modelled biomass produced (t)", x = "Observed biomass produced (t)") +
+  theme_classic() +
+  theme(legend.position = "top", legend.title = element_blank())
+```
+
+## Impacts of nutrient input
+
+*To detail here:*
+
+* How to convert feed and uneaten faeces into nutrients - just nitrogen? Carbon too? If just nitrogen, then can probably use the standard N = 6.25 x protein conversion to compare the feeds (lipids and carbohydrates have negligible protein). If doing carbon too, will need to find conversion rates for all of them, possibly splitting carbs/lipids into complex/simple, saturated/unsaturated, etc.
+* Source of species vulnerability layers
+
+# Results
+
+* Main point is the difference between feeds (kg/t salmon).
+* Also interesting to see if difference between feeds varies geographically (correlates with mean/median/max temperature?)
+
+```{r weight and biomass data}
+farmrun_files <- file.path(output_cohort_growth_data_path) %>% 
+  list.files(full.names = T)
+
+qs::qread(farmrun_files[1]) %>% names()
+weight <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["weight_stat"]]}) %>% bind_rows()
+biomass <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["biomass_stat"]]}) %>% bind_rows()
+```
+
+## Uneaten feed
+
+```{r uneaten feed data}
+#| code-summary: Load and prep uneaten feed data
+
+uneaten_total <- farmrun_files %>% 
+  purrr::map(function(f) {qs::qread(f)[["total_uneat_stat"]]}) %>% 
+  bind_rows() %>% 
+  merge(biomass, by = c("farm_ID", "feed", "t")) %>% 
+  rename(uneat_mean = mean.x, biomass_mean = mean.y,
+         uneat_sd = sd.x, biomass_sd = sd.y) %>% 
+  mutate(uneat_sd = uneat_sd/uneat_mean,
+         biomass_sd = biomass_sd/biomass_mean,
+         uneat_biom_mean = uneat_mean/biomass_mean,
+         uneat_biom_sd = sqrt(uneat_sd^2+biomass_sd^2)*uneat_biom_mean)
+
+uneaten_total_stats <- uneaten_total %>% 
+  group_by(feed, farm_ID) %>% 
+  reframe(total = sum(uneat_biom_mean)) %>% 
+  group_by(feed) %>% 
+  reframe(min = minna(total),
+          max = maxna(total),
+          mean = meanna(total)) %>% 
+  mutate(min = min %>% set_units("g gfish-1") %>% set_units("g kgfish-1"),
+         max = max %>% set_units("g gfish-1") %>% set_units("g kgfish-1"),
+         mean = mean %>% set_units("g gfish-1") %>% set_units("g kgfish-1")) %>% 
+  mutate(min = round(min,2),
+         max = round(max,2),
+         mean = round(mean,2))
+```
+
+### Amount
+
+* Total reference uneaten feed across a cohort (548 days) ranged from `r uneaten_total_stats$min[uneaten_total_stats$feed == "reference"]` to `r uneaten_total_stats$min[uneaten_total_stats$feed == "reference"]` g kg$^{-1}$, with a mean of `r uneaten_total_stats$mean[uneaten_total_stats$feed == "reference"]`.
+* There was very little difference between the past and future feeds and the reference feed. Uneaten past feed ranged from 
+`r uneaten_total_stats$min[uneaten_total_stats$feed == "past"]` to `r uneaten_total_stats$min[uneaten_total_stats$feed == "past"]` g kg$^{-1}$ (mean of `r uneaten_total_stats$mean[uneaten_total_stats$feed == "past"]`) while uneaten future feed ranged from 
+`r uneaten_total_stats$min[uneaten_total_stats$feed == "future"]` to `r uneaten_total_stats$min[uneaten_total_stats$feed == "future"]` g kg$^{-1}$ (mean of `r uneaten_total_stats$mean[uneaten_total_stats$feed == "future"]`).
+* @fig-total-uneaten-perday shows the range of total uneaten feed per day across countries.
+
+```{r fig-total-uneaten-perday}
+#| fig-width: 9.5
+
+uneaten_total %>% 
+  merge(farms_geometry, by = "farm_ID") %>% 
+  mutate(uneat_biom_mean = uneat_biom_mean %>% set_units("g gfish-1 d-1") %>% set_units("g kgfish-1 d-1"),
+         country = factor(country, levels = sorted_countries)) %>% 
+  ggplot(aes(x = country, y = uneat_biom_mean, fill = feed)) +
+  geom_boxplot() +
+  theme_classic() +
+  scale_fill_manual(values = feed_pal) +
+  labs(y = "Uneaten feed", x = "Country")
+```
+
+```{r uneaten composition}
+#| eval: false
+
+uneaten_P <- farmrun_files %>% purrr::map(function(f) {qs::qread(f)[["P_uneat_stat"]]}) %>% bind_rows()
+uneaten_L <- farmrun_files %>% purrr::map(function(f) {qs::qread(f)[["L_uneat_stat"]]}) %>% bind_rows()
+uneaten_C <- farmrun_files %>% purrr::map(function(f) {qs::qread(f)[["C_uneat_stat"]]}) %>% bind_rows()
+
+uneaten_all <- uneaten_total %>% 
+  select(-contains("biom")) %>% 
+  merge(uneaten_P, by = c("farm_ID", "feed", "t")) %>% 
+  merge(uneaten_L, by = c("farm_ID", "feed", "t")) %>% 
+  merge(uneaten_C, by = c("farm_ID", "feed", "t")) %>% 
+  select(-c(contains("sd")))
+```
+
+* The composition of the uneaten feed is (obviously) the same as the total feed composition (@sec-feeds).
+
+## Excreted faeces
+
+```{r excreted faeces data}
+#| code-summary: Load and prep all excretion data
+
+# The following reads in all the total excretion data and converts the mean and sd values into values/biomass
+excreted_total <- farmrun_files %>% 
+  purrr::map(function(f) {qs::qread(f)[["total_excr_stat"]]}) %>% 
+  bind_rows() %>% 
+  merge(biomass, by = c("farm_ID", "feed", "t")) %>% 
+  rename(excr_mean = mean.x, biomass_mean = mean.y,
+         excr_sd = sd.x, biomass_sd = sd.y) %>% 
+  mutate(excr_sd = excr_sd/excr_mean,
+         biomass_sd = biomass_sd/biomass_mean,
+         excr_biom_mean = excr_mean/biomass_mean,
+         excr_biom_sd = sqrt(excr_sd^2+biomass_sd^2)*excr_biom_mean)
+
+excreted_total_stats <- excreted_total %>% 
+  group_by(feed, farm_ID) %>% 
+  reframe(total = sum(excr_biom_mean)) %>% 
+  group_by(feed) %>% 
+  reframe(min = minna(total),
+          max = maxna(total),
+          mean = meanna(total)) %>% 
+  mutate(min = min %>% set_units("g gfish-1") %>% set_units("g kgfish-1"),
+         max = max %>% set_units("g gfish-1") %>% set_units("g kgfish-1"),
+         mean = mean %>% set_units("g gfish-1") %>% set_units("g kgfish-1")) %>% 
+  mutate(min = round(min,2),
+         max = round(max,2),
+         mean = round(mean,2))
+```
+
+* Total reference excreted faeces across a cohort (548 days) ranged from `r excreted_total_stats$min[excreted_total_stats$feed == "reference"]` to `r excreted_total_stats$max[excreted_total_stats$feed == "reference"]` g kg$^{-1}$, with a mean of `r excreted_total_stats$mean[excreted_total_stats$feed == "reference"]`.
+* There was very little difference between the past and future feeds and the reference feed. Uneaten past feed ranged from 
+`r excreted_total_stats$min[excreted_total_stats$feed == "past"]` to `r excreted_total_stats$max[excreted_total_stats$feed == "past"]` g kg$^{-1}$ (mean of `r excreted_total_stats$mean[excreted_total_stats$feed == "past"]` g kg$^{-1}$) while uneaten future feed ranged from 
+`r excreted_total_stats$min[excreted_total_stats$feed == "future"]` to `r excreted_total_stats$max[excreted_total_stats$feed == "future"]` g kg$^{-1}$ (mean of `r excreted_total_stats$mean[excreted_total_stats$feed == "future"]` g kg$^{-1}$).
+* @fig-total-excreted-perday shows the range of total excreted faeces per day across countries.
+
+```{r fig-total-excreted-perday}
+#| fig-width: 9
+
+excreted_total %>% 
+  merge(farms_geometry, by = "farm_ID") %>% 
+  mutate(excr_biom_mean = excr_biom_mean %>% set_units("g gfish-1 d-1") %>% set_units("g kgfish-1 d-1"),
+         country = factor(country, levels = sorted_countries)) %>% 
+  ggplot(aes(x = country, y = excr_biom_mean, fill = feed)) +
+  geom_boxplot() +
+  theme_classic() +
+  scale_fill_manual(values = feed_pal) +
+  labs(y = "Excreted faeces", x = "Country")
+```
+
+### Amount
+
+```{r fig-total-excr-diff_perc, class.chunk = "aside"}
+#| fig-cap: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion.
+
+df <- excreted_total %>% 
+  select(-contains(c("sd", "biom"))) %>% 
+  pivot_wider(names_from = "feed", values_from = "excr_mean") %>% 
+  mutate(past = past-reference,
+         future = future-reference) %>% 
+  pivot_longer(names_to = "feed", values_to = "diff", cols = c(past, future), names_transform = list(feed = as.factor)) %>% 
+  mutate(reference = set_units(reference, "g kgfish-1 d-1"),
+         diff_perc = drop_units(diff/reference)) %>% 
+    merge(farm_coords, by = "farm_ID") %>% 
+  mutate(prod_day = t - t_start + 1)
+
+summ <- df %>%
+  group_by(hemisphere, feed) %>% 
+  reframe(mean = 100*meanna(diff_perc) %>% round(3),
+          min = 100*meanna(diff_perc) %>% round(3),
+          max = 100*maxna(diff_perc) %>% round(3))
+
+df %>% 
+  ggplot(aes(x = reference, y = diff_perc, colour = hemisphere)) +
+  geom_point() + 
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_grid(~feed) +
+  theme_classic()
+```
+
+There was very little variation in the percentage difference (from reference) excreted with increasing overall excretion (@fig-total-excr-diff_perc), or through time (@fig-total-excr-diff_perc_2). 
+The difference in total excretion for the past feed ranged from 
+`r summ$min[summ$feed == "past"]`-`r summ$max[summ$feed == "past"]`% across all farms globally, and for the future feed ranged from 
+`r summ$min[summ$feed == "future"]`-`r summ$max[summ$feed == "future"]`%. 
+
+```{r fig-total-excr-diff_perc_2, class.chunk = "aside"}
+#| fig-cap: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+
+df %>% 
+  group_by(prod_day, feed, hemisphere) %>% 
+  reframe(diff_perc_mean = meanna(diff_perc),
+          diff_perc_sd = sdna(diff_perc)) %>% 
+  ggplot(aes(x = prod_day, y = diff_perc_mean, ymin = diff_perc_mean-diff_perc_sd, ymax = diff_perc_mean+diff_perc_sd, 
+             colour = as.factor(hemisphere), fill = as.factor(hemisphere))) +
+  geom_line() + 
+  geom_ribbon(alpha = 0.25) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_grid(~feed) +
+  theme_classic()
+```
+
+However, the actual difference in excreted faeces varied by feed, time in the production cycle, and location of the farm [@fig-total-excr-act_diff].
+
+```{r fig-total-excr-act_diff}
+#| fig-width: 6.25
+#| fig-height: 5.25
+#| fig-cap: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+
+df <- excreted_total %>% 
+  select(-contains(c("sd", "excr_mean", "biomass"))) %>% 
+  pivot_wider(names_from = "feed", values_from = "excr_biom_mean") %>% 
+  mutate(past = past-reference,
+         future = future-reference) %>% 
+  pivot_longer(names_to = "feed", values_to = "diff", cols = c(past, future), names_transform = list(feed = as.factor)) %>% 
+  mutate(reference = set_units(reference, "g kgfish-1 d-1"),
+         diff = set_units(diff, "kg tfish-1 d-1")) %>% 
+  merge(farm_coords, by = "farm_ID") %>% 
+  mutate(prod_day = t-t_start+1)
+
+summ <- df %>%
+  group_by(hemisphere, feed) %>% 
+  reframe(mean = meanna(diff) %>% round(3),
+          min = meanna(diff) %>% round(3),
+          max = maxna(diff) %>% round(3))
+
+df %>% 
+  group_by(hemisphere, feed, prod_day) %>% 
+  reframe(mean_diff = meanna(diff),
+          sd_diff = sdna(diff) %>% set_units("kg tfish-1 d-1")) %>% 
+  ggplot(aes(x = prod_day, y = mean_diff, ymin = mean_diff-sd_diff, ymax = mean_diff+sd_diff, colour = hemisphere, fill = hemisphere)) +
+  geom_line(linewidth = 0.75) +
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(~feed) +
+  theme_classic()
+```
+
+### Composition
+
+```{r excreted composition}
+#| eval: true
+
+excreted_P <- farmrun_files %>% purrr::map(function(f) {qs::qread(f)[["P_excr_stat"]]}) %>% bind_rows()
+excreted_L <- farmrun_files %>% purrr::map(function(f) {qs::qread(f)[["L_excr_stat"]]}) %>% bind_rows()
+excreted_C <- farmrun_files %>% purrr::map(function(f) {qs::qread(f)[["C_excr_stat"]]}) %>% bind_rows()
+
+excreted_all <- excreted_total %>% 
+  select(-contains("biom")) %>% 
+  merge(excreted_P, by = c("farm_ID", "feed", "t")) %>% 
+  merge(excreted_L, by = c("farm_ID", "feed", "t")) %>% 
+  merge(excreted_C, by = c("farm_ID", "feed", "t")) %>% 
+  select(-c(contains("sd"))) %>% 
+  rename(protein = mean.x, lipids = mean.y, carbohydrates = mean) %>% 
+  mutate(protein = protein/excr_mean %>% set_units("d-1"),
+         lipids = lipids/excr_mean %>% set_units("d-1"),
+         carbohydrates = carbohydrates/excr_mean %>% set_units("d-1")) %>% 
+  select(-excr_mean)
+```
+
+Unlike the uneaten feed, the composition of excreted faeces differs from that of the incoming feed.
+
+* Composition does not change through time or with increasing biomass (because digestibility does not change with fish size or temeprature)
+
+```{r composition-throughtime}
+#| eval: false
+
+excreted_all %>% 
+  pivot_longer(names_to = "macro", values_to = "perc", cols = c("protein", "lipids", "carbohydrates")) %>% 
+  mutate(macro = factor(macro, levels = c("protein", "lipids", "carbohydrates"))) %>% 
+  group_by(farm_ID, feed, macro) %>% 
+  reframe(sd = sd(perc) %>% set_units("d-1"),
+          mean = mean(perc)) %>% 
+  ggplot(aes(x = farm_ID, colour = feed, fill = feed, y = 100*mean, ymin = 100*(mean-sd), ymax = 100*(mean+sd))) +
+  geom_point(size = 2) +
+  geom_errorbar(width = 0.5) +
+  scale_color_manual(values = feed_pal) +
+  scale_fill_manual(values = feed_pal) +
+  facet_grid(rows = vars(macro)) +
+  theme_classic() +
+  labs(x = "Macronutrient", y = "Mean composition of faeces")
+```
+
+## Total nutrients
+
+# Statistical analysis & code availability
+
+All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
+Major packages used include `terra` [@terra], `targets` [@targets], `future` [@future], `furrr` [@furrr], `renv` [@renv], and the `tidyverse` [@tidyverse].
+For a full list of R packages used see the lockfile on [Github](https://www.github.com).
+This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
+
+# References
+
+
+
