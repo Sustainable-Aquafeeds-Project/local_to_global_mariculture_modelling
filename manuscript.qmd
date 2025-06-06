@@ -114,6 +114,92 @@ feed_pal <- c("past" = brewer.pal(9, "Set1")[1], "reference" = brewer.pal(9, "Se
 cohort_pal <- c("1" = brewer.pal(9, "Set1")[1], "2" = brewer.pal(9, "Set1")[2], "3" = brewer.pal(9, "Set1")[3], "all" = "black")
 ```
 
+```{r custom fuctions}
+#| code-summary: Function to create sf polygons from bounding boxes
+
+create_boxes <- function(box_list, label_positions, offset_deg) {
+  boxes <- list()
+  labels <- list()
+  
+  for(i in seq_along(box_list)) {
+    name <- names(box_list)[i]
+    coords <- box_list[[i]]
+    pos <- label_positions[i]
+    
+    # Create polygon from bounding box coordinates
+    box_coords <- matrix(c(
+      coords[1], coords[3],  # lonmin, latmin
+      coords[2], coords[3],  # lonmax, latmin  
+      coords[2], coords[4],  # lonmax, latmax
+      coords[1], coords[4],  # lonmin, latmax
+      coords[1], coords[3]   # close polygon
+    ), ncol = 2, byrow = TRUE)
+    
+    # Create sf polygon
+    poly <- st_polygon(list(box_coords))
+    boxes[[i]] <- st_sfc(poly, crs = 4326)
+    
+    # Calculate label position based on specification
+    label_coords <- get_label_position(coords, pos, offset_deg[i])
+    label_point <- st_point(c(label_coords[1], label_coords[2]))
+    labels[[i]] <- st_sfc(label_point, crs = 4326)
+  }
+  
+  # Combine into sf objects
+  boxes_sf <- st_sf(
+    name = names(box_list),
+    letter = LETTERS[1:length(box_list)],
+    geometry = do.call(c, boxes)
+  )
+  
+  labels_sf <- st_sf(
+    name = names(box_list), 
+    letter = LETTERS[1:length(box_list)],
+    geometry = do.call(c, labels)
+  )
+  
+  return(list(boxes = boxes_sf, labels = labels_sf))
+}
+
+# Helper function to calculate label positions
+get_label_position <- function(coords, position, offset) {
+  lonmin <- coords[1]
+  lonmax <- coords[2]
+  latmin <- coords[3]
+  latmax <- coords[4]
+  
+  # Parse position string
+  parts <- strsplit(position, "_")[[1]]
+  vertical <- parts[1]    # "top" or "bottom"
+  horizontal <- parts[2]  # "left" or "right"
+  location <- parts[3]    # "inside" or "outside"
+  
+  # Base coordinates for corners
+  if(vertical == "bottom") {base_lat <- latmin} else {base_lat <- latmax}
+  if(horizontal == "right") {base_lon <- lonmax} else {base_lon <- lonmin}
+
+  # Apply offset for outside positioning
+  if(location == "outside") {
+    if(horizontal == "left") {base_lon <- base_lon-offset} else {base_lon <- base_lon+offset}
+    if(vertical == "top") {base_lat <- base_lat + offset} else {base_lat <- base_lat - offset}
+  }
+  
+  return(c(base_lon, base_lat))
+}
+
+lim_robin <- function(lons = c(144.0, 149.5), lats = c(-39.75, -44.00)) {
+  coords <- data.frame(lon = lons, lat = lats) %>%
+    st_as_sf(coords = c("lon", "lat"), crs = 4326) %>%
+    st_transform(crs = "+proj=robin") %>% 
+    st_coordinates()
+  list(
+    xlims = range(coords[, "X"]),
+    ylims = range(coords[, "Y"])
+  )
+}
+
+```
+
 This document was last updated at `r format(Sys.time(), "%H:%M")` on `r format(Sys.time(), "%d %b, %Y")`.
 
 # Methods
@@ -199,13 +285,45 @@ Farms with a mean temperature of $\leq$6$^\circ$C were excluded (`r as.integer(l
 #| fig-height: 9
 #| fig-width: 9.5
 
-worldmap <- ne_countries(scale = "medium", returnclass = "sf")
+worldmap <- ne_countries(scale = "medium", returnclass = "sf") %>% st_transform(crs = "+proj=robin")
+graticules <- st_graticule(worldmap, lon = seq(-180, 180, 30), lat = seq(-90, 90, 30)) 
 
-p1 <- ggplot(data = worldmap, aes(geometry = geometry)) +
-  geom_sf(fill = "white", color = "dimgray") +
-  geom_sf(data = farm_temp_means, aes(colour = mean_temp), size = 1.5) +
+inset_boxes <- list(   # lonmin, lonmax, latmin, latmax
+  CAN1 = c(-132, -122, 47.75, 54.25),
+  CAN2 = c(-70, -54, 43, 48.5),
+  EUR = c(-26, 30, 51, 71),
+  CHI = c(-77.5, -62.5, -56, -25),
+  AUS = c(144, 149.5, -39.75, -44)
+)
+labels_spec <- c(CAN1 = "bottom_left_outside", CAN2 = "bottom_right_outside", EUR = "bottom_left_outside", CHI = "top_left_outside", AUS = "bottom_left_outside")
+labels_offset <- c(CAN1 = 1, CAN2 = 2, EUR = 1.75, CHI = 1.75, AUS = 3.5)
+
+box_data <- create_boxes(box_list = inset_boxes, # see function create_boxes above
+                         label_positions = unname(labels_spec),
+                         offset_deg = unname(labels_offset))
+boxes_robinson <- st_transform(box_data$boxes, crs = "+proj=robin")
+labels_robinson <- st_transform(box_data$labels, crs = "+proj=robin")
+farm_temp_robinson <- st_sf(farm_temp_means) %>% st_transform(crs = "+proj=robin")
+
+p1 <- ggplot() +
+  geom_sf(data = graticules, color = "gray80", size = 0.3) +
+  geom_sf(data = worldmap, fill = "white", color = "dimgray") +
+  geom_sf(data = farm_temp_robinson, aes(color = mean_temp), size = 1) +
   coord_sf() +
-  theme_classic() 
+  scale_color_viridis_c(option = "turbo") +
+  guides(col = guide_colourbar(
+    title = "Mean temperature (°C)",
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top", 
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 2,
+    barwidth = 25,barheight = 1.5
+  )) +
+  geom_sf(data = boxes_robinson, fill = NA, color = "darkred", size = 1.65) +
+  geom_sf_text(data = labels_robinson, aes(label = letter), 
+               color = "darkred", size = 5, fontface = "bold", 
+               hjust = 0.5, vjust = 0.5) +
+  theme_void()
 
 p2 <- farm_temp_means %>% 
   ggplot(aes(y = mean_temp, x = abs(lat), colour = country)) +
@@ -226,25 +344,11 @@ p3 <- farm_temp_means %>%
 (p2 + p3) / p1 + plot_layout(heights = c(1, 1.5))
 ```
 
-```{r patchwork map}
+```{r patchwork-map-mercator}
 #| fig-cap: |
 #|   Possibly use a patchwork map to show spatial results?
 #| fig-height: 9
 #| fig-width: 9.5
-
-worldmap <- ne_countries(scale = "large", returnclass = "sf")
-
-AUS_bounds <- c(144, 149.5, -39.75, -44)
-CAN1_bounds <- c(-132, -122, 47.75, 54.25)
-CAN2_bounds <- c(-70, -54, 43, 48.5)
-CHI_bounds <- c(-77.5, -62.5, -56, -25)
-EUR_bounds <- c(-26, 30, 51, 71)
-
-p_ALL <- ggplot(data = worldmap, aes(geometry = geometry)) +
-  geom_sf(fill = "white", color = "dimgray") +
-  geom_sf(data = farm_temp_means, aes(colour = mean_temp), size = 1.5) +
-  coord_sf() +
-  theme_classic()
 
 no_margins <- function() {
   theme(legend.position = "none", 
@@ -252,17 +356,67 @@ no_margins <- function() {
         axis.title = element_blank())
 }
 
-p_Aus <- p_ALL + coord_sf(xlim = AUS_bounds[1:2], ylim = AUS_bounds[3:4], expand = FALSE) + no_margins()
-p_Eur <- p_ALL + coord_sf(xlim = EUR_bounds[1:2], ylim = EUR_bounds[3:4], expand = FALSE) + no_margins()
-p_Chi <- p_ALL + coord_sf(xlim = CHI_bounds[1:2], ylim = CHI_bounds[3:4], expand = FALSE) + no_margins()
-p_Can <- p_ALL + coord_sf(xlim = CAN1_bounds[1:2], ylim = CAN1_bounds[3:4], expand = FALSE) + no_margins()
-p_USA <- p_ALL + coord_sf(xlim = CAN2_bounds[1:2], ylim = CAN2_bounds[3:4], expand = FALSE) + no_margins()
+inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
+  CAN1 = c(-132, -122, 48.5, 54),
+  CAN2 = c(-70, -54, 43, 48.5),
+  EUR = c(-23, 28.5, 52, 71),
+  CHI = c(-78, -62, -55.5, -27),
+  AUS = c(144, 149, -40.75, -43.75)
+)
 
-subplot <- (p_Eur/p_Aus) + plot_layout(heights = c(1.5, 1))
-finalplot <- (p_Can + p_USA) / (p_Chi + subplot) + 
-  plot_layout(widths = c(1, 1.5), heights = c(1, 2)) &
-  theme(plot.margin = margin(0, 0, 0, 0))
-finalplot
+worldmap <- ne_countries(scale = "large", returnclass = "sf")
+p1 <- ggplot() +
+  geom_sf(data = worldmap, fill = "white", color = "dimgray") +
+  geom_sf(data = farm_temp_means, aes(color = mean_temp, geometry = geometry), size = 1) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo") +
+  guides(col = guide_colourbar(
+    title = "Mean temperature (°C)",
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top", 
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 2,
+    barwidth = 1.5, barheight = 20
+  )) +
+  prettyplot() +
+  labs(y = "Latitude", x = "Longitude")
+
+p_Aus <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["AUS"]][1:2], ylim = inset_boxes_sm[["AUS"]][3:4])  +
+  draw_label("E", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["AUS"]][1], y = inset_boxes_sm[["AUS"]][3], 
+             hjust = 0, vjust = 1)
+p_Eur <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["EUR"]][1:2], ylim = inset_boxes_sm[["EUR"]][3:4]) +
+  draw_label("C", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["EUR"]][1], y = inset_boxes_sm[["EUR"]][4], 
+             hjust = -1, vjust = 1)
+p_Chi <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["CHI"]][1:2], ylim = inset_boxes_sm[["CHI"]][3:4]) +
+  theme(legend.position = "right") +
+  draw_label("D", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["CHI"]][1], y = inset_boxes_sm[["CHI"]][4], 
+             hjust = 0, vjust = 0)
+p_Can1 <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["CAN1"]][1:2], ylim = inset_boxes_sm[["CAN1"]][3:4]) +
+  draw_label("A", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["CAN1"]][1], y = inset_boxes_sm[["CAN1"]][4], 
+             hjust = -1, vjust = 0)
+p_Can2 <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["CAN2"]][1:2], ylim = inset_boxes_sm[["CAN2"]][3:4]) +
+  draw_label("B", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["CAN2"]][1], y = inset_boxes_sm[["CAN2"]][4], 
+             hjust = 0, vjust = 1)
+
+grid_1 <- cowplot::plot_grid(p_Can1, p_Can2, ncol = 2, rel_widths =  c(1, 1.35))
+grid_2 <- cowplot::plot_grid(p_Eur,  p_Aus,  nrow = 2, rel_heights = c(1, 1))
+grid_3 <- cowplot::plot_grid(grid_2, p_Chi,  ncol = 2, rel_widths =  c(1, 1))
+
+cowplot::plot_grid(
+  grid_1, grid_3,
+  nrow = 2,
+  rel_heights = c(1, 1.5)        # relative row heights
+)
 ```
 
 ## Production parameters
