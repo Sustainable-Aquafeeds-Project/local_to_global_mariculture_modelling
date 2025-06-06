@@ -50,6 +50,7 @@ library(ggplot2)
 library(ggh4x)
 library(here)
 library(ggpubr)
+library(cowplot)
 library(patchwork)
 library(qs)
 library(arrow)
@@ -110,8 +111,102 @@ sens_results_files <- file.path(output_sens_data_path) %>% str_subset("results")
 species_params <- qread(species_params_file)
 pop_params <- qread(pop_params_file)
 
+prettyplot <- function() {
+  theme_classic() +
+    theme(legend.position = "none",
+          text = element_text(family = "serif", size = 12, colour = "black"),
+          axis.title.x = element_text(vjust = 0.5),
+          axis.title.y = element_text(hjust = 0.5))
+}
+  
 feed_pal <- c("past" = brewer.pal(9, "Set1")[1], "reference" = brewer.pal(9, "Set1")[2], "future" = brewer.pal(9, "Set1")[3])
 cohort_pal <- c("1" = brewer.pal(9, "Set1")[1], "2" = brewer.pal(9, "Set1")[2], "3" = brewer.pal(9, "Set1")[3], "all" = "black")
+```
+
+```{r custom fuctions}
+#| code-summary: Function to create sf polygons from bounding boxes
+
+create_boxes <- function(box_list, label_positions, offset_deg) {
+  boxes <- list()
+  labels <- list()
+  
+  for(i in seq_along(box_list)) {
+    name <- names(box_list)[i]
+    coords <- box_list[[i]]
+    pos <- label_positions[i]
+    
+    # Create polygon from bounding box coordinates
+    box_coords <- matrix(c(
+      coords[1], coords[3],  # lonmin, latmin
+      coords[2], coords[3],  # lonmax, latmin  
+      coords[2], coords[4],  # lonmax, latmax
+      coords[1], coords[4],  # lonmin, latmax
+      coords[1], coords[3]   # close polygon
+    ), ncol = 2, byrow = TRUE)
+    
+    # Create sf polygon
+    poly <- st_polygon(list(box_coords))
+    boxes[[i]] <- st_sfc(poly, crs = 4326)
+    
+    # Calculate label position based on specification
+    label_coords <- get_label_position(coords, pos, offset_deg[i])
+    label_point <- st_point(c(label_coords[1], label_coords[2]))
+    labels[[i]] <- st_sfc(label_point, crs = 4326)
+  }
+  
+  # Combine into sf objects
+  boxes_sf <- st_sf(
+    name = names(box_list),
+    letter = LETTERS[1:length(box_list)],
+    geometry = do.call(c, boxes)
+  )
+  
+  labels_sf <- st_sf(
+    name = names(box_list), 
+    letter = LETTERS[1:length(box_list)],
+    geometry = do.call(c, labels)
+  )
+  
+  return(list(boxes = boxes_sf, labels = labels_sf))
+}
+
+# Helper function to calculate label positions
+get_label_position <- function(coords, position, offset) {
+  lonmin <- coords[1]
+  lonmax <- coords[2]
+  latmin <- coords[3]
+  latmax <- coords[4]
+  
+  # Parse position string
+  parts <- strsplit(position, "_")[[1]]
+  vertical <- parts[1]    # "top" or "bottom"
+  horizontal <- parts[2]  # "left" or "right"
+  location <- parts[3]    # "inside" or "outside"
+  
+  # Base coordinates for corners
+  if(vertical == "bottom") {base_lat <- latmin} else {base_lat <- latmax}
+  if(horizontal == "right") {base_lon <- lonmax} else {base_lon <- lonmin}
+
+  # Apply offset for outside positioning
+  if(location == "outside") {
+    if(horizontal == "left") {base_lon <- base_lon-offset} else {base_lon <- base_lon+offset}
+    if(vertical == "top") {base_lat <- base_lat + offset} else {base_lat <- base_lat - offset}
+  }
+  
+  return(c(base_lon, base_lat))
+}
+
+lim_robin <- function(lons = c(144.0, 149.5), lats = c(-39.75, -44.00)) {
+  coords <- data.frame(lon = lons, lat = lats) %>%
+    st_as_sf(coords = c("lon", "lat"), crs = 4326) %>%
+    st_transform(crs = "+proj=robin") %>% 
+    st_coordinates()
+  list(
+    xlims = range(coords[, "X"]),
+    ylims = range(coords[, "Y"])
+  )
+}
+
 ```
 
 This document was last updated at `r format(Sys.time(), "%H:%M")` on `r format(Sys.time(), "%d %b, %Y")`.
@@ -148,7 +243,7 @@ df %>%
   scale_y_continuous(breaks = seq(0,1.5,0.25)) +
   scale_x_continuous(breaks = seq(-5,30,5), limits = c(-5,26)) +
   labs(x = expression("Water temperature ("*degree*"C)"), y = "Relative food ingested/provided") +
-  theme_classic() +
+  prettyplot() +
   theme(text = element_text(colour = "black", family = "serif", size = 12))
 ```
 
@@ -199,20 +294,52 @@ Farms with a mean temperature of $\leq$6$^\circ$C were excluded (`r as.integer(l
 #| fig-height: 9
 #| fig-width: 9.5
 
-worldmap <- ne_countries(scale = "medium", returnclass = "sf")
+worldmap <- ne_countries(scale = "medium", returnclass = "sf") %>% st_transform(crs = "+proj=robin")
+graticules <- st_graticule(worldmap, lon = seq(-180, 180, 30), lat = seq(-90, 90, 30)) 
 
-p1 <- ggplot(data = worldmap, aes(geometry = geometry)) +
-  geom_sf(fill = "white", color = "dimgray") +
-  geom_sf(data = farm_temp_means, aes(colour = mean_temp), size = 1.5) +
+inset_boxes <- list(   # lonmin, lonmax, latmin, latmax
+  CAN1 = c(-132, -122, 47.75, 54.25),
+  CAN2 = c(-70, -54, 43, 48.5),
+  EUR = c(-26, 30, 51, 71),
+  CHI = c(-77.5, -62.5, -56, -25),
+  AUS = c(144, 149.5, -39.75, -44)
+)
+labels_spec <- c(CAN1 = "bottom_left_outside", CAN2 = "bottom_right_outside", EUR = "bottom_left_outside", CHI = "top_left_outside", AUS = "bottom_left_outside")
+labels_offset <- c(CAN1 = 1, CAN2 = 2, EUR = 1.75, CHI = 1.75, AUS = 3.5)
+
+box_data <- create_boxes(box_list = inset_boxes, # see function create_boxes above
+                         label_positions = unname(labels_spec),
+                         offset_deg = unname(labels_offset))
+boxes_robinson <- st_transform(box_data$boxes, crs = "+proj=robin")
+labels_robinson <- st_transform(box_data$labels, crs = "+proj=robin")
+farm_temp_robinson <- st_sf(farm_temp_means) %>% st_transform(crs = "+proj=robin")
+
+p1 <- ggplot() +
+  geom_sf(data = graticules, color = "gray80", size = 0.3) +
+  geom_sf(data = worldmap, fill = "white", color = "dimgray") +
+  geom_sf(data = farm_temp_robinson, aes(color = mean_temp), size = 1) +
   coord_sf() +
-  theme_classic() 
+  scale_color_viridis_c(option = "turbo") +
+  guides(col = guide_colourbar(
+    title = "Mean temperature (°C)",
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top", 
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 2,
+    barwidth = 25,barheight = 1.5
+  )) +
+  geom_sf(data = boxes_robinson, fill = NA, color = "darkred", size = 1.65) +
+  geom_sf_text(data = labels_robinson, aes(label = letter), 
+               color = "darkred", size = 5, fontface = "bold", 
+               hjust = 0.5, vjust = 0.5) +
+  theme_void()
 
 p2 <- farm_temp_means %>% 
   ggplot(aes(y = mean_temp, x = abs(lat), colour = country)) +
   geom_point(size = 2) +
   scale_colour_brewer(palette = "Set1") +
   labs(x = expression("Absolute latitude ("*degree*")"), y = expression("Mean temperature ("*degree*"C)")) +
-  theme_classic() +
+  prettyplot() +
   theme(legend.position = "top", legend.title = element_blank())
 
 p3 <- farm_temp_means %>% 
@@ -220,31 +347,17 @@ p3 <- farm_temp_means %>%
   ggplot(aes(x = mean_temp, fill = hemisphere)) +
   geom_histogram(position = "identity", colour = "black", alpha = 0.5, binwidth = 0.5) +
   labs(x = expression("Mean temperature ("*degree*"C)"), y = "Frequency") +
-  theme_classic() +
+  prettyplot() +
   theme(legend.position = "top", legend.title = element_blank())
 
 (p2 + p3) / p1 + plot_layout(heights = c(1, 1.5))
 ```
 
-```{r patchwork map}
+```{r patchwork-map-mercator}
 #| fig-cap: |
 #|   Possibly use a patchwork map to show spatial results?
 #| fig-height: 9
 #| fig-width: 9.5
-
-worldmap <- ne_countries(scale = "large", returnclass = "sf")
-
-AUS_bounds <- c(144, 149.5, -39.75, -44)
-CAN1_bounds <- c(-132, -122, 47.75, 54.25)
-CAN2_bounds <- c(-70, -54, 43, 48.5)
-CHI_bounds <- c(-77.5, -62.5, -56, -25)
-EUR_bounds <- c(-26, 30, 51, 71)
-
-p_ALL <- ggplot(data = worldmap, aes(geometry = geometry)) +
-  geom_sf(fill = "white", color = "dimgray") +
-  geom_sf(data = farm_temp_means, aes(colour = mean_temp), size = 1.5) +
-  coord_sf() +
-  theme_classic()
 
 no_margins <- function() {
   theme(legend.position = "none", 
@@ -252,17 +365,67 @@ no_margins <- function() {
         axis.title = element_blank())
 }
 
-p_Aus <- p_ALL + coord_sf(xlim = AUS_bounds[1:2], ylim = AUS_bounds[3:4], expand = FALSE) + no_margins()
-p_Eur <- p_ALL + coord_sf(xlim = EUR_bounds[1:2], ylim = EUR_bounds[3:4], expand = FALSE) + no_margins()
-p_Chi <- p_ALL + coord_sf(xlim = CHI_bounds[1:2], ylim = CHI_bounds[3:4], expand = FALSE) + no_margins()
-p_Can <- p_ALL + coord_sf(xlim = CAN1_bounds[1:2], ylim = CAN1_bounds[3:4], expand = FALSE) + no_margins()
-p_USA <- p_ALL + coord_sf(xlim = CAN2_bounds[1:2], ylim = CAN2_bounds[3:4], expand = FALSE) + no_margins()
+inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
+  CAN1 = c(-132, -122, 48.5, 54),
+  CAN2 = c(-70, -54, 43, 48.5),
+  EUR = c(-23, 28.5, 52, 71),
+  CHI = c(-78, -62, -55.5, -27),
+  AUS = c(144, 149, -40.75, -43.75)
+)
 
-subplot <- (p_Eur/p_Aus) + plot_layout(heights = c(1.5, 1))
-finalplot <- (p_Can + p_USA) / (p_Chi + subplot) + 
-  plot_layout(widths = c(1, 1.5), heights = c(1, 2)) &
-  theme(plot.margin = margin(0, 0, 0, 0))
-finalplot
+worldmap <- ne_countries(scale = "large", returnclass = "sf")
+p1 <- ggplot() +
+  geom_sf(data = worldmap, fill = "white", color = "dimgray") +
+  geom_sf(data = farm_temp_means, aes(color = mean_temp, geometry = geometry), size = 1) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo") +
+  guides(col = guide_colourbar(
+    title = "Mean temperature (°C)",
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top", 
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 2,
+    barwidth = 1.5, barheight = 20
+  )) +
+  prettyplot() +
+  labs(y = "Latitude", x = "Longitude")
+
+p_Aus <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["AUS"]][1:2], ylim = inset_boxes_sm[["AUS"]][3:4])  +
+  draw_label("E", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["AUS"]][1], y = inset_boxes_sm[["AUS"]][3], 
+             hjust = 0, vjust = 1)
+p_Eur <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["EUR"]][1:2], ylim = inset_boxes_sm[["EUR"]][3:4]) +
+  draw_label("C", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["EUR"]][1], y = inset_boxes_sm[["EUR"]][4], 
+             hjust = -1, vjust = 1)
+p_Chi <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["CHI"]][1:2], ylim = inset_boxes_sm[["CHI"]][3:4]) +
+  theme(legend.position = "right") +
+  draw_label("D", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["CHI"]][1], y = inset_boxes_sm[["CHI"]][4], 
+             hjust = 0, vjust = 0)
+p_Can1 <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["CAN1"]][1:2], ylim = inset_boxes_sm[["CAN1"]][3:4]) +
+  draw_label("A", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["CAN1"]][1], y = inset_boxes_sm[["CAN1"]][4], 
+             hjust = -1, vjust = 0)
+p_Can2 <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["CAN2"]][1:2], ylim = inset_boxes_sm[["CAN2"]][3:4]) +
+  draw_label("B", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["CAN2"]][1], y = inset_boxes_sm[["CAN2"]][4], 
+             hjust = 0, vjust = 1)
+
+grid_1 <- cowplot::plot_grid(p_Can1, p_Can2, ncol = 2, rel_widths =  c(1, 1.35))
+grid_2 <- cowplot::plot_grid(p_Eur,  p_Aus,  nrow = 2, rel_heights = c(1, 1))
+grid_3 <- cowplot::plot_grid(grid_2, p_Chi,  ncol = 2, rel_widths =  c(1, 1))
+
+cowplot::plot_grid(
+  grid_1, grid_3,
+  nrow = 2,
+  rel_heights = c(1, 1.5)        # relative row heights
+)
 ```
 
 ## Production parameters
@@ -339,53 +502,8 @@ param_names <- tibble::tribble(
 ### Parameter sensitivity
 
 Parameter sensitivity was tested by varying each parameter in @tbl-params by $\pm 10$% and calculating sensitivity as $S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}$, where $S$ is the sensitivity of the measured variable to changes in parameter $p$, and $P_{1.1}$, $P_{0.9}$, and $P_{1}$ are the value of the measured variable when the model is run with parameter $p$ at 110%, 90%, and 100% of its value respectively. 
-* All parameters in Table @tbl-params were tested across all farms (all temperatures)
-* Used the full population of 5000 for the population parameters $\overline{W}$, $\Delta{W}$, $\overline{I_{max}}$, $\Delta{I_{max}}$, $\overline{F}$, and $\Delta{F}$, and a population of 100 in each farm for all other parameters.
-
-```{r sensitivity data}
-sens_weight <- output_sens_data_path %>% 
-  list.files(full.names = T) %>% 
-  str_subset("results") %>% 
-  str_subset("weight") %>% 
-  qs::qread()
-
-sens_excr <- output_sens_data_path %>% 
-  list.files(full.names = T) %>% 
-  str_subset("results") %>% 
-  str_subset("total_excr") %>% 
-  qs::qread() 
-
-sens_data <- rbind(sens_weight, sens_excr) %>% 
-  mutate(adj_param = factor(adj_param, levels = param_names$name))
-```
-
-Looking at @fig-param-sens-weight:
-
-* The most sensitive parameter by far is $m$ (the weight exponent for anabolism), followed closely by $n$ the (weight exponent for catabolism)
-* These two are also relatively uncertain, as $m$ was taken from *Salmo trutta* measurements in a fairly old paper [@broekhuizen_modelling_1994] and $n$ was taken from @baldan_r_2018 which did not specifically look at Atlantic salmon. There must be more up-to-date measurements for Atlantic salmon in particular. 
-
-```{r fig-param-sens-weight}
-#| fig-cap: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period. 
-
-sens_data %>% 
-  ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens - sd_sens, ymax = mean_sens + sd_sens, fill = measure)) +
-  geom_col(position = position_dodge(), width = 0.95, colour = "black", alpha = 0.75) +
-  # geom_errorbar(position = position_dodge(width = 0.95), width = 0.3) +
-  geom_hline(aes(yintercept = 0), linetype = "dashed") +
-  scale_y_continuous(breaks = seq(-30,30,5), limits = c(-10,30)) +
-  scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
-  scale_fill_manual(values = c(weight = "salmon", total_excr = "steelblue")) +
-  # scale_fill_manual(values = c("weight" = "salmon", "uneat" = "steelblue", "excr" = "darkgreen")) +
-  labs(x = "Adjusted parameter", y = "Sensitivity") +
-  theme_classic() + 
-  theme(legend.position = "none", 
-        strip.text = element_blank(), 
-        aspect.ratio = 0.8,
-        text = element_text(size = 12),
-        axis.title.y = element_blank()) +
-  coord_flip()
-```
-
+All parameters in Table @tbl-params were tested. The population-level parameters ($\overline{W}$, $\Delta{W}$, $\overline{I_{max}}$, $\Delta{I_{max}}$, $\overline{F}$, $\Delta{F}$) were tested with a population of of 5000 on a random 10% of farms, while all other parameters were tested across all farms with a population of 10.
+ 
 ## Modelled experimental feeds {#sec-feeds}
 
 ```{r feeds}
@@ -398,7 +516,7 @@ digestP_1 <- sum(df[["Proteins"]]$digest * contribP_1)/tP_1
 
 contribL_1 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
 tL_1 <- sum(contribL_1)
-digestL <- sum(df[["Lipids"]]$digest * contribL_1)/tL_1
+digestL_1 <- sum(df[["Lipids"]]$digest * contribL_1)/tL_1
 
 contribC_1 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
 tC_1 <- sum(contribC_1)
@@ -411,7 +529,7 @@ digestP_2 <- sum(df[["Proteins"]]$digest * contribP_2)/tP_2
 
 contribL_2 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
 tL_2 <- sum(contribL_2)
-digestL <- sum(df[["Lipids"]]$digest * contribL_2)/tL_2
+digestL_2 <- sum(df[["Lipids"]]$digest * contribL_2)/tL_2
 
 contribC_2 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
 tC_2 <- sum(contribC_2)
@@ -424,7 +542,7 @@ digestP_3 <- sum(df[["Proteins"]]$digest * contribP_3)/tP_3
 
 contribL_3 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
 tL_3 <- sum(contribL_3)
-digestL <- sum(df[["Lipids"]]$digest * contribL_3)/tL_3
+digestL_3 <- sum(df[["Lipids"]]$digest * contribL_3)/tL_3
 
 contribC_3 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
 tC_3 <- sum(contribC_3)
@@ -437,9 +555,9 @@ digestC_3 <- sum(df[["Carbohydrates"]]$digest * contribC_3)/tC_3
 * The reference feed is `r round(100*tP_1,1)`% protein, `r round(100*tL_1,1)`% lipid, `r round(100*tC_1,1)`% carbohydrate. 
 * The past feed is `r round(100*tP_2,1)`% protein, `r round(100*tL_2,1)`% lipid, `r round(100*tC_2,1)`% carbohydrate. 
 * The future feed is `r round(100*tP_3,1)`% protein, `r round(100*tL_3,1)`% lipid, `r round(100*tC_3,1)`% carbohydrate. 
-* Within the reference feed, protein is overall `r round(100*digestP_1,1)`% digestible, lipid is overall `r round(100*digestL,1)`% digestible, and carbohydrate is overall `r round(100*digestC_1,1)`% digestible.
-* Within the past feed, protein is overall `r round(100*digestP_2,1)`% digestible, lipid is overall `r round(100*digestL,1)`% digestible, and carbohydrate is overall `r round(100*digestC_2,1)`% digestible.
-* Within the future feed, protein is overall `r round(100*digestP_3,1)`% digestible, lipid is overall `r round(100*digestL,1)`% digestible, and carbohydrate is overall `r round(100*digestC_3,1)`% digestible.
+* Within the reference feed, protein is overall `r round(100*digestP_1,1)`% digestible, lipid is overall `r round(100*digestL_1,1)`% digestible, and carbohydrate is overall `r round(100*digestC_1,1)`% digestible.
+* Within the past feed, protein is overall `r round(100*digestP_2,1)`% digestible, lipid is overall `r round(100*digestL_2,1)`% digestible, and carbohydrate is overall `r round(100*digestC_2,1)`% digestible.
+* Within the future feed, protein is overall `r round(100*digestP_3,1)`% digestible, lipid is overall `r round(100*digestL_3,1)`% digestible, and carbohydrate is overall `r round(100*digestC_3,1)`% digestible.
 
 ## Model population and biomass
 
@@ -486,10 +604,9 @@ ggplot(df, aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = as.fact
   geom_line(linewidth = 0.75) +
   geom_ribbon(linetype = "dotted", alpha = 0) +
   facet_grid(cols = vars(split)) +
-  theme_classic() +
   scale_x_continuous(breaks = seq(0, 1600, 120)) +
   scale_colour_manual(values = cohort_pal) +
-  theme(legend.position = "none") +
+  prettyplot() +
   labs(y = "Farm biomass", x = "Day of production")
 ```
 
@@ -516,11 +633,8 @@ harv_size %>%
   geom_histogram(binwidth = 0.25, colour = "black", fill = "salmon", alpha = 0.75) +
   scale_y_continuous(limits = c(0,500)) +
   labs(y = "Frequency", x = "Harvest weight") +
-  theme_classic() +
-  theme(
-    legend.position = "none", 
-    aspect.ratio = 0.75
-  )
+  prettyplot() +
+  theme(aspect.ratio = 0.75)
 ```
 
 By this method, farm biomass as predicted by the model slightly overestimated farm tonnage. Predicted farm biomass was `r round(min(coho_biom_summ$perc_diff),1)`-`r round(max(coho_biom_summ$perc_diff),1)` higher than tonnage produced (@fig-biomass-produced). This variation was not correlated with mean farm temperature or total tonnage produced (@fig-biomass-variation). 
@@ -537,12 +651,11 @@ coho_biom %>%
   ggplot(aes(x = tonnes_per_farm, y = mean, colour = country)) +
   geom_point(size = 2.5) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-  theme_classic() +
   scale_x_continuous(limits = c(0,1700)) +
   scale_y_continuous(limits = c(0,1700)) +
   scale_colour_brewer(palette = "Set1") +
   labs(y = "Modelled biomass produced (t)", x = "Observed biomass produced (t)") +
-  theme_classic() +
+  prettyplot() +
   theme(legend.position = "top", legend.title = element_blank())
 ```
 
@@ -555,16 +668,13 @@ coho_biom %>%
 
 # Results
 
+* Parameter sensitivity results are in supplementary @sec-parameter-sensitivity
+
 In general, data outputs comes in the following dimensions:
 
 * Location -> temperature -> farm_ID
 * Uneaten feed + excreted faeces = total inputs (g)
 * Day of production (impacted by location)
-
-
-
-
-
 * Main point is the difference between feeds (kg/t salmon).
 * Also interesting to see if difference between feeds varies geographically (correlates with latitude, or maybe mean/median/max temperature?)
 
@@ -572,7 +682,7 @@ In general, data outputs comes in the following dimensions:
 farmrun_files <- file.path(output_cohort_growth_data_path) %>% 
   list.files(full.names = T)
 
-qs::qread(farmrun_files[1]) %>% names()
+# qs::qread(farmrun_files[1]) %>% names()
 weight <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["weight_stat"]]}) %>% bind_rows()
 biomass <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["biomass_stat"]]}) %>% bind_rows()
 ```
@@ -625,7 +735,7 @@ uneaten_total %>%
          country = factor(country, levels = sorted_countries)) %>% 
   ggplot(aes(x = country, y = uneat_biom_mean, fill = feed)) +
   geom_boxplot() +
-  theme_classic() +
+  prettyplot() +
   scale_fill_manual(values = feed_pal) +
   labs(y = "Uneaten feed", x = "Country")
 ```
@@ -694,7 +804,7 @@ excreted_total %>%
          country = factor(country, levels = sorted_countries)) %>% 
   ggplot(aes(x = country, y = excr_biom_mean, fill = feed)) +
   geom_boxplot() +
-  theme_classic() +
+  prettyplot() +
   scale_fill_manual(values = feed_pal) +
   labs(y = "Excreted faeces", x = "Country")
 ```
@@ -726,7 +836,7 @@ df %>%
   geom_point() + 
   geom_hline(yintercept = 0, linetype = "dashed") +
   facet_grid(~feed) +
-  theme_classic()
+  prettyplot()
 ```
 
 The difference in total excretion for the past feed ranged from 
@@ -746,7 +856,7 @@ df %>%
   geom_ribbon(alpha = 0.25) +
   geom_hline(yintercept = 0, linetype = "dashed") +
   facet_grid(~feed) +
-  theme_classic()
+  prettyplot()
 ```
 
 However, the actual difference in excreted faeces varied by feed, time in the production cycle, and location of the farm [@fig-total-excr-act_diff].
@@ -781,7 +891,7 @@ df %>%
   geom_line(linewidth = 0.75) +
   geom_ribbon(alpha = 0.25) +
   facet_wrap(~feed) +
-  theme_classic()
+  prettyplot()
 ```
 
 ### Composition
@@ -804,13 +914,32 @@ excreted_all <- excreted_total %>%
          lipids = lipids/excr_mean %>% set_units("d-1"),
          carbohydrates = carbohydrates/excr_mean %>% set_units("d-1")) %>% 
   select(-excr_mean)
+
+ec <- excreted_all %>% 
+  group_by(feed) %>% 
+  reframe(P = mean(protein),
+          C = mean(carbohydrates),
+          L = mean(lipids)) %>% 
+  mutate(source = "excreted") %>% 
+  rbind(data.frame(
+    feed = c("reference", "past", "future"),
+    P = c(tP_1, tP_2, tP_3),
+    C = c(tC_1, tC_2, tC_3),
+    L = c(tL_1, tL_2, tL_3),
+    source = rep("feed", 3)
+  )) %>% 
+  pivot_longer(cols = c(P,L,C), names_to = "macro", values_to = "value", 
+               names_transform = list(macro = as.factor), values_transform = list(value = as.numeric)) %>% 
+  mutate(source = factor(source, levels = c("feed", "excreted")),
+         macro = factor(macro, levels = c("P", "L", "C"), labels = c("Protein", "Lipids", "Carbohydrates")),
+         feed = factor(feed, levels = c("reference", "past", "future")),
+         source = factor(source, levels = c("feed", "excreted"), labels = c("Feed", "Faeces")))
 ```
 
 Unlike the uneaten feed, the composition of excreted faeces differs from that of the incoming feed.
+[Note that composition does not change through time or with increasing biomass (because digestibility does not change with fish size or temeprature)]{.aside}
 
-* Composition does not change through time or with increasing biomass (because digestibility does not change with fish size or temeprature)
-
-```{r composition-throughtime}
+```{r composition-throughtime, class.chunk = "aside"}
 #| eval: false
 
 excreted_all %>% 
@@ -829,11 +958,18 @@ excreted_all %>%
   labs(x = "Macronutrient", y = "Mean composition of faeces")
 ```
 
-| Macro | Reference | Past | Future |
-|:-----------:|:---:|:---:|:---:|
-| Protein | `r tP_1` |  `r tP_2` |  `r tP_3` | 
-| Lipids | `r tL_1` | `r tL_2` |  `r tL_3` | 
-| Carbohydrates | `r tC_1` | `r tL_2` |  `r tL_3` | 
+```{r fig-composition-comparison}
+#| eval: true
+#| fig-cap: Comparison of the composition of the reference (blue), past (red) and future (green) feed and faeces of salmon fed each feed.
+
+ggplot(ec, aes(x = source, y = 100*value, fill = feed)) +
+  geom_col(colour = "black", position = position_dodge(width = 0.9), alpha = 0.75) +
+  facet_grid(cols = vars(macro)) +
+  prettyplot() +
+  scale_fill_manual(values = feed_pal) +
+  scale_y_continuous(breaks = seq(0, 60, 10)) +
+  labs(y = "Composition (%)", x = "Source")
+```
 
 ## Total nutrients
 
@@ -843,6 +979,52 @@ All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['
 Major packages used include `terra` [@terra], `targets` [@targets], `future` [@future], `furrr` [@furrr], `renv` [@renv], and the `tidyverse` [@tidyverse].
 For a full list of R packages used see the lockfile on [Github](https://www.github.com).
 This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
+
+# Supplementary stuff
+
+## Parameter sensitivity {#sec-parameter-sensitivity}
+
+```{r sensitivity data}
+sens_weight <- output_sens_data_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("results") %>% 
+  str_subset("weight") %>% 
+  qs::qread()
+
+sens_excr <- output_sens_data_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("results") %>% 
+  str_subset("total_excr") %>% 
+  qs::qread() 
+
+sens_data <- rbind(sens_weight, sens_excr) %>% 
+  mutate(adj_param = factor(adj_param, levels = param_names$name))
+```
+
+Looking at @fig-param-sens-weight:
+
+* The most sensitive parameter by far is $m$ (the weight exponent for anabolism), followed closely by $n$ the (weight exponent for catabolism)
+* These two are also relatively uncertain, as $m$ was taken from *Salmo trutta* measurements in a fairly old paper [@broekhuizen_modelling_1994] and $n$ was taken from @baldan_r_2018 which did not specifically look at Atlantic salmon. There must be more up-to-date measurements for Atlantic salmon in particular. 
+
+```{r fig-param-sens-weight}
+#| fig-cap: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period. 
+
+sens_data %>% 
+  ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens - sd_sens, ymax = mean_sens + sd_sens, fill = measure)) +
+  geom_col(position = position_dodge(), width = 0.95, colour = "black", alpha = 0.75) +
+  # geom_errorbar(position = position_dodge(width = 0.95), width = 0.3) +
+  geom_hline(aes(yintercept = 0), linetype = "dashed") +
+  scale_y_continuous(breaks = seq(-30,30,5), limits = c(-10,30)) +
+  scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
+  scale_fill_manual(values = c(weight = "salmon", total_excr = "steelblue")) +
+  # scale_fill_manual(values = c("weight" = "salmon", "uneat" = "steelblue", "excr" = "darkgreen")) +
+  labs(x = "Adjusted parameter", y = "Sensitivity") +
+  prettyplot() +
+  theme(strip.text = element_blank(), 
+        aspect.ratio = 0.8,
+        axis.title.y = element_blank()) +
+  coord_flip()
+```
 
 # References
 
