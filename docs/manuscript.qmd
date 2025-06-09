@@ -295,7 +295,7 @@ Farms with a mean temperature of $\leq$6$^\circ$C were excluded (`r as.integer(l
 
 ```{r fig-farm-mean-temps}
 #| fig-cap: |
-#|   Potential options for showing farm site mean temperatures. Top left: Mean temperature by latitude across countries. Top right: Frequency distribution of mean temperatures by hemisphere. Bottom: global distribution of mean temperatures.
+#|   Potential options for showing data spatially. Top left: Mean temperature by latitude across countries. Top right: Frequency distribution of mean temperatures by hemisphere. Bottom: global distribution of mean temperatures.
 #| fig-height: 9
 #| fig-width: 9.5
 
@@ -390,7 +390,7 @@ inset_boxes_sm <- map(inset_boxes_sm, function(bx) {
 worldmap <- ne_countries(scale = "large", returnclass = "sf")
 p1 <- ggplot() +
   geom_sf(data = worldmap, fill = "white", color = "dimgray") +
-  geom_sf(data = farm_temp_means, aes(color = mean_temp, geometry = geometry), size = 1) +
+  geom_sf(data = farm_temp_means, aes(color = mean_temp, geometry = geometry), size = 2) +
   coord_sf() +
   scale_color_viridis_c(option = "turbo") +
   guides(col = guide_colourbar(
@@ -417,7 +417,7 @@ p_Can2 <- p1 +
   draw_label("B", size = 14, fontface = "bold", 
              x = inset_boxes_sm[["CAN2"]][["labx"]], 
              y = inset_boxes_sm[["CAN2"]][["laby"]], 
-             hjust = 0.5, vjust = 0)
+             hjust = 0.5, vjust = 0.5)
 p_Eur <- p1 + 
   coord_sf(xlim = inset_boxes_sm[["EUR"]][["xlims"]], 
            ylim = inset_boxes_sm[["EUR"]][["ylims"]])  +
@@ -439,7 +439,7 @@ p_Aus <- p1 +
   draw_label("E", size = 14, fontface = "bold", 
              x = inset_boxes_sm[["AUS"]][["labx"]], 
              y = inset_boxes_sm[["AUS"]][["laby"]], 
-             hjust = 0, vjust = 0)
+             hjust = 0, vjust = 0.5)
 
 grid_1 <- cowplot::plot_grid(p_Can1, p_Can2, ncol = 2, rel_widths =  c(1, 1.35))
 grid_2 <- cowplot::plot_grid(p_Eur,  p_Aus,  nrow = 2, rel_heights = c(1, 1))
@@ -556,7 +556,7 @@ feed_summary <- map_dfr(names(feed_params), function(feed) {
 
 Feeds came from [@cottrell_origins_nodate; @cottrell_global_2020]. 
 
-[Possibly replace this with a better summary of the ingredients that make up each feed, and report these stats in Results under Uneaten feed?]{.aside}
+[Plan to put full details of ingredients in a supplementary section. But possibly report these stats in Results under Uneaten feed?]{.aside}
 
 The reference feed was 
 `r round(100*filter(feed_summary, feed == "reference", macro == "P")$total, 1)`% protein, 
@@ -736,7 +736,7 @@ By this method, farm biomass as predicted by the model slightly overestimated fa
 
 ```{r fig-biomass-variation, class.chunk = "aside"}
 plot(coho_biom_summ$temp_c, coho_biom_summ$perc_diff)
-plot(coho_biom_summ$tonnes_per_farm, coho_biom_summ$perc_diff)
+# plot(coho_biom_summ$tonnes_per_farm, coho_biom_summ$perc_diff)
 ```
 
 ```{r fig-biomass-produced, class.chunk = "aside"}
@@ -760,6 +760,13 @@ coho_biom %>%
 
 * How to convert feed and uneaten faeces into nutrients - just nitrogen? Carbon too? If just nitrogen, then can probably use the standard N = 6.25 x protein conversion to compare the feeds (lipids and carbohydrates have negligible protein). If doing carbon too, will need to find conversion rates for all of them, possibly splitting carbs/lipids into complex/simple, saturated/unsaturated, etc.
 * Source of species vulnerability layers
+
+# Statistical analysis & code availability
+
+All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
+Major packages used include `terra` [@terra], `targets` [@targets], `future` [@future], `furrr` [@furrr], `renv` [@renv], and the `tidyverse` [@tidyverse].
+For a full list of R packages used see the lockfile on [Github](https://www.github.com).
+This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
 
 # Results
 
@@ -834,15 +841,17 @@ Total uneaten feed across a cohort (548 days) fed the reference feed ranged from
 `r uneaten_total_stats$min[uneaten_total_stats$feed == "reference"]` to 
 `r uneaten_total_stats$max[uneaten_total_stats$feed == "reference"]` g kg$^{-1}$ fish, with a mean of 
 `r uneaten_total_stats$mean[uneaten_total_stats$feed == "reference"]` g kg$^{-1}$ fish. 
-
-* Differences between the feeds were very small, with the past scenario producing 
-* but slightly less uneaten feed was lost in the reference scenario. Uneaten past feed ranged from 
-`r uneaten_total_stats$min[uneaten_total_stats$feed == "past"]` to `r uneaten_total_stats$min[uneaten_total_stats$feed == "past"]` g kg$^{-1}$ (mean of `r uneaten_total_stats$mean[uneaten_total_stats$feed == "past"]`) while uneaten future feed ranged from 
-`r uneaten_total_stats$min[uneaten_total_stats$feed == "future"]` to `r uneaten_total_stats$min[uneaten_total_stats$feed == "future"]` g kg$^{-1}$ (mean of `r uneaten_total_stats$mean[uneaten_total_stats$feed == "future"]`).
-* @fig-total-uneaten-perday shows the range of total uneaten feed per day across countries.
+Differences between the feeds were very small, but slightly less feed was left uneaten in the reference scenario (@fig-total-uneaten-perday). Uneaten feed in the past scenario ranged from 
+`r uneaten_total_stats$min[uneaten_total_stats$feed == "past"]` to 
+`r uneaten_total_stats$max[uneaten_total_stats$feed == "past"]` g kg$^{-1}$ fish (mean of 
+`r uneaten_total_stats$mean[uneaten_total_stats$feed == "past"]` g kg$^{-1}$ fish) while uneaten feed in the future scenario ranged from 
+`r uneaten_total_stats$min[uneaten_total_stats$feed == "future"]` to 
+`r uneaten_total_stats$max[uneaten_total_stats$feed == "future"]` g kg$^{-1}$ (mean of 
+`r uneaten_total_stats$mean[uneaten_total_stats$feed == "future"]`  g kg$^{-1}$ fish).
 
 ```{r fig-total-uneaten-perday}
-#| fig-width: 9.5
+#| fig-cap: |
+#|   Feed left uneaten when fish are fed the reference (blue), past (red) or future (green) feed. Countries are arranged by descending mean latitude. 
 
 uneaten_total %>% 
   merge(farms_geometry, by = "farm_ID") %>% 
@@ -870,7 +879,7 @@ uneaten_all <- uneaten_total %>%
   select(-c(contains("sd")))
 ```
 
-* The composition of the uneaten feed is (obviously) the same as the total feed composition (@sec-feeds).
+The composition of the uneaten feed is (obviously) the same as the total feed composition detailed in (@sec-feeds).
 
 ## Excreted faeces
 
@@ -906,14 +915,22 @@ excreted_total_stats <- excreted_total %>%
 
 ### Amount
 
-* Total reference excreted faeces across a cohort (548 days) ranged from `r excreted_total_stats$min[excreted_total_stats$feed == "reference"]` to `r excreted_total_stats$max[excreted_total_stats$feed == "reference"]` g kg$^{-1}$, with a mean of `r excreted_total_stats$mean[excreted_total_stats$feed == "reference"]`.
-* There was very little difference between the past and future feeds and the reference feed. Uneaten past feed ranged from 
-`r excreted_total_stats$min[excreted_total_stats$feed == "past"]` to `r excreted_total_stats$max[excreted_total_stats$feed == "past"]` g kg$^{-1}$ (mean of `r excreted_total_stats$mean[excreted_total_stats$feed == "past"]` g kg$^{-1}$) while uneaten future feed ranged from 
-`r excreted_total_stats$min[excreted_total_stats$feed == "future"]` to `r excreted_total_stats$max[excreted_total_stats$feed == "future"]` g kg$^{-1}$ (mean of `r excreted_total_stats$mean[excreted_total_stats$feed == "future"]` g kg$^{-1}$).
-* @fig-total-excreted-perday shows the range of total excreted faeces per day across countries.
+Overall, total excretion was lowest when when fish were fed the past feed and highest when fish were fed the reference feed (@fig-total-excreted-perday). 
+Total excreted faeces across a cohort (548 days) in the reference scenario ranged from `r excreted_total_stats$min[excreted_total_stats$feed == "reference"]` to 
+`r excreted_total_stats$max[excreted_total_stats$feed == "reference"]` g kg$^{-1}$ fish d$^{-1}$, with a mean of 
+`r excreted_total_stats$mean[excreted_total_stats$feed == "reference"]`.
+Total excreted faeces across a cohort in the past scenario ranged from 
+`r excreted_total_stats$min[excreted_total_stats$feed == "past"]` to 
+`r excreted_total_stats$max[excreted_total_stats$feed == "past"]` g kg$^{-1}$ fish d$^{-1}$ (mean of 
+`r excreted_total_stats$mean[excreted_total_stats$feed == "past"]` g kg$^{-1}$ fish d$^{-1}$).
+Total excreted faeces across a cohort in the future scenario ranged from 
+`r excreted_total_stats$min[excreted_total_stats$feed == "future"]` to 
+`r excreted_total_stats$max[excreted_total_stats$feed == "future"]` g kg$^{-1}$ fish d$^{-1}$ (mean of 
+`r excreted_total_stats$mean[excreted_total_stats$feed == "future"]` g kg$^{-1}$ fish d$^{-1}$). 
 
 ```{r fig-total-excreted-perday}
-#| fig-width: 9
+#| fig-cap: |
+#|   Feed left uneaten when fish are fed the reference (blue), past (red) or future (green) feed. Countries are arranged by descending mean latitude. 
 
 excreted_total %>% 
   merge(farms_geometry, by = "farm_ID") %>% 
@@ -927,7 +944,9 @@ excreted_total %>%
 ```
 
 ```{r fig-total-excr-diff_perc, class.chunk = "aside"}
-#| fig-cap: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion.
+#| eval: false
+#| fig-cap: |
+#|   Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion.
 
 df <- excreted_total %>% 
   select(-contains(c("sd", "biom"))) %>% 
@@ -952,14 +971,16 @@ df %>%
   geom_hline(yintercept = 0, linetype = "dashed") +
   facet_grid(~feed) +
   prettyplot()
+
+# The difference in total excretion for the past feed ranged from 
+# `r summ$min[summ$feed == "past"]`-`r summ$max[summ$feed == "past"]`% across all farms globally, and for the future feed ranged from 
+# `r summ$min[summ$feed == "future"]`-`r summ$max[summ$feed == "future"]`%. 
 ```
 
-The difference in total excretion for the past feed ranged from 
-`r summ$min[summ$feed == "past"]`-`r summ$max[summ$feed == "past"]`% across all farms globally, and for the future feed ranged from 
-`r summ$min[summ$feed == "future"]`-`r summ$max[summ$feed == "future"]`%. 
-
 ```{r fig-total-excr-diff_perc_2, class.chunk = "aside"}
-#| fig-cap: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+#| eval: false
+#| fig-cap: |
+#|   Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
 
 df %>% 
   group_by(prod_day, feed, hemisphere) %>% 
@@ -977,6 +998,7 @@ df %>%
 However, the actual difference in excreted faeces varied by feed, time in the production cycle, and location of the farm [@fig-total-excr-act_diff].
 
 ```{r fig-total-excr-act_diff}
+#| eval: false
 #| fig-width: 6.25
 #| fig-height: 5.25
 #| fig-cap: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
@@ -1088,14 +1110,7 @@ ggplot(ec, aes(x = source, y = 100*value, fill = feed)) +
 
 ## Total nutrients
 
-# Statistical analysis & code availability
-
-All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
-Major packages used include `terra` [@terra], `targets` [@targets], `future` [@future], `furrr` [@furrr], `renv` [@renv], and the `tidyverse` [@tidyverse].
-For a full list of R packages used see the lockfile on [Github](https://www.github.com).
-This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
-
-# Supplementary stuff
+# Supplementary materials
 
 ## Parameter sensitivity {#sec-parameter-sensitivity}
 
@@ -1112,17 +1127,17 @@ sens_excr <- output_sens_data_path %>%
   str_subset("total_excr") %>% 
   qs::qread() 
 
-sens_data <- rbind(sens_weight, sens_excr) %>% 
-  mutate(adj_param = factor(adj_param, levels = param_names$name))
+sens_data <- rbind(sens_weight, sens_excr)
 ```
 
-Looking at @fig-param-sens-weight:
-
-* The most sensitive parameter by far is $m$ (the weight exponent for anabolism), followed closely by $n$ the (weight exponent for catabolism)
-* These two are also relatively uncertain, as $m$ was taken from *Salmo trutta* measurements in a fairly old paper [@broekhuizen_modelling_1994] and $n$ was taken from @baldan_r_2018 which did not specifically look at Atlantic salmon. There must be more up-to-date measurements for Atlantic salmon in particular. 
+The most sensitive parameter by far in @fig-param-sens-weight is $m$ (the weight exponent for anabolism), followed closely by $n$ the (weight exponent for catabolism). 
+These two are also relatively uncertain, as $m$ was taken from *Salmo trutta* measurements in a fairly old paper [@broekhuizen_modelling_1994] and $n$ was taken from @baldan_r_2018 which did not specifically look at Atlantic salmon.
 
 ```{r fig-param-sens-weight}
 #| fig-cap: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period. 
+
+sens_data <- sens_data %>% 
+  filter(measure %in% c("total_excr", "total_uneat")) 
 
 sens_data %>% 
   ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens - sd_sens, ymax = mean_sens + sd_sens, fill = measure)) +
@@ -1130,9 +1145,8 @@ sens_data %>%
   # geom_errorbar(position = position_dodge(width = 0.95), width = 0.3) +
   geom_hline(aes(yintercept = 0), linetype = "dashed") +
   scale_y_continuous(breaks = seq(-30,30,5), limits = c(-10,30)) +
-  scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
-  scale_fill_manual(values = c(weight = "salmon", total_excr = "steelblue")) +
-  # scale_fill_manual(values = c("weight" = "salmon", "uneat" = "steelblue", "excr" = "darkgreen")) +
+  # scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
+  # scale_fill_manual(values = c(total_excr = "salmon", total_uneat = "steelblue")) +
   labs(x = "Adjusted parameter", y = "Sensitivity") +
   prettyplot() +
   theme(strip.text = element_blank(), 
