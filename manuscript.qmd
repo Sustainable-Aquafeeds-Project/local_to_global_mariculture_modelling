@@ -119,8 +119,13 @@ prettyplot <- function() {
           axis.title.y = element_text(hjust = 0.5))
 }
   
-feed_pal <- c("past" = brewer.pal(9, "Set1")[1], "reference" = brewer.pal(9, "Set1")[2], "future" = brewer.pal(9, "Set1")[3])
-cohort_pal <- c("1" = brewer.pal(9, "Set1")[1], "2" = brewer.pal(9, "Set1")[2], "3" = brewer.pal(9, "Set1")[3], "all" = "black")
+feed_pal <- c("past" = "#E41A1C", "reference" = "#377EB8", "future" = "#4DAF4A")  
+cohort_pal <- c("1" = "#E41A1C", "2" = "#377EB8", "3" = "#4DAF4A", "all" = "black")
+macro_pal <- c(
+  "protein" = "darkred", "P" = "darkred", 
+  "carbohydrates" = "steelblue", "C" = "steelblue", 
+  "lipids" = "darkgoldenrod1", "L" = "darkgoldenrod1"
+)
 ```
 
 ```{r custom fuctions}
@@ -300,9 +305,9 @@ graticules <- st_graticule(worldmap, lon = seq(-180, 180, 30), lat = seq(-90, 90
 inset_boxes <- list(   # lonmin, lonmax, latmin, latmax
   CAN1 = c(-132, -122, 47.75, 54.25),
   CAN2 = c(-70, -54, 43, 48.5),
-  EUR = c(-26, 30, 51, 71),
+  EUR = c(-26, 30, 51, 72),
   CHI = c(-77.5, -62.5, -56, -25),
-  AUS = c(144, 149.5, -39.75, -44)
+  AUS = c(144, 149.5, -44, -39.75)
 )
 labels_spec <- c(CAN1 = "bottom_left_outside", CAN2 = "bottom_right_outside", EUR = "bottom_left_outside", CHI = "top_left_outside", AUS = "bottom_left_outside")
 labels_offset <- c(CAN1 = 1, CAN2 = 2, EUR = 1.75, CHI = 1.75, AUS = 3.5)
@@ -355,7 +360,7 @@ p3 <- farm_temp_means %>%
 
 ```{r patchwork-map-mercator}
 #| fig-cap: |
-#|   Possibly use a patchwork map to show spatial results?
+#|   Example of a patchwork
 #| fig-height: 9
 #| fig-width: 9.5
 
@@ -370,8 +375,17 @@ inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
   CAN2 = c(-70, -54, 43, 48.5),
   EUR = c(-23, 28.5, 52, 71),
   CHI = c(-78, -62, -55.5, -27),
-  AUS = c(144, 149, -40.75, -43.75)
+  AUS = c(144, 149, -43.75, -40.75)
 )
+
+inset_boxes_sm <- map(inset_boxes_sm, function(bx) {
+  list(
+    xlims = bx[1:2],
+    ylims = bx[3:4],
+    labx = bx[1],
+    laby = bx[4]
+    )
+})
 
 worldmap <- ne_countries(scale = "large", returnclass = "sf")
 p1 <- ggplot() +
@@ -390,32 +404,42 @@ p1 <- ggplot() +
   prettyplot() +
   labs(y = "Latitude", x = "Longitude")
 
-p_Aus <- p1 + 
-  coord_sf(xlim = inset_boxes_sm[["AUS"]][1:2], ylim = inset_boxes_sm[["AUS"]][3:4])  +
-  draw_label("E", size = 14, fontface = "bold", 
-             x = inset_boxes_sm[["AUS"]][1], y = inset_boxes_sm[["AUS"]][3], 
-             hjust = 0, vjust = 1)
+p_Can1 <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["CAN1"]][["xlims"]], 
+           ylim = inset_boxes_sm[["CAN1"]][["ylims"]])  +
+  draw_label("A", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["CAN1"]][["labx"]], 
+             y = inset_boxes_sm[["CAN1"]][["laby"]], 
+             hjust = -1, vjust = 0.5)
+p_Can2 <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["CAN2"]][["xlims"]], 
+           ylim = inset_boxes_sm[["CAN2"]][["ylims"]])  +
+  draw_label("B", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["CAN2"]][["labx"]], 
+             y = inset_boxes_sm[["CAN2"]][["laby"]], 
+             hjust = 0.5, vjust = 0)
 p_Eur <- p1 + 
-  coord_sf(xlim = inset_boxes_sm[["EUR"]][1:2], ylim = inset_boxes_sm[["EUR"]][3:4]) +
+  coord_sf(xlim = inset_boxes_sm[["EUR"]][["xlims"]], 
+           ylim = inset_boxes_sm[["EUR"]][["ylims"]])  +
   draw_label("C", size = 14, fontface = "bold", 
-             x = inset_boxes_sm[["EUR"]][1], y = inset_boxes_sm[["EUR"]][4], 
-             hjust = -1, vjust = 1)
+             x = inset_boxes_sm[["EUR"]][["labx"]], 
+             y = inset_boxes_sm[["EUR"]][["laby"]], 
+             hjust = -1, vjust = 0.5)
 p_Chi <- p1 + 
-  coord_sf(xlim = inset_boxes_sm[["CHI"]][1:2], ylim = inset_boxes_sm[["CHI"]][3:4]) +
+  coord_sf(xlim = inset_boxes_sm[["CHI"]][["xlims"]], 
+           ylim = inset_boxes_sm[["CHI"]][["ylims"]])  +
   theme(legend.position = "right") +
   draw_label("D", size = 14, fontface = "bold", 
-             x = inset_boxes_sm[["CHI"]][1], y = inset_boxes_sm[["CHI"]][4], 
+             x = inset_boxes_sm[["CHI"]][["labx"]], 
+             y = inset_boxes_sm[["CHI"]][["laby"]], 
              hjust = 0, vjust = 0)
-p_Can1 <- p1 + 
-  coord_sf(xlim = inset_boxes_sm[["CAN1"]][1:2], ylim = inset_boxes_sm[["CAN1"]][3:4]) +
-  draw_label("A", size = 14, fontface = "bold", 
-             x = inset_boxes_sm[["CAN1"]][1], y = inset_boxes_sm[["CAN1"]][4], 
-             hjust = -1, vjust = 0)
-p_Can2 <- p1 + 
-  coord_sf(xlim = inset_boxes_sm[["CAN2"]][1:2], ylim = inset_boxes_sm[["CAN2"]][3:4]) +
-  draw_label("B", size = 14, fontface = "bold", 
-             x = inset_boxes_sm[["CAN2"]][1], y = inset_boxes_sm[["CAN2"]][4], 
-             hjust = 0, vjust = 1)
+p_Aus <- p1 + 
+  coord_sf(xlim = inset_boxes_sm[["AUS"]][["xlims"]], 
+           ylim = inset_boxes_sm[["AUS"]][["ylims"]])  +
+  draw_label("E", size = 14, fontface = "bold", 
+             x = inset_boxes_sm[["AUS"]][["labx"]], 
+             y = inset_boxes_sm[["AUS"]][["laby"]], 
+             hjust = 0, vjust = 0)
 
 grid_1 <- cowplot::plot_grid(p_Can1, p_Can2, ncol = 2, rel_widths =  c(1, 1.35))
 grid_2 <- cowplot::plot_grid(p_Eur,  p_Aus,  nrow = 2, rel_heights = c(1, 1))
@@ -507,59 +531,116 @@ All parameters in Table @tbl-params were tested. The population-level parameters
 ## Modelled experimental feeds {#sec-feeds}
 
 ```{r feeds}
-feed_params <- file.path(output_species_data_path, "feed_params.qs") %>% qs::qread()
+feed_params <- file.path(output_species_data_path, "feed_params.qs") %>%
+  qs::qread() 
 
-df <- feed_params[["reference"]]
-contribP_1 <- df[["Proteins"]]$proportion*df[["Proteins"]]$macro
-tP_1 <- sum(contribP_1)
-digestP_1 <- sum(df[["Proteins"]]$digest * contribP_1)/tP_1
-
-contribL_1 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
-tL_1 <- sum(contribL_1)
-digestL_1 <- sum(df[["Lipids"]]$digest * contribL_1)/tL_1
-
-contribC_1 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
-tC_1 <- sum(contribC_1)
-digestC_1 <- sum(df[["Carbohydrates"]]$digest * contribC_1)/tC_1
-
-df <- feed_params[["past"]]
-contribP_2 <- df[["Proteins"]]$proportion*df[["Proteins"]]$macro
-tP_2 <- sum(contribP_2)
-digestP_2 <- sum(df[["Proteins"]]$digest * contribP_2)/tP_2
-
-contribL_2 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
-tL_2 <- sum(contribL_2)
-digestL_2 <- sum(df[["Lipids"]]$digest * contribL_2)/tL_2
-
-contribC_2 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
-tC_2 <- sum(contribC_2)
-digestC_2 <- sum(df[["Carbohydrates"]]$digest * contribC_2)/tC_2
-
-df <- feed_params[["future"]]
-contribP_3 <- df[["Proteins"]]$proportion*df[["Proteins"]]$macro
-tP_3 <- sum(contribP_3)
-digestP_3 <- sum(df[["Proteins"]]$digest * contribP_3)/tP_3
-
-contribL_3 <- df[["Lipids"]]$proportion*df[["Lipids"]]$macro
-tL_3 <- sum(contribL_3)
-digestL_3 <- sum(df[["Lipids"]]$digest * contribL_3)/tL_3
-
-contribC_3 <- df[["Carbohydrates"]]$proportion*df[["Carbohydrates"]]$macro
-tC_3 <- sum(contribC_3)
-digestC_3 <- sum(df[["Carbohydrates"]]$digest * contribC_3)/tC_3
+feed_summary <- map_dfr(names(feed_params), function(feed) {
+  df <- feed_params[[feed]]
+  map_dfr(c("Proteins", "Lipids", "Carbohydrates"), function(macro) {
+    contrib <- df[[macro]]$proportion * df[[macro]]$macro
+    total <- sum(contrib)
+    digest <- sum(df[[macro]]$digest * contrib) / total
+        tibble(
+      feed = feed,
+      macro = macro,
+      total = total,
+      digest = digest
+    )
+  })
+}) %>%
+  mutate(macro = factor(macro, levels = c("Proteins", "Lipids", "Carbohydrates"), labels = c("P", "L", "C")),
+         feed = factor(feed, levels = c("reference", "past", "future")),
+         total_r = total * 100 %>% round(1),
+         digest_r = digest * 100 %>% round(1))
 ```
+
+Feeds came from [@cottrell_origins_nodate; @cottrell_global_2020]. 
 
 [Possibly replace this with a better summary of the ingredients that make up each feed, and report these stats in Results under Uneaten feed?]{.aside}
 
-* Feeds came from [@cottrell_origins_nodate; @cottrell_global_2020].
-* The reference feed is `r round(100*tP_1,1)`% protein, `r round(100*tL_1,1)`% lipid, `r round(100*tC_1,1)`% carbohydrate. 
-* The past feed is `r round(100*tP_2,1)`% protein, `r round(100*tL_2,1)`% lipid, `r round(100*tC_2,1)`% carbohydrate. 
-* The future feed is `r round(100*tP_3,1)`% protein, `r round(100*tL_3,1)`% lipid, `r round(100*tC_3,1)`% carbohydrate. 
-* Within the reference feed, protein is overall `r round(100*digestP_1,1)`% digestible, lipid is overall `r round(100*digestL_1,1)`% digestible, and carbohydrate is overall `r round(100*digestC_1,1)`% digestible.
-* Within the past feed, protein is overall `r round(100*digestP_2,1)`% digestible, lipid is overall `r round(100*digestL_2,1)`% digestible, and carbohydrate is overall `r round(100*digestC_2,1)`% digestible.
-* Within the future feed, protein is overall `r round(100*digestP_3,1)`% digestible, lipid is overall `r round(100*digestL_3,1)`% digestible, and carbohydrate is overall `r round(100*digestC_3,1)`% digestible.
+* The reference feed is `r filter(feed_summary, feed == "reference", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "reference", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "reference", macro == "C")$total_r`% carbohydrate.
+* The past feed is `r filter(feed_summary, feed == "past", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "past", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "past", macro == "C")$total_r`% carbohydrate.
+* The future feed is `r filter(feed_summary, feed == "future", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "future", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "future", macro == "C")$total_r`% carbohydrate.
+* Within the reference feed, protein is overall `r filter(feed_summary, feed == "reference", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "reference", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "reference", macro == "C")$digest_r`% digestible.
+* Within the past feed, protein is overall `r filter(feed_summary, feed == "past", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "past", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "past", macro == "C")$digest_r`% digestible.
+* Within the future feed, protein is overall `r filter(feed_summary, feed == "future", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "future", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "future", macro == "C")$digest_r`% digestible.
+
+```{r feed summary ideas}
+#| fig-cap: | 
+#|   Ideas for how to present the differences between feeds. Top plot shows the protein (red), lipids (yellow) and carbohydrate (blue) composition, with the digestible portion shown darker and the undigestible portion shown lighter. Bottom plot shows the proportion of each feed composed of each types of ingredient.
+
+p1 <- feed_summary %>%
+  mutate(digest_total = digest * total) %>% 
+  ggplot(aes(x = feed, y = total, fill = macro)) +
+  geom_col(position = "dodge", alpha = 0.55, colour = "black") +
+  geom_col(mapping = aes(y = digest_total), position = "dodge", alpha = 1, colour = "black") +
+  scale_fill_manual(values = macro_pal) +
+  scale_y_continuous(breaks = seq(0,0.5,0.1), labels = seq(0,50,10)) +
+  scale_x_discrete(labels = c("reference" = "Reference", "past" = "Past", "future" = "Future")) +
+  labs(x = "Feed", y = "Proportion (%)") +
+  prettyplot()
+
+feed_ings <- rbind(
+  feed_params[[1]][[1]] %>% mutate(feed = as.factor("reference")), 
+  feed_params[[2]][[1]] %>% mutate(feed = as.factor("past")), 
+  feed_params[[3]][[1]] %>% mutate(feed = as.factor("future"))
+) %>%
+  rename(protein = macro) %>%
+  mutate(
+    category = case_when(
+      str_detect(ingredient, "fish-oil") ~ "fish",
+      str_detect(ingredient, "fishmeal") ~ "fish",
+      str_detect(ingredient, "krill") ~ "other-marine",
+      str_detect(ingredient, "soy") ~ "legume",
+      str_detect(ingredient, "pea") ~ "legume",
+      str_detect(ingredient, "guar") ~ "legume",
+      str_detect(ingredient, "faba") ~ "legume",
+      str_detect(ingredient, "corn") ~ "wheat-corn",
+      str_detect(ingredient, "wheat") ~ "wheat-corn",
+      str_detect(ingredient, "chicken") ~ "chicken",
+      str_detect(ingredient, "bacteri") ~ "bact-fungi-micro",
+      str_detect(ingredient, "yeast") ~ "bact-fungi-micro",
+      str_detect(ingredient, "spirulina") ~ "bact-fungi-micro",
+      str_detect(ingredient, "bsf") ~ "insect",
+      T ~ "other-plant"
+    ) %>% 
+      factor(levels = c("fish", "other-marine", "chicken", "wheat-corn", "legume", "other-plant", "insect", "bact-fungi-micro"))
+  )
+
+p_ings <- feed_ings %>% 
+  mutate(feed = factor(feed, levels = c("reference", "past", "future"), labels = c("Reference", "Past", "Future"))) %>% 
+  group_by(feed, category) %>%
+  reframe(proportion = sum(proportion)) %>% 
+  ggplot(aes(x = "", y = proportion, fill = category)) +
+  geom_col(width = 1, colour = "black") +
+  coord_polar("y", start = 0) +
+  scale_fill_manual(
+    name = "Ingredient category",
+    values = c("fish" = "royalblue3", "other-marine" = "turquoise2", "chicken" = "hotpink1", "wheat-corn" = "moccasin", "legume" = "forestgreen", "other-plant" = "darkolivegreen1", "insect" = "firebrick3", "bact-fungi-micro" = "darkorange"), 
+    labels = c("Fish meal or oil", "Other marine ingredients", "Chicken", "Wheat and corn", "Legumes", "Other plant ingredients", "Insects", "Bacteria, fungi or microalgae")) +
+  facet_grid(cols = vars(feed)) +
+  theme_void() +
+  theme(
+    text = element_text(family = "serif", size = 12, colour = "black"),
+    legend.position = "bottom",
+    strip.text = element_blank(),
+    strip.text.x = element_text(size = 14)
+  )
+
+plot_grid(p1, p_ings, nrow = 2)
+```
 
 ## Model population and biomass
+
+```{r raw biomass and weight data}
+farmrun_files <- file.path(output_cohort_growth_data_path) %>% 
+  list.files(full.names = T)
+
+weight <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["weight_stat"]]}) %>%
+  bind_rows()
+biomass <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["biomass_stat"]]}) %>%
+  bind_rows()
+```
 
 ```{r fig-cohorts}
 #| fig-cap: | 
@@ -678,15 +759,6 @@ In general, data outputs comes in the following dimensions:
 * Main point is the difference between feeds (kg/t salmon).
 * Also interesting to see if difference between feeds varies geographically (correlates with latitude, or maybe mean/median/max temperature?)
 
-```{r weight and biomass data}
-farmrun_files <- file.path(output_cohort_growth_data_path) %>% 
-  list.files(full.names = T)
-
-# qs::qread(farmrun_files[1]) %>% names()
-weight <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["weight_stat"]]}) %>% bind_rows()
-biomass <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["biomass_stat"]]}) %>% bind_rows()
-```
-
 ## Uneaten feed
 
 ```{r uneaten feed data}
@@ -702,7 +774,9 @@ uneaten_total <- farmrun_files %>%
          biomass_sd = biomass_sd/biomass_mean,
          uneat_biom_mean = uneat_mean/biomass_mean,
          uneat_biom_sd = sqrt(uneat_sd^2+biomass_sd^2)*uneat_biom_mean)
+```
 
+```{r uneaten feed analysis}
 uneaten_total_stats <- uneaten_total %>% 
   group_by(feed, farm_ID) %>% 
   reframe(total = sum(uneat_biom_mean)) %>% 
@@ -716,12 +790,39 @@ uneaten_total_stats <- uneaten_total %>%
   mutate(min = round(min,2),
          max = round(max,2),
          mean = round(mean,2))
+
+uneaten_total_compare <- uneaten_total %>% 
+  group_by(feed, farm_ID) %>% 
+  reframe(total = sum(uneat_biom_mean)) %>% 
+  pivot_wider(names_from = "feed", values_from = "total", id_cols = "farm_ID") %>% 
+  mutate(diff_past = past-reference,
+         diff_future = future-reference,
+         diffperc_past = diff_past/reference,
+         diffperc_future = diff_future/reference) %>% 
+  dplyr::select(-c(reference, future, past)) %>% 
+  pivot_longer(names_to = c("measure", "feed"), names_sep = "_", values_to = "value",
+               cols = contains("diff"), names_transform = list(measure = as.factor, feed = as.factor)) %>% 
+  group_by(feed, measure) %>% 
+  reframe(min = minna(value),
+          max = maxna(value),
+          mean = meanna(value)) %>% 
+  mutate(
+    min = case_when(measure == "diffperc" ~ 100*min,
+                    T ~ min %>% set_units("g g_fish-1") %>% set_units("g kg_fish-1") %>% drop_units()),
+    max = case_when(measure == "diffperc" ~ 100*max,
+                    T ~ max %>% set_units("g g_fish-1") %>% set_units("g kg_fish-1") %>% drop_units()),
+    mean = case_when(measure == "diffperc" ~ 100*mean,
+                     T ~ mean %>% set_units("g g_fish-1") %>% set_units("g kg_fish-1") %>% drop_units()),
+    )
 ```
 
-### Amount
+Total uneaten feed across a cohort (548 days) fed the reference feed ranged from 
+`r uneaten_total_stats$min[uneaten_total_stats$feed == "reference"]` to 
+`r uneaten_total_stats$max[uneaten_total_stats$feed == "reference"]` g kg$^{-1}$ fish, with a mean of 
+`r uneaten_total_stats$mean[uneaten_total_stats$feed == "reference"]` g kg$^{-1}$ fish. 
 
-* Total reference uneaten feed across a cohort (548 days) ranged from `r uneaten_total_stats$min[uneaten_total_stats$feed == "reference"]` to `r uneaten_total_stats$min[uneaten_total_stats$feed == "reference"]` g kg$^{-1}$, with a mean of `r uneaten_total_stats$mean[uneaten_total_stats$feed == "reference"]`.
-* There was very little difference between the past and future feeds and the reference feed. Uneaten past feed ranged from 
+* Differences between the feeds were very small, with the past scenario producing 
+* but slightly less uneaten feed was lost in the reference scenario. Uneaten past feed ranged from 
 `r uneaten_total_stats$min[uneaten_total_stats$feed == "past"]` to `r uneaten_total_stats$min[uneaten_total_stats$feed == "past"]` g kg$^{-1}$ (mean of `r uneaten_total_stats$mean[uneaten_total_stats$feed == "past"]`) while uneaten future feed ranged from 
 `r uneaten_total_stats$min[uneaten_total_stats$feed == "future"]` to `r uneaten_total_stats$min[uneaten_total_stats$feed == "future"]` g kg$^{-1}$ (mean of `r uneaten_total_stats$mean[uneaten_total_stats$feed == "future"]`).
 * @fig-total-uneaten-perday shows the range of total uneaten feed per day across countries.
@@ -789,6 +890,8 @@ excreted_total_stats <- excreted_total %>%
          mean = round(mean,2))
 ```
 
+### Amount
+
 * Total reference excreted faeces across a cohort (548 days) ranged from `r excreted_total_stats$min[excreted_total_stats$feed == "reference"]` to `r excreted_total_stats$max[excreted_total_stats$feed == "reference"]` g kg$^{-1}$, with a mean of `r excreted_total_stats$mean[excreted_total_stats$feed == "reference"]`.
 * There was very little difference between the past and future feeds and the reference feed. Uneaten past feed ranged from 
 `r excreted_total_stats$min[excreted_total_stats$feed == "past"]` to `r excreted_total_stats$max[excreted_total_stats$feed == "past"]` g kg$^{-1}$ (mean of `r excreted_total_stats$mean[excreted_total_stats$feed == "past"]` g kg$^{-1}$) while uneaten future feed ranged from 
@@ -808,8 +911,6 @@ excreted_total %>%
   scale_fill_manual(values = feed_pal) +
   labs(y = "Excreted faeces", x = "Country")
 ```
-
-### Amount
 
 ```{r fig-total-excr-diff_perc, class.chunk = "aside"}
 #| fig-cap: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion.
