@@ -62,7 +62,6 @@ library(rnaturalearthdata)
 library(rnaturalearthhires)
 library(dtplyr)
 library(furrr)
-library(RColorBrewer)
 library(purrr)
 library(future)
 library(readxl)
@@ -79,6 +78,10 @@ remove_unit("t_fish")
 install_unit("g_fish")
 install_unit("kg_fish", "1000 g_fish")
 install_unit("t_fish", "1000 kg_fish")
+
+packages <- c("magrittr", "dplyr", "tidyr", "stringr", "ggplot2", "arrow", "targets", "sf", "terra", "rnaturalearth", "furrr", "future", "units", "lubridate")
+
+here("00_model_functions.R") %>% source()
 ```
 
 ```{r global-variables}
@@ -126,92 +129,6 @@ macro_pal <- c(
   "carbohydrates" = "steelblue", "C" = "steelblue", 
   "lipids" = "darkgoldenrod1", "L" = "darkgoldenrod1"
 )
-```
-
-```{r custom fuctions}
-#| code-summary: Function to create sf polygons from bounding boxes
-
-create_boxes <- function(box_list, label_positions, offset_deg) {
-  boxes <- list()
-  labels <- list()
-  
-  for(i in seq_along(box_list)) {
-    name <- names(box_list)[i]
-    coords <- box_list[[i]]
-    pos <- label_positions[i]
-    
-    # Create polygon from bounding box coordinates
-    box_coords <- matrix(c(
-      coords[1], coords[3],  # lonmin, latmin
-      coords[2], coords[3],  # lonmax, latmin  
-      coords[2], coords[4],  # lonmax, latmax
-      coords[1], coords[4],  # lonmin, latmax
-      coords[1], coords[3]   # close polygon
-    ), ncol = 2, byrow = TRUE)
-    
-    # Create sf polygon
-    poly <- st_polygon(list(box_coords))
-    boxes[[i]] <- st_sfc(poly, crs = 4326)
-    
-    # Calculate label position based on specification
-    label_coords <- get_label_position(coords, pos, offset_deg[i])
-    label_point <- st_point(c(label_coords[1], label_coords[2]))
-    labels[[i]] <- st_sfc(label_point, crs = 4326)
-  }
-  
-  # Combine into sf objects
-  boxes_sf <- st_sf(
-    name = names(box_list),
-    letter = LETTERS[1:length(box_list)],
-    geometry = do.call(c, boxes)
-  )
-  
-  labels_sf <- st_sf(
-    name = names(box_list), 
-    letter = LETTERS[1:length(box_list)],
-    geometry = do.call(c, labels)
-  )
-  
-  return(list(boxes = boxes_sf, labels = labels_sf))
-}
-
-# Helper function to calculate label positions
-get_label_position <- function(coords, position, offset) {
-  lonmin <- coords[1]
-  lonmax <- coords[2]
-  latmin <- coords[3]
-  latmax <- coords[4]
-  
-  # Parse position string
-  parts <- strsplit(position, "_")[[1]]
-  vertical <- parts[1]    # "top" or "bottom"
-  horizontal <- parts[2]  # "left" or "right"
-  location <- parts[3]    # "inside" or "outside"
-  
-  # Base coordinates for corners
-  if(vertical == "bottom") {base_lat <- latmin} else {base_lat <- latmax}
-  if(horizontal == "right") {base_lon <- lonmax} else {base_lon <- lonmin}
-
-  # Apply offset for outside positioning
-  if(location == "outside") {
-    if(horizontal == "left") {base_lon <- base_lon-offset} else {base_lon <- base_lon+offset}
-    if(vertical == "top") {base_lat <- base_lat + offset} else {base_lat <- base_lat - offset}
-  }
-  
-  return(c(base_lon, base_lat))
-}
-
-lim_robin <- function(lons = c(144.0, 149.5), lats = c(-39.75, -44.00)) {
-  coords <- data.frame(lon = lons, lat = lats) %>%
-    st_as_sf(coords = c("lon", "lat"), crs = 4326) %>%
-    st_transform(crs = "+proj=robin") %>% 
-    st_coordinates()
-  list(
-    xlims = range(coords[, "X"]),
-    ylims = range(coords[, "Y"])
-  )
-}
-
 ```
 
 This document was last updated at `r format(Sys.time(), "%H:%M")` on `r format(Sys.time(), "%d %b, %Y")`.
@@ -498,29 +415,29 @@ param_names <- tibble::tribble(
 | Parameter | Value | Units | Description | Reference | 
 |:-------:|:----:|:----:|:----------------|:-------------------------|
 | $\alpha$             | `r unname(params['alpha'])`      | -                        | Feeding catabolism coefficient | *Salvelinus alpinus*, *Oncorhynchus mykiss* (temps: 8–13$^{\circ}$C) [@broekhuizen_modelling_1994] | 
-| $\epsilon_{P}$       | `r unname(params['epsprot'])`    | J g$^{-1}$               | Energy content of protein      | @baldan_r_2018 | 
+| $\epsilon_{P}$       | `r unname(params['epsprot'])`    | J g$^{-1}$               | Energy content of protein      | @baldan_r_2018 |
 | $\epsilon_{L}$       | `r unname(params['epslip'])`     | J g$^{-1}$               | Energy content of lipid        | @baldan_r_2018 |
 | $\epsilon_{C}$       | `r unname(params['epscarb'])`    | J g$^{-1}$               | Energy content of carbohydrate | @baldan_r_2018 |
 | $\epsilon_{O_2}$     | `r unname(params['epsO2'])`      | J g O$_2^{-1}$           | Energy consumed by the respiration of 1 g of oxygen | @elliott_energy_1975 |
-| pk                   | `r unname(params['pk'])`         | d$^{-1}$                 | Temperature coefficient for the fasting catabolism | @macnaughton_using_2019 |
+| $p_k$                | `r unname(params['pk'])`         | d$^{-1}$                 | Temperature coefficient for the fasting catabolism | @macnaughton_using_2019 |
 | $k_0$                | `r unname(params['k0'])`         | -                        | Fasting catabolism at 0 $^{^\circ}$C | @macnaughton_using_2019 |
-| m                    | `r unname(params['m'])`          | -                        | Weight exponent for anabolism | Experimentally-derived alue over a range of *Oncorhynchus*, *Perca* and *Salmo* species (temps: 8–13$^{\circ}$C) [@broekhuizen_modelling_1994] | 
-| n                    | `r unname(params['n'])`          | -                        | Weight exponent for catabolism | @baldan_r_2018 |
-| $\beta C$            | `r unname(params['betac'])`      | -                        | Shape coefficient for the feeding function | Fish size range: 2.25 $\pm$ 0.49 – 11.5 $\pm$ 5.29 g, temperature ranges: 5–24$\^{\circ}$C. Coefficient for mean daily energy intake of the moderately fast growing group, 0.4398 (mean fast group), 0.2214 (mean slow group) [@jonsson_thermal_2001] | 
+| $m$                  | `r unname(params['m'])`          | -                        | Weight exponent for anabolism | Experimentally-derived alue over a range of *Oncorhynchus*, *Perca* and *Salmo* species (temps: 8–13$^{\circ}$C) [@broekhuizen_modelling_1994] | 
+| $n$                  | `r unname(params['n'])`          | -                        | Weight exponent for catabolism | @baldan_r_2018 |
+| $\beta C$            | `r unname(params['betac'])`      | -                        | Shape coefficient for the feeding function | Fish size range: 2.25 $\pm$ 0.49 – 11.5 $\pm$ 5.29 g, temperature ranges: 5–24$^{\circ}$C. Coefficient for mean daily energy intake of the moderately fast growing group, 0.4398 (mean fast group), 0.2214 (mean slow group) [@jonsson_thermal_2001] | 
 | $T_{max}$            | `r unname(params['Tma'])`        | $^{\circ}$C              | Maximum lethal temperature | Juvenile *Oncorhynchus tshawytscha* (19.8 $\pm$ 0.02 g, acclimation temp: 15$^{^\circ}$C, 19${\circ}$C) [@poletto_unusual_2017] |
 | $T_{opt}$            | `r unname(params['Toa'])`        | $^{\circ}$C              | Optimal temperature | Fish size range: 2.25 $\pm$ 0.49 – 11.5 $\pm$ 5.29 g, temperature ranges: 5–24$^{^\circ}$C [@jonsson_thermal_2001]. Alt value: 14°C [@handeland_effect_2008], *Salmo salar* initial size: 77.0 $\pm$ 14.6 g, temps: 6, 10, 14, 18${\circ}$C | 
 | $T_{min}$            | `r unname(params['Taa'])`        | $^{\circ}$C              | Lowest feeding temperature | Fish essentially stop feeding when below 2$^{\circ}$C [@vadboncoeur_lowering_2023] | 
 | $\omega$             | `r unname(params['omega'])`      | g O$_2$ g$^{-1}$         | Oxygen consumption:weight loss ratio | Calibrated value from @baldan_r_2018 | 
-| a                    | `r unname(params['a'])`          | J g tissue$^{-1}$        | Energy content of fish tissue | Alt value: 17.02350 (nls model fitted to female Atlantic salmon data extracted and transformed from @jonsson_energy_2003 [@van_tien_development_2016] |
-| k                    | `r unname(params['k'])`          | -                        | Weight exponent for energy content | Alt value: 1.65175 (nls model fitted to female Atlantic salmon data extracted and transformed from @jonsson_energy_2003 [@van_tien_development_2016] |
-| eff                  | `r unname(params['eff'])`        | -                        | Food ingestion efficiency | Range: 95-97% ingestion efficiency [@uglem_does_2020] | 
+| $a$                  | `r unname(params['a'])`          | J g tissue$^{-1}$        | Energy content of fish tissue | Alt value: 17.02350 (nls model fitted to female Atlantic salmon data extracted and transformed from @jonsson_energy_2003 [@van_tien_development_2016] |
+| $k$                  | `r unname(params['k'])`          | -                        | Weight exponent for energy content | Alt value: 1.65175 (nls model fitted to female Atlantic salmon data extracted and transformed from @jonsson_energy_2003 [@van_tien_development_2016] |
+| $eff$                | `r unname(params['eff'])`        | -                        | Food ingestion efficiency | Range: 95-97% ingestion efficiency [@uglem_does_2020] | 
 | $\overline{W}$       | `r unname(params['meanW'])`      | g                        | Dry weight mean | Range of 100-150 given so used a mean of 125 and sd of 10 which over 1000 draws from a normal distribution delivers a minimum and maximum close to these numbers [@dempsey_estimating_2023] | 
 | $\Delta{W}$          | `r unname(params['deltaW'])`     | g                        | Dry weight standard deviation | Range of 100-150 given so used a mean of 125 and sd of 10 which over 1000 draws from a normal distribution delivers a minimum and maximum close to these numbers [@dempsey_estimating_2023] | 
 | $\overline{I_{max}}$ | `r unname(params['meanImax'])`   | g g$^{-1}$ fish d$^{-1}$ | Ingestion rate mean | [FAO](https://www.fao.org/fileadmin/user_upload/affris/docs/tabl10.pdf) |
 | $\Delta{I_{max}}$    | `r unname(params['deltaImax'])`  | g g$^{-1}$ fish d$^{-1}$ | Ingestion rate standard deviation | [FAO](https://www.fao.org/fileadmin/user_upload/affris/docs/tabl10.pdf) |
 | $\overline{F}$       | `r unname(params['overFmean'])`  | g g$^{-1}$ fish          | Overfeeding rate mean |    |
 | $\Delta{F}$          | `r unname(params['overFdelta'])` | g g$^{-1}$ fish          | Overfeeding rate standard deviation |    |
-| mort                 | `r unname(params['mortmyt'])`    | d$^{-1}$                 | Natural mortality rate | @tvete_towards_2023 |
+| $mort$               | `r unname(params['mortmyt'])`    | d$^{-1}$                 | Natural mortality rate | @tvete_towards_2023 |
 : Model growth parameters for Atlantic salmon {#tbl-params}
 
 ### Parameter sensitivity
@@ -764,7 +681,7 @@ coho_biom %>%
 # Statistical analysis & code availability
 
 All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
-Major packages used include `terra` [@terra], `targets` [@targets], `future` [@future], `furrr` [@furrr], `renv` [@renv], and the `tidyverse` [@tidyverse].
+Major packages used include `r cite_packages(packages)`.
 For a full list of R packages used see the lockfile on [Github](https://www.github.com).
 This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
 

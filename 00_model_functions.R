@@ -261,4 +261,110 @@ farm_growth <- function(pop_params, species_params, feed_params, water_temp, tim
   return(out_list)
 }
 
+cite_pack <- function(package_name) {
+  version <- packageVersion(package_name)
+  paste0("package `", package_name, "`, version ", version, " [@", package_name, "]")
+}
+
+cite_packages <- function(packages) {
+  # Generate citations for each package
+  citations <- sapply(packages, function(pkg) {
+    version <- packageVersion(pkg)
+    paste0("`", pkg, "`, version ", version, " [@", pkg, "]")
+  })
+  
+  # Handle different cases based on number of packages
+  if (length(packages) == 1) {
+    return(paste0("package ", citations[1]))
+  } else if (length(packages) == 2) {
+    return(paste0("packages ", citations[1], " and ", citations[2]))
+  } else {
+    # More than 2 packages: use commas and "and" before last
+    first_part <- paste(citations[-length(citations)], collapse = ", ")
+    last_part <- citations[length(citations)]
+    return(paste0("packages ", first_part, ", and ", last_part))
+  }
+}
+
+create_boxes <- function(box_list, label_positions, offset_deg) {
+  boxes <- list()
+  labels <- list()
+  
+  for(i in seq_along(box_list)) {
+    name <- names(box_list)[i]
+    coords <- box_list[[i]]
+    pos <- label_positions[i]
+    
+    # Create polygon from bounding box coordinates
+    box_coords <- matrix(c(
+      coords[1], coords[3],  # lonmin, latmin
+      coords[2], coords[3],  # lonmax, latmin  
+      coords[2], coords[4],  # lonmax, latmax
+      coords[1], coords[4],  # lonmin, latmax
+      coords[1], coords[3]   # close polygon
+    ), ncol = 2, byrow = TRUE)
+    
+    # Create sf polygon
+    poly <- st_polygon(list(box_coords))
+    boxes[[i]] <- st_sfc(poly, crs = 4326)
+    
+    # Calculate label position based on specification
+    label_coords <- get_label_position(coords, pos, offset_deg[i])
+    label_point <- st_point(c(label_coords[1], label_coords[2]))
+    labels[[i]] <- st_sfc(label_point, crs = 4326)
+  }
+  
+  # Combine into sf objects
+  boxes_sf <- st_sf(
+    name = names(box_list),
+    letter = LETTERS[1:length(box_list)],
+    geometry = do.call(c, boxes)
+  )
+  
+  labels_sf <- st_sf(
+    name = names(box_list), 
+    letter = LETTERS[1:length(box_list)],
+    geometry = do.call(c, labels)
+  )
+  
+  return(list(boxes = boxes_sf, labels = labels_sf))
+}
+
+# Helper function to calculate label positions
+get_label_position <- function(coords, position, offset) {
+  lonmin <- coords[1]
+  lonmax <- coords[2]
+  latmin <- coords[3]
+  latmax <- coords[4]
+  
+  # Parse position string
+  parts <- strsplit(position, "_")[[1]]
+  vertical <- parts[1]    # "top" or "bottom"
+  horizontal <- parts[2]  # "left" or "right"
+  location <- parts[3]    # "inside" or "outside"
+  
+  # Base coordinates for corners
+  if(vertical == "bottom") {base_lat <- latmin} else {base_lat <- latmax}
+  if(horizontal == "right") {base_lon <- lonmax} else {base_lon <- lonmin}
+  
+  # Apply offset for outside positioning
+  if(location == "outside") {
+    if(horizontal == "left") {base_lon <- base_lon-offset} else {base_lon <- base_lon+offset}
+    if(vertical == "top") {base_lat <- base_lat + offset} else {base_lat <- base_lat - offset}
+  }
+  
+  return(c(base_lon, base_lat))
+}
+
+lim_robin <- function(lons = c(144.0, 149.5), lats = c(-39.75, -44.00)) {
+  coords <- data.frame(lon = lons, lat = lats) %>%
+    st_as_sf(coords = c("lon", "lat"), crs = 4326) %>%
+    st_transform(crs = "+proj=robin") %>% 
+    st_coordinates()
+  list(
+    xlims = range(coords[, "X"]),
+    ylims = range(coords[, "Y"])
+  )
+}
+
 # nolint end
