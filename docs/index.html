@@ -295,7 +295,7 @@ window.Quarto = {
   
 
 
-<p>This document was last updated at 11:32 on 09 Jun, 2025.</p>
+<p>This document was last updated at 15:54 on 09 Jun, 2025.</p>
 <section id="methods" class="level1 page-columns page-full">
 <h1>Methods</h1>
 <section id="feeding-rate" class="level3">
@@ -545,24 +545,18 @@ Table&nbsp;1: Model growth parameters for Atlantic salmon
 <h2 class="anchored" data-anchor-id="sec-feeds">Modelled experimental feeds</h2>
 <p>Feeds came from <span class="citation" data-cites="cottrell_origins_nodate cottrell_global_2020">(<a href="#ref-cottrell_origins_nodate" role="doc-biblioref">Cottrell et al., n.d.</a>, <a href="#ref-cottrell_global_2020" role="doc-biblioref">2020</a>)</span>.</p>
 <div class="page-columns page-full"><p></p><div class="no-row-height column-margin column-container"><span class="margin-aside">Possibly replace this with a better summary of the ingredients that make up each feed, and report these stats in Results under Uneaten feed?</span></div></div>
-<ul>
-<li>The reference feed is 37.808% protein, 36.492% lipid, 20.395% carbohydrate.</li>
-<li>The past feed is 49.812% protein, 27.103% lipid, 16.582% carbohydrate.</li>
-<li>The future feed is 47.7008812% protein, 32.8691493% lipid, 13.8965258% carbohydrate.</li>
-<li>Within the reference feed, protein is overall 89.2050106% digestible, lipid is overall 96% digestible, and carbohydrate is overall 69.606129% digestible.</li>
-<li>Within the past feed, protein is overall 90.5281659% digestible, lipid is overall 96% digestible, and carbohydrate is overall 79.7491002% digestible.</li>
-<li>Within the future feed, protein is overall 86.2391049% digestible, lipid is overall 96% digestible, and carbohydrate is overall 69.3082581% digestible.</li>
-</ul>
-<div class="cell" data-layout-align="center">
+<p>The reference feed was 37.8% protein, 36.5% lipid, and 20.4% carbohydrate, the past feed was 49.8% protein, 27.1% lipid, and 16.6% carbohydrate, and the future feed was 47.7% protein, 32.9% lipid, and 13.9% carbohydrate.</p>
+<p>Ingredients are tracked seperately through the model with their own digestibility coefficients. Overall, proteins within the reference feed were 89.2% digestible, proteins within the past feed were 90.5% digestible, and proteins within the future feed were 86.2% digestible. The digestibility of the other macronutrients are assumed to remain constant across all ingredients at 79.7% for carbohydrates and 96% for lipids.</p>
+<div id="cell-fig-feed-summary-ideas" class="cell" data-layout-align="center">
 <div class="cell-output-display">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><a href="manuscript_files/figure-html/feed%20summary%20ideas-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Ideas for how to present the differences between feeds. Top plot shows the protein (red), lipids (yellow) and carbohydrate (blue) composition, with the digestible portion shown darker and the undigestible portion shown lighter. Bottom plot shows the proportion of each feed composed of each types of ingredient."><img src="manuscript_files/figure-html/feed%20summary%20ideas-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816" alt="Ideas for how to present the differences between feeds. Top plot shows the protein (red), lipids (yellow) and carbohydrate (blue) composition, with the digestible portion shown darker and the undigestible portion shown lighter. Bottom plot shows the proportion of each feed composed of each types of ingredient."></a></p>
-</figure>
+<div id="fig-feed-summary-ideas" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-feed-summary-ideas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="manuscript_files/figure-html/fig-feed-summary-ideas-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-3" title="Figure&nbsp;2: Ideas for how to present the differences between feeds. Top plot shows the protein (red), lipids (yellow) and carbohydrate (blue) composition, with the digestible portion shown darker and the undigestible portion shown lighter. Bottom plot shows the proportion of each feed composed of each types of ingredient."><img src="manuscript_files/figure-html/fig-feed-summary-ideas-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
-<figcaption>Ideas for how to present the differences between feeds. Top plot shows the protein (red), lipids (yellow) and carbohydrate (blue) composition, with the digestible portion shown darker and the undigestible portion shown lighter. Bottom plot shows the proportion of each feed composed of each types of ingredient.</figcaption>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-feed-summary-ideas-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Ideas for how to present the differences between feeds. Top plot shows the protein (red), lipids (yellow) and carbohydrate (blue) composition, with the digestible portion shown darker and the undigestible portion shown lighter. Bottom plot shows the proportion of each feed composed of each types of ingredient.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -575,10 +569,10 @@ Table&nbsp;1: Model growth parameters for Atlantic salmon
 <div id="fig-cohorts" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-cohorts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-cohorts-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;2: Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days."><img src="manuscript_files/figure-html/fig-cohorts-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-cohorts-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-4" title="Figure&nbsp;3: Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days."><img src="manuscript_files/figure-html/fig-cohorts-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cohorts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2: Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days.
+Figure&nbsp;3: Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days.
 </figcaption>
 </figure>
 </div>
@@ -592,16 +586,16 @@ Figure&nbsp;2: Example of how the overlapping cohorts combine into a single farm
 <div id="fig-harvest-size" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-harvest-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-harvest-size-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;3: Frequency distribution of harvest sizes used to create the population timeseries for each farm, as predicted by the fish-growth model."><img src="manuscript_files/figure-html/fig-harvest-size-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-harvest-size-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-5" title="Figure&nbsp;4: Frequency distribution of harvest sizes used to create the population timeseries for each farm, as predicted by the fish-growth model."><img src="manuscript_files/figure-html/fig-harvest-size-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-harvest-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3: Frequency distribution of harvest sizes used to create the population timeseries for each farm, as predicted by the fish-growth model.
+Figure&nbsp;4: Frequency distribution of harvest sizes used to create the population timeseries for each farm, as predicted by the fish-growth model.
 </figcaption>
 </figure>
 </div>
 </div>
 </div></div></div>
-<p>By this method, farm biomass as predicted by the model slightly overestimated farm tonnage. Predicted farm biomass was 2.4-6.5 higher than tonnage produced (<a href="#fig-biomass-produced" class="quarto-xref">Figure&nbsp;6</a>). This variation was not correlated with mean farm temperature or total tonnage produced (<strong>?@fig-biomass-variation</strong>).</p>
+<p>By this method, farm biomass as predicted by the model slightly overestimated farm tonnage. Predicted farm biomass was 2.4-6.5 higher than tonnage produced (<a href="#fig-biomass-produced" class="quarto-xref">Figure&nbsp;7</a>). This variation was not correlated with mean farm temperature or total tonnage produced (<strong>?@fig-biomass-variation</strong>).</p>
 <div id="cell-fig-biomass-variation" class="cell page-columns page-full" data-layout-align="center">
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
@@ -609,10 +603,10 @@ Figure&nbsp;3: Frequency distribution of harvest sizes used to create the popula
 <div id="fig-biomass-variation-1" class="quarto-float quarto-figure quarto-figure-center anchored" width="816" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-biomass-variation-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-biomass-variation-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;4: "><img src="manuscript_files/figure-html/fig-biomass-variation-1.png" id="fig-biomass-variation-1" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-biomass-variation-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;5: "><img src="manuscript_files/figure-html/fig-biomass-variation-1.png" id="fig-biomass-variation-1" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-biomass-variation-1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4
+Figure&nbsp;5
 </figcaption>
 </figure>
 </div>
@@ -621,10 +615,10 @@ Figure&nbsp;4
 <div id="fig-biomass-variation-2" class="quarto-float quarto-figure quarto-figure-center anchored" width="816" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-biomass-variation-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-biomass-variation-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;5: "><img src="manuscript_files/figure-html/fig-biomass-variation-2.png" id="fig-biomass-variation-2" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-biomass-variation-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-7" title="Figure&nbsp;6: "><img src="manuscript_files/figure-html/fig-biomass-variation-2.png" id="fig-biomass-variation-2" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-biomass-variation-2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5
+Figure&nbsp;6
 </figcaption>
 </figure>
 </div>
@@ -637,10 +631,10 @@ Figure&nbsp;5
 <div id="fig-biomass-produced" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-biomass-produced-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-biomass-produced-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;6: Modelled vs observed salmon biomass produced"><img src="manuscript_files/figure-html/fig-biomass-produced-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-biomass-produced-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;7: Modelled vs observed salmon biomass produced"><img src="manuscript_files/figure-html/fig-biomass-produced-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-biomass-produced-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;6: Modelled vs observed salmon biomass produced
+Figure&nbsp;7: Modelled vs observed salmon biomass produced
 </figcaption>
 </figure>
 </div>
@@ -675,17 +669,17 @@ Figure&nbsp;6: Modelled vs observed salmon biomass produced
 <ul>
 <li>Differences between the feeds were very small, with the past scenario producing</li>
 <li>but slightly less uneaten feed was lost in the reference scenario. Uneaten past feed ranged from 48.72 to 48.72 g kg<span class="math inline">\(^{-1}\)</span> (mean of 62.17) while uneaten future feed ranged from 48.73 to 48.73 g kg<span class="math inline">\(^{-1}\)</span> (mean of 62.05).</li>
-<li><a href="#fig-total-uneaten-perday" class="quarto-xref">Figure&nbsp;7</a> shows the range of total uneaten feed per day across countries.</li>
+<li><a href="#fig-total-uneaten-perday" class="quarto-xref">Figure&nbsp;8</a> shows the range of total uneaten feed per day across countries.</li>
 </ul>
 <div id="cell-fig-total-uneaten-perday" class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-total-uneaten-perday" class="quarto-float quarto-figure quarto-figure-center anchored" width="912" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-total-uneaten-perday-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-total-uneaten-perday-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Figure&nbsp;7: "><img src="manuscript_files/figure-html/fig-total-uneaten-perday-1.png" id="fig-total-uneaten-perday" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="912"></a>
+<a href="manuscript_files/figure-html/fig-total-uneaten-perday-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Figure&nbsp;8: "><img src="manuscript_files/figure-html/fig-total-uneaten-perday-1.png" id="fig-total-uneaten-perday" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="912"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-total-uneaten-perday-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7
+Figure&nbsp;8
 </figcaption>
 </figure>
 </div>
@@ -702,17 +696,17 @@ Figure&nbsp;7
 <ul>
 <li>Total reference excreted faeces across a cohort (548 days) ranged from 194.24 to 295.9 g kg<span class="math inline">\(^{-1}\)</span>, with a mean of 247.38.</li>
 <li>There was very little difference between the past and future feeds and the reference feed. Uneaten past feed ranged from 154.33 to 236.05 g kg<span class="math inline">\(^{-1}\)</span> (mean of 196.94 g kg<span class="math inline">\(^{-1}\)</span>) while uneaten future feed ranged from 202.55 to 308.61 g kg<span class="math inline">\(^{-1}\)</span> (mean of 257.91 g kg<span class="math inline">\(^{-1}\)</span>).</li>
-<li><a href="#fig-total-excreted-perday" class="quarto-xref">Figure&nbsp;8</a> shows the range of total excreted faeces per day across countries.</li>
+<li><a href="#fig-total-excreted-perday" class="quarto-xref">Figure&nbsp;9</a> shows the range of total excreted faeces per day across countries.</li>
 </ul>
 <div id="cell-fig-total-excreted-perday" class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-total-excreted-perday" class="quarto-float quarto-figure quarto-figure-center anchored" width="864" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-total-excreted-perday-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-total-excreted-perday-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;8: "><img src="manuscript_files/figure-html/fig-total-excreted-perday-1.png" id="fig-total-excreted-perday" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="864"></a>
+<a href="manuscript_files/figure-html/fig-total-excreted-perday-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;9: "><img src="manuscript_files/figure-html/fig-total-excreted-perday-1.png" id="fig-total-excreted-perday" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="864"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-total-excreted-perday-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;8
+Figure&nbsp;9
 </figcaption>
 </figure>
 </div>
@@ -725,10 +719,10 @@ Figure&nbsp;8
 <div id="fig-total-excr-diff_perc" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-total-excr-diff_perc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-total-excr-diff_perc-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;9: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion."><img src="manuscript_files/figure-html/fig-total-excr-diff_perc-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-total-excr-diff_perc-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;10: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion."><img src="manuscript_files/figure-html/fig-total-excr-diff_perc-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-excr-diff_perc-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;9: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion.
+Figure&nbsp;10: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) with increasing overall excretion.
 </figcaption>
 </figure>
 </div>
@@ -742,25 +736,25 @@ Figure&nbsp;9: Mean % difference in excreted faeces of the two experimental feed
 <div id="fig-total-excr-diff_perc_2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-total-excr-diff_perc_2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-total-excr-diff_perc_2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Figure&nbsp;10: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle."><img src="manuscript_files/figure-html/fig-total-excr-diff_perc_2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-total-excr-diff_perc_2-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-12" title="Figure&nbsp;11: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle."><img src="manuscript_files/figure-html/fig-total-excr-diff_perc_2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-excr-diff_perc_2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;10: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+Figure&nbsp;11: Mean % difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
 </figcaption>
 </figure>
 </div>
 </div>
 </div></div></div>
-<p>However, the actual difference in excreted faeces varied by feed, time in the production cycle, and location of the farm <a href="#fig-total-excr-act_diff" class="quarto-xref">Figure&nbsp;11</a>.</p>
+<p>However, the actual difference in excreted faeces varied by feed, time in the production cycle, and location of the farm <a href="#fig-total-excr-act_diff" class="quarto-xref">Figure&nbsp;12</a>.</p>
 <div id="cell-fig-total-excr-act_diff" class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-total-excr-act_diff" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-total-excr-act_diff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-total-excr-act_diff-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Figure&nbsp;11: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle."><img src="manuscript_files/figure-html/fig-total-excr-act_diff-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="600"></a>
+<a href="manuscript_files/figure-html/fig-total-excr-act_diff-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-13" title="Figure&nbsp;12: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle."><img src="manuscript_files/figure-html/fig-total-excr-act_diff-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="600"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-excr-act_diff-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;11: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
+Figure&nbsp;12: Mean actual difference in excreted faeces of the two experimental feeds (compared to the reference feed) over time in one production cycle.
 </figcaption>
 </figure>
 </div>
@@ -780,10 +774,10 @@ Figure&nbsp;11: Mean actual difference in excreted faeces of the two experimenta
 <div id="fig-composition-comparison" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-composition-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-composition-comparison-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="Figure&nbsp;12: Comparison of the composition of the reference (blue), past (red) and future (green) feed and faeces of salmon fed each feed."><img src="manuscript_files/figure-html/fig-composition-comparison-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-composition-comparison-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-14" title="Figure&nbsp;13: Comparison of the composition of the reference (blue), past (red) and future (green) feed and faeces of salmon fed each feed."><img src="manuscript_files/figure-html/fig-composition-comparison-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-composition-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;12: Comparison of the composition of the reference (blue), past (red) and future (green) feed and faeces of salmon fed each feed.
+Figure&nbsp;13: Comparison of the composition of the reference (blue), past (red) and future (green) feed and faeces of salmon fed each feed.
 </figcaption>
 </figure>
 </div>
@@ -803,7 +797,7 @@ Figure&nbsp;12: Comparison of the composition of the reference (blue), past (red
 <h1>Supplementary stuff</h1>
 <section id="sec-parameter-sensitivity" class="level2">
 <h2 class="anchored" data-anchor-id="sec-parameter-sensitivity">Parameter sensitivity</h2>
-<p>Looking at <a href="#fig-param-sens-weight" class="quarto-xref">Figure&nbsp;13</a>:</p>
+<p>Looking at <a href="#fig-param-sens-weight" class="quarto-xref">Figure&nbsp;14</a>:</p>
 <ul>
 <li>The most sensitive parameter by far is <span class="math inline">\(m\)</span> (the weight exponent for anabolism), followed closely by <span class="math inline">\(n\)</span> the (weight exponent for catabolism)</li>
 <li>These two are also relatively uncertain, as <span class="math inline">\(m\)</span> was taken from <em>Salmo trutta</em> measurements in a fairly old paper <span class="citation" data-cites="broekhuizen_modelling_1994">(<a href="#ref-broekhuizen_modelling_1994" role="doc-biblioref">Broekhuizen et al. 1994</a>)</span> and <span class="math inline">\(n\)</span> was taken from <span class="citation" data-cites="baldan_r_2018">Baldan et al. (<a href="#ref-baldan_r_2018" role="doc-biblioref">2018</a>)</span> which did not specifically look at Atlantic salmon. There must be more up-to-date measurements for Atlantic salmon in particular.</li>
@@ -813,10 +807,10 @@ Figure&nbsp;12: Comparison of the composition of the reference (blue), past (red
 <div id="fig-param-sens-weight" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-param-sens-weight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Figure&nbsp;13: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period."><img src="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15" title="Figure&nbsp;14: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period."><img src="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-param-sens-weight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;13: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period.
+Figure&nbsp;14: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period.
 </figcaption>
 </figure>
 </div>
@@ -1328,7 +1322,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"descPosition":"bottom","selector":".lightbox","closeEffect":"zoom","loop":false,"openEffect":"zoom"});
+<script>var lightboxQuarto = GLightbox({"openEffect":"zoom","selector":".lightbox","closeEffect":"zoom","descPosition":"bottom","loop":false});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {

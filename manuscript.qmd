@@ -556,16 +556,29 @@ feed_summary <- map_dfr(names(feed_params), function(feed) {
 
 Feeds came from [@cottrell_origins_nodate; @cottrell_global_2020]. 
 
-[Possibly replace this with a better summary of the ingredients that make up each feed, and report these stats in Results under Uneaten feed?]{.aside}
+[Plan to put full details of ingredients in a supplementary section. But possibly report these stats in Results under Uneaten feed?]{.aside}
 
-* The reference feed is `r filter(feed_summary, feed == "reference", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "reference", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "reference", macro == "C")$total_r`% carbohydrate.
-* The past feed is `r filter(feed_summary, feed == "past", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "past", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "past", macro == "C")$total_r`% carbohydrate.
-* The future feed is `r filter(feed_summary, feed == "future", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "future", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "future", macro == "C")$total_r`% carbohydrate.
-* Within the reference feed, protein is overall `r filter(feed_summary, feed == "reference", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "reference", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "reference", macro == "C")$digest_r`% digestible.
-* Within the past feed, protein is overall `r filter(feed_summary, feed == "past", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "past", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "past", macro == "C")$digest_r`% digestible.
-* Within the future feed, protein is overall `r filter(feed_summary, feed == "future", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "future", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "future", macro == "C")$digest_r`% digestible.
+The reference feed was 
+`r round(100*filter(feed_summary, feed == "reference", macro == "P")$total, 1)`% protein, 
+`r round(100*filter(feed_summary, feed == "reference", macro == "L")$total, 1)`% lipid, and 
+`r round(100*filter(feed_summary, feed == "reference", macro == "C")$total, 1)`% carbohydrate, the past feed was 
+`r round(100*filter(feed_summary, feed == "past", macro == "P")$total, 1)`% protein, 
+`r round(100*filter(feed_summary, feed == "past", macro == "L")$total, 1)`% lipid, and 
+`r round(100*filter(feed_summary, feed == "past", macro == "C")$total, 1)`% carbohydrate, and the future feed was 
+`r round(100*filter(feed_summary, feed == "future", macro == "P")$total, 1)`% protein, 
+`r round(100*filter(feed_summary, feed == "future", macro == "L")$total, 1)`% lipid, and 
+`r round(100*filter(feed_summary, feed == "future", macro == "C")$total, 1)`% carbohydrate.
 
-```{r feed summary ideas}
+Ingredients are tracked seperately through the model with their own digestibility coefficients. Overall, proteins within the reference feed were 
+`r round(100*filter(feed_summary, feed == "reference", macro == "P")$digest, 1)`% digestible, proteins within the past feed were 
+`r round(100*filter(feed_summary, feed == "past", macro == "P")$digest, 1)`% digestible, and proteins within the future feed were 
+`r round(100*filter(feed_summary, feed == "future", macro == "P")$digest, 1)`% digestible.
+The digestibility of the other macronutrients are assumed to remain constant across all ingredients at `r round(100*filter(feed_summary, feed == "past", macro == "C")$digest, 1)`% for carbohydrates and `r round(100*filter(feed_summary, feed == "past", macro == "L")$digest, 1)`% for lipids. 
+
+
+
+```{r fig-feed-summary-ideas}
+#| fig-height: 7.5
 #| fig-cap: | 
 #|   Ideas for how to present the differences between feeds. Top plot shows the protein (red), lipids (yellow) and carbohydrate (blue) composition, with the digestible portion shown darker and the undigestible portion shown lighter. Bottom plot shows the proportion of each feed composed of each types of ingredient.
 
@@ -623,6 +636,7 @@ p_ings <- feed_ings %>%
   theme(
     text = element_text(family = "serif", size = 12, colour = "black"),
     legend.position = "bottom",
+    legend.title = element_blank(), 
     strip.text = element_blank(),
     strip.text.x = element_text(size = 14)
   )
@@ -1098,17 +1112,19 @@ sens_excr <- output_sens_data_path %>%
   str_subset("total_excr") %>% 
   qs::qread() 
 
-sens_data <- rbind(sens_weight, sens_excr) %>% 
-  mutate(adj_param = factor(adj_param, levels = param_names$name))
+sens_data <- rbind(sens_weight, sens_excr)
 ```
 
 Looking at @fig-param-sens-weight:
 
 * The most sensitive parameter by far is $m$ (the weight exponent for anabolism), followed closely by $n$ the (weight exponent for catabolism)
-* These two are also relatively uncertain, as $m$ was taken from *Salmo trutta* measurements in a fairly old paper [@broekhuizen_modelling_1994] and $n$ was taken from @baldan_r_2018 which did not specifically look at Atlantic salmon. There must be more up-to-date measurements for Atlantic salmon in particular. 
+* These two are also relatively uncertain, as $m$ was taken from *Salmo trutta* measurements in a fairly old paper [@broekhuizen_modelling_1994] and $n$ was taken from @baldan_r_2018 which did not specifically look at Atlantic salmon.
 
 ```{r fig-param-sens-weight}
 #| fig-cap: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period. 
+
+sens_data <- sens_data %>% 
+  filter(measure %in% c("total_excr", "total_uneat")) 
 
 sens_data %>% 
   ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens - sd_sens, ymax = mean_sens + sd_sens, fill = measure)) +
@@ -1116,9 +1132,8 @@ sens_data %>%
   # geom_errorbar(position = position_dodge(width = 0.95), width = 0.3) +
   geom_hline(aes(yintercept = 0), linetype = "dashed") +
   scale_y_continuous(breaks = seq(-30,30,5), limits = c(-10,30)) +
-  scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
-  scale_fill_manual(values = c(weight = "salmon", total_excr = "steelblue")) +
-  # scale_fill_manual(values = c("weight" = "salmon", "uneat" = "steelblue", "excr" = "darkgreen")) +
+  # scale_x_discrete(limits = rev(param_names$name), labels = rev(param_names$lab)) +
+  # scale_fill_manual(values = c(total_excr = "salmon", total_uneat = "steelblue")) +
   labs(x = "Adjusted parameter", y = "Sensitivity") +
   prettyplot() +
   theme(strip.text = element_blank(), 

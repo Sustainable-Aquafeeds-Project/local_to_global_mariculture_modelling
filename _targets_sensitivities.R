@@ -16,10 +16,9 @@ list(
   ),
   tar_target(
     tar_farm_ID_sample,
-    farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) %>% sample(271)
+    farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) %>% sample(25) # %>% sample(271)
   ),
   
-  tar_target(tar_factors, factors),
   tar_target(tar_param_names_pop, c("meanW", "deltaW", "meanImax", "deltaImax", "overFmean", "overFdelta")),
   tar_target(tar_param_names_spec, sens_params_names[!sens_params_names %in% tar_param_names_pop]),
   
@@ -238,7 +237,7 @@ list(
         catab = mean(sens[['catab_stat']][, 2], na.rm = T),
         O2 = sum(sens[['O2_stat']][, 2], na.rm = T),
         NH4 = sum(sens[['NH4_stat']][, 2], na.rm = T),
-        adj_param = as.factor(tar_param_names_spec)
+        adj_param = as.factor(tar_param_names_pop)
       ) %>%
         mutate(farm_ID = tar_farm_ID_sample,
                factor = factors[1])
@@ -282,7 +281,7 @@ list(
         catab = mean(sens[['catab_stat']][, 2], na.rm = T),
         O2 = sum(sens[['O2_stat']][, 2], na.rm = T),
         NH4 = sum(sens[['NH4_stat']][, 2], na.rm = T),
-        adj_param = as.factor(tar_param_names_spec)
+        adj_param = as.factor(tar_param_names_pop)
       ) %>%
         mutate(farm_ID = tar_farm_ID_sample,
                factor = factors[2])
@@ -326,7 +325,7 @@ list(
         catab = mean(sens[['catab_stat']][, 2], na.rm = T),
         O2 = sum(sens[['O2_stat']][, 2], na.rm = T),
         NH4 = sum(sens[['NH4_stat']][, 2], na.rm = T),
-        adj_param = as.factor(tar_param_names_spec)
+        adj_param = as.factor(tar_param_names_pop)
       ) %>%
         mutate(farm_ID = tar_farm_ID_sample,
                factor = factors[3])

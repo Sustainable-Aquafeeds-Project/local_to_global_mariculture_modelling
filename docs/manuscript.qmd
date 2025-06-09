@@ -558,14 +558,27 @@ Feeds came from [@cottrell_origins_nodate; @cottrell_global_2020].
 
 [Possibly replace this with a better summary of the ingredients that make up each feed, and report these stats in Results under Uneaten feed?]{.aside}
 
-* The reference feed is `r filter(feed_summary, feed == "reference", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "reference", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "reference", macro == "C")$total_r`% carbohydrate.
-* The past feed is `r filter(feed_summary, feed == "past", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "past", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "past", macro == "C")$total_r`% carbohydrate.
-* The future feed is `r filter(feed_summary, feed == "future", macro == "P")$total_r`% protein, `r filter(feed_summary, feed == "future", macro == "L")$total_r`% lipid, `r filter(feed_summary, feed == "future", macro == "C")$total_r`% carbohydrate.
-* Within the reference feed, protein is overall `r filter(feed_summary, feed == "reference", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "reference", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "reference", macro == "C")$digest_r`% digestible.
-* Within the past feed, protein is overall `r filter(feed_summary, feed == "past", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "past", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "past", macro == "C")$digest_r`% digestible.
-* Within the future feed, protein is overall `r filter(feed_summary, feed == "future", macro == "P")$digest_r`% digestible, lipid is overall `r filter(feed_summary, feed == "future", macro == "L")$digest_r`% digestible, and carbohydrate is overall `r filter(feed_summary, feed == "future", macro == "C")$digest_r`% digestible.
+The reference feed was 
+`r round(100*filter(feed_summary, feed == "reference", macro == "P")$total, 1)`% protein, 
+`r round(100*filter(feed_summary, feed == "reference", macro == "L")$total, 1)`% lipid, and 
+`r round(100*filter(feed_summary, feed == "reference", macro == "C")$total, 1)`% carbohydrate, the past feed was 
+`r round(100*filter(feed_summary, feed == "past", macro == "P")$total, 1)`% protein, 
+`r round(100*filter(feed_summary, feed == "past", macro == "L")$total, 1)`% lipid, and 
+`r round(100*filter(feed_summary, feed == "past", macro == "C")$total, 1)`% carbohydrate, and the future feed was 
+`r round(100*filter(feed_summary, feed == "future", macro == "P")$total, 1)`% protein, 
+`r round(100*filter(feed_summary, feed == "future", macro == "L")$total, 1)`% lipid, and 
+`r round(100*filter(feed_summary, feed == "future", macro == "C")$total, 1)`% carbohydrate.
 
-```{r feed summary ideas}
+Ingredients are tracked seperately through the model with their own digestibility coefficients. Overall, proteins within the reference feed were 
+`r round(100*filter(feed_summary, feed == "reference", macro == "P")$digest, 1)`% digestible, proteins within the past feed were 
+`r round(100*filter(feed_summary, feed == "past", macro == "P")$digest, 1)`% digestible, and proteins within the future feed were 
+`r round(100*filter(feed_summary, feed == "future", macro == "P")$digest, 1)`% digestible.
+The digestibility of the other macronutrients are assumed to remain constant across all ingredients at `r round(100*filter(feed_summary, feed == "past", macro == "C")$digest, 1)`% for carbohydrates and `r round(100*filter(feed_summary, feed == "past", macro == "L")$digest, 1)`% for lipids. 
+
+
+
+```{r fig-feed-summary-ideas}
+#| fig-height: 7.5
 #| fig-cap: | 
 #|   Ideas for how to present the differences between feeds. Top plot shows the protein (red), lipids (yellow) and carbohydrate (blue) composition, with the digestible portion shown darker and the undigestible portion shown lighter. Bottom plot shows the proportion of each feed composed of each types of ingredient.
 
@@ -623,6 +636,7 @@ p_ings <- feed_ings %>%
   theme(
     text = element_text(family = "serif", size = 12, colour = "black"),
     legend.position = "bottom",
+    legend.title = element_blank(), 
     strip.text = element_blank(),
     strip.text.x = element_text(size = 14)
   )
