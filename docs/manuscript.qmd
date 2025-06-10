@@ -369,11 +369,9 @@ cowplot::plot_grid(
 )
 ```
 
-## Production parameters
-
-Salmon were grown for 548 days and were initialised Spring. This was on day `r unique(farm_coords$t_start[farm_coords$lat < 0])` for farms in the southern hemisphere and day `r unique(farm_coords$t_start[farm_coords$lat > 0])` for farms in the northern hemisphere. Cohorts were initialised anually, such that there was an overlap of 183 days where one cohort was nearing harvest and another was being initialised.
-
 ## Model parameterisation
+
+<!-- Salmon were grown for 548 days and were initialised in Spring. This was on day `r unique(farm_coords$t_start[farm_coords$lat < 0])` for farms in the southern hemisphere and day `r unique(farm_coords$t_start[farm_coords$lat > 0])` for farms in the northern hemisphere. Cohorts were initialised annually, such that there was an overlap of 183 days where one cohort was nearing harvest and another was being initialised. -->
 
 ```{r salmon params}
 #| code-summary: Get parameter and sensitivity data
@@ -410,35 +408,33 @@ param_names <- tibble::tribble(
 )
 ```
 
-@tbl-params shows the parameter values used to model the growth of farmed Atlantic salmon.
-
-| Parameter | Value | Units | Description | Reference | 
-|:-------:|:----:|:----:|:----------------|:-------------------------|
-| $\alpha$             | `r unname(params['alpha'])`      | -                        | Feeding catabolism coefficient | *Salvelinus alpinus*, *Oncorhynchus mykiss* (temps: 8–13$^{\circ}$C) [@broekhuizen_modelling_1994] | 
-| $\epsilon_{P}$       | `r unname(params['epsprot'])`    | J g$^{-1}$               | Energy content of protein      | @baldan_r_2018 |
-| $\epsilon_{L}$       | `r unname(params['epslip'])`     | J g$^{-1}$               | Energy content of lipid        | @baldan_r_2018 |
-| $\epsilon_{C}$       | `r unname(params['epscarb'])`    | J g$^{-1}$               | Energy content of carbohydrate | @baldan_r_2018 |
-| $\epsilon_{O_2}$     | `r unname(params['epsO2'])`      | J g O$_2^{-1}$           | Energy consumed by the respiration of 1 g of oxygen | @elliott_energy_1975 |
-| $p_k$                | `r unname(params['pk'])`         | d$^{-1}$                 | Temperature coefficient for the fasting catabolism | @macnaughton_using_2019 |
-| $k_0$                | `r unname(params['k0'])`         | -                        | Fasting catabolism at 0 $^{^\circ}$C | @macnaughton_using_2019 |
-| $m$                  | `r unname(params['m'])`          | -                        | Weight exponent for anabolism | Experimentally-derived alue over a range of *Oncorhynchus*, *Perca* and *Salmo* species (temps: 8–13$^{\circ}$C) [@broekhuizen_modelling_1994] | 
-| $n$                  | `r unname(params['n'])`          | -                        | Weight exponent for catabolism | @baldan_r_2018 |
-| $\beta C$            | `r unname(params['betac'])`      | -                        | Shape coefficient for the feeding function | Fish size range: 2.25 $\pm$ 0.49 – 11.5 $\pm$ 5.29 g, temperature ranges: 5–24$^{\circ}$C. Coefficient for mean daily energy intake of the moderately fast growing group, 0.4398 (mean fast group), 0.2214 (mean slow group) [@jonsson_thermal_2001] | 
-| $T_{max}$            | `r unname(params['Tma'])`        | $^{\circ}$C              | Maximum lethal temperature | Juvenile *Oncorhynchus tshawytscha* (19.8 $\pm$ 0.02 g, acclimation temp: 15$^{^\circ}$C, 19${\circ}$C) [@poletto_unusual_2017] |
-| $T_{opt}$            | `r unname(params['Toa'])`        | $^{\circ}$C              | Optimal temperature | Fish size range: 2.25 $\pm$ 0.49 – 11.5 $\pm$ 5.29 g, temperature ranges: 5–24$^{^\circ}$C [@jonsson_thermal_2001]. Alt value: 14°C [@handeland_effect_2008], *Salmo salar* initial size: 77.0 $\pm$ 14.6 g, temps: 6, 10, 14, 18${\circ}$C | 
-| $T_{min}$            | `r unname(params['Taa'])`        | $^{\circ}$C              | Lowest feeding temperature | Fish essentially stop feeding when below 2$^{\circ}$C [@vadboncoeur_lowering_2023] | 
-| $\omega$             | `r unname(params['omega'])`      | g O$_2$ g$^{-1}$         | Oxygen consumption:weight loss ratio | Calibrated value from @baldan_r_2018 | 
-| $a$                  | `r unname(params['a'])`          | J g tissue$^{-1}$        | Energy content of fish tissue | Alt value: 17.02350 (nls model fitted to female Atlantic salmon data extracted and transformed from @jonsson_energy_2003 [@van_tien_development_2016] |
-| $k$                  | `r unname(params['k'])`          | -                        | Weight exponent for energy content | Alt value: 1.65175 (nls model fitted to female Atlantic salmon data extracted and transformed from @jonsson_energy_2003 [@van_tien_development_2016] |
-| $eff$                | `r unname(params['eff'])`        | -                        | Food ingestion efficiency | Range: 95-97% ingestion efficiency [@uglem_does_2020] | 
-| $\overline{W}$       | `r unname(params['meanW'])`      | g                        | Dry weight mean | Range of 100-150 given so used a mean of 125 and sd of 10 which over 1000 draws from a normal distribution delivers a minimum and maximum close to these numbers [@dempsey_estimating_2023] | 
-| $\Delta{W}$          | `r unname(params['deltaW'])`     | g                        | Dry weight standard deviation | Range of 100-150 given so used a mean of 125 and sd of 10 which over 1000 draws from a normal distribution delivers a minimum and maximum close to these numbers [@dempsey_estimating_2023] | 
-| $\overline{I_{max}}$ | `r unname(params['meanImax'])`   | g g$^{-1}$ fish d$^{-1}$ | Ingestion rate mean | [FAO](https://www.fao.org/fileadmin/user_upload/affris/docs/tabl10.pdf) |
-| $\Delta{I_{max}}$    | `r unname(params['deltaImax'])`  | g g$^{-1}$ fish d$^{-1}$ | Ingestion rate standard deviation | [FAO](https://www.fao.org/fileadmin/user_upload/affris/docs/tabl10.pdf) |
-| $\overline{F}$       | `r unname(params['overFmean'])`  | g g$^{-1}$ fish          | Overfeeding rate mean |    |
-| $\Delta{F}$          | `r unname(params['overFdelta'])` | g g$^{-1}$ fish          | Overfeeding rate standard deviation |    |
-| $mort$               | `r unname(params['mortmyt'])`    | d$^{-1}$                 | Natural mortality rate | @tvete_towards_2023 |
-: Model growth parameters for Atlantic salmon {#tbl-params}
+| Parameter | Value | Reference |
+|:------:|:------:|:-----------:|
+| $\alpha$             | `r unname(params['alpha'])`      | [@broekhuizen_modelling_1994] |
+| $\epsilon_{P}$       | `r unname(params['epsprot'])`    | @baldan_r_2018 |
+| $\epsilon_{L}$       | `r unname(params['epslip'])`     | @baldan_r_2018 |
+| $\epsilon_{C}$       | `r unname(params['epscarb'])`    | @baldan_r_2018 |
+| $\epsilon_{O_2}$     | `r unname(params['epsO2'])`      | @elliott_energy_1975 |
+| $p_k$                | `r unname(params['pk'])`         | @macnaughton_using_2019 |
+| $k_0$                | `r unname(params['k0'])`         | @macnaughton_using_2019 |
+| $m$                  | `r unname(params['m'])`          | @broekhuizen_modelling_1994 | 
+| $n$                  | `r unname(params['n'])`          | @baldan_r_2018 |
+| $\beta C$            | `r unname(params['betac'])`      | @jonsson_thermal_2001 |
+| $T_{max}$            | `r unname(params['Tma'])`        | @poletto_unusual_2017 | 
+| $T_{opt}$            | `r unname(params['Toa'])`        | @jonsson_thermal_2001 | 
+| $T_{min}$            | `r unname(params['Taa'])`        | @vadboncoeur_lowering_2023 | 
+| $\omega$             | `r unname(params['omega'])`      | @baldan_r_2018 |
+| $a$                  | `r unname(params['a'])`          | @van_tien_development_2016 |
+| $k$                  | `r unname(params['k'])`          | @van_tien_development_2016 | 
+| $eff$                | `r unname(params['eff'])`        | @uglem_does_2020 | 
+| $\overline{W}$       | `r unname(params['meanW'])`      | @dempsey_estimating_2023 | 
+| $\Delta{W}$          | `r unname(params['deltaW'])`     | @dempsey_estimating_2023 | |
+| $\overline{I_{max}}$ | `r unname(params['meanImax'])`   | @lall_nutrition_2009 | 
+| $\Delta{I_{max}}$    | `r unname(params['deltaImax'])`  | @lall_nutrition_2009 | 
+| $\overline{F}$       | `r unname(params['overFmean'])`  | |
+| $\Delta{F}$          | `r unname(params['overFdelta'])` | |
+| $mort$               | `r unname(params['mortmyt'])`    | @tvete_towards_2023 |
+: Model growth parameters for Atlantic salmon (for double-checking numbers and reference list only) {#tbl-params}
 
 ### Parameter sensitivity
 
@@ -471,10 +467,6 @@ feed_summary <- map_dfr(names(feed_params), function(feed) {
          digest_r = digest * 100 %>% round(1))
 ```
 
-Feeds came from [@cottrell_origins_nodate; @cottrell_global_2020]. 
-
-[Plan to put full details of ingredients in a supplementary section. But possibly report these stats in Results under Uneaten feed?]{.aside}
-
 The reference feed was 
 `r round(100*filter(feed_summary, feed == "reference", macro == "P")$total, 1)`% protein, 
 `r round(100*filter(feed_summary, feed == "reference", macro == "L")$total, 1)`% lipid, and 
@@ -486,13 +478,16 @@ The reference feed was
 `r round(100*filter(feed_summary, feed == "future", macro == "L")$total, 1)`% lipid, and 
 `r round(100*filter(feed_summary, feed == "future", macro == "C")$total, 1)`% carbohydrate.
 
-Ingredients are tracked seperately through the model with their own digestibility coefficients. Overall, proteins within the reference feed were 
-`r round(100*filter(feed_summary, feed == "reference", macro == "P")$digest, 1)`% digestible, proteins within the past feed were 
-`r round(100*filter(feed_summary, feed == "past", macro == "P")$digest, 1)`% digestible, and proteins within the future feed were 
-`r round(100*filter(feed_summary, feed == "future", macro == "P")$digest, 1)`% digestible.
-The digestibility of the other macronutrients are assumed to remain constant across all ingredients at `r round(100*filter(feed_summary, feed == "past", macro == "C")$digest, 1)`% for carbohydrates and `r round(100*filter(feed_summary, feed == "past", macro == "L")$digest, 1)`% for lipids. 
-
-
+Ingredients are tracked seperately through the model with their own digestibility coefficients. 
+Overall, protein digestibility was 
+`r round(100*filter(feed_summary, feed == "reference", macro == "P")$digest, 1)`%,
+`r round(100*filter(feed_summary, feed == "past", macro == "P")$digest, 1)`%, and 
+`r round(100*filter(feed_summary, feed == "future", macro == "P")$digest, 1)`% and carbohydrate digestibility was 
+`r round(100*filter(feed_summary, feed == "reference", macro == "C")$digest, 1)`%,
+`r round(100*filter(feed_summary, feed == "past", macro == "C")$digest, 1)`%, and 
+`r round(100*filter(feed_summary, feed == "future", macro == "C")$digest, 1)`%
+within the reference, past, and future feeds respectively. 
+The digestibility of lipids was assumed to remain constant across all ingredients at `r round(100*filter(feed_summary, feed == "past", macro == "L")$digest, 1)`%. 
 
 ```{r fig-feed-summary-ideas}
 #| fig-height: 7.5
@@ -673,10 +668,16 @@ coho_biom %>%
 
 ## Impacts of nutrient input
 
-*To detail here:*
+General thoughts is that a risk-assessment approach is most compelling: 
 
-* How to convert feed and uneaten faeces into nutrients - just nitrogen? Carbon too? If just nitrogen, then can probably use the standard N = 6.25 x protein conversion to compare the feeds (lipids and carbohydrates have negligible protein). If doing carbon too, will need to find conversion rates for all of them, possibly splitting carbs/lipids into complex/simple, saturated/unsaturated, etc.
-* Source of species vulnerability layers
+* Hazard: Nutrient input. Present as a change between feeds (%?), relative to background levels (ratio?)
+  * Possibly ask Camille how the quotas for Tasmanian salmon are calculated
+  * Background levels are from [oceanhealthindex.org](https://knb.ecoinformatics.org/view/resource_map_doi:10.5063/F1610XPS) - double-check that it includes wastewater input AND agriculture - should include both - if they're not combined ask Ben because he has them combined somewhere
+  * If this is too uncertain perhaps combine into categorical (oligotrophic/eutrophic) classification?
+* Exposure: Species presence. Use IUCN/Aquamap data to estimate the % of each species range is occupied by farms
+  * give each farm a 1km radius, check for overlaps
+  * Gage already has the data to process the Aquamap data
+* Vulnerability: species vulnerability to eutrophication + nutrient input - from @butt_trait-based_2022. Possibly also use IUCN threat levels for prioritisation?
 
 # Statistical analysis & code availability
 
@@ -697,7 +698,7 @@ In general, data outputs comes in the following dimensions:
 * Main point is the difference between feeds (kg/t salmon).
 * Also interesting to see if difference between feeds varies geographically (correlates with latitude, or maybe mean/median/max temperature?)
 
-## Uneaten feed
+## Uneaten feed and faeces
 
 ```{r uneaten feed data}
 #| code-summary: Load and prep uneaten feed data
