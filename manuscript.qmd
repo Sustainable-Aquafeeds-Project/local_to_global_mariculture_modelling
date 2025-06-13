@@ -82,26 +82,16 @@ install_unit("t_fish", "1000 kg_fish")
 packages <- c("magrittr", "dplyr", "tidyr", "stringr", "ggplot2", "arrow", "targets", "sf", "terra", "rnaturalearth", "furrr", "future", "units", "lubridate")
 
 here("00_model_functions.R") %>% source()
+
+remove_unit("gN")
+install_unit("gN", "6.25 g") # 1/6.25
 ```
 
 ```{r global-variables}
 #| include: false
 
 source(here("00_model_functions.R"))
-
-# Input paths
-input_farm_coords_path <- here() %>% file.path("data", "_general_data", "farm_locations")
-input_farm_sst_path <- here() %>% file.path("data", "_general_data", "SST")
-input_species_param_path <- here() %>% file.path("data", "atlantic_salmon", "params")
-input_feed_profile_path <- here() %>% file.path("data", "_general_data", "diets")
-
-# Output paths
-output_farm_data_path <- here() %>% file.path("outputs", "farm_data")
-output_species_data_path <- here() %>% file.path("outputs", "species_data")
-output_sens_data_path <- here() %>% file.path("outputs", "sensitivity_data")
-output_farm_growth_data_path <- here() %>% file.path("outputs", "farm_growth_data")
-output_cohort_growth_data_path <- here() %>% file.path("outputs", "cohort_growth_data")
-data_analysis_path <- here() %>% file.path("outputs", "data_analysis")
+source(here("00_dirs.R"))
 
 # Filenames
 farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
@@ -109,7 +99,7 @@ species_params_file <- file.path(output_species_data_path, "species_params.qs")
 pop_params_file <- file.path(output_species_data_path, "pop_params.qs")
 feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
 sens_params_file <- file.path(output_species_data_path, "sens_params.qs")
-sens_results_files <- file.path(output_sens_data_path) %>% str_subset("results")
+sens_results_files <- file.path(output_sens_data_path) %>% list.files(full.names = T) %>% str_subset("results")
 
 species_params <- qread(species_params_file)
 pop_params <- qread(pop_params_file)
@@ -189,6 +179,9 @@ sorted_countries <- farm_coords %>%
   arrange(-av_lat) %>% 
   pull(country) %>% 
   unique()
+
+farms_geometry <- farms_geometry %>% 
+  mutate(country = factor(country, levels = sorted_countries))
 ```
 
 ```{r farm temperature data}
@@ -236,7 +229,7 @@ boxes_robinson <- st_transform(box_data$boxes, crs = "+proj=robin")
 labels_robinson <- st_transform(box_data$labels, crs = "+proj=robin")
 farm_temp_robinson <- st_sf(farm_temp_means) %>% st_transform(crs = "+proj=robin")
 
-p1 <- ggplot() +
+p_big_map <- ggplot() +
   geom_sf(data = graticules, color = "gray80", size = 0.3) +
   geom_sf(data = worldmap, fill = "white", color = "dimgray") +
   geom_sf(data = farm_temp_robinson, aes(color = mean_temp), size = 1) +
@@ -272,7 +265,7 @@ p3 <- farm_temp_means %>%
   prettyplot() +
   theme(legend.position = "top", legend.title = element_blank())
 
-(p2 + p3) / p1 + plot_layout(heights = c(1, 1.5))
+(p2 + p3) / p_big_map + plot_layout(heights = c(1, 1.5))
 ```
 
 ```{r patchwork-map-mercator}
@@ -410,7 +403,7 @@ param_names <- tibble::tribble(
 
 | Parameter | Value | Reference |
 |:------:|:------:|:-----------:|
-| $\alpha$             | `r unname(params['alpha'])`      | [@broekhuizen_modelling_1994] |
+| $\alpha$             | `r unname(params['alpha'])`      | @broekhuizen_modelling_1994 |
 | $\epsilon_{P}$       | `r unname(params['epsprot'])`    | @baldan_r_2018 |
 | $\epsilon_{L}$       | `r unname(params['epslip'])`     | @baldan_r_2018 |
 | $\epsilon_{C}$       | `r unname(params['epscarb'])`    | @baldan_r_2018 |
