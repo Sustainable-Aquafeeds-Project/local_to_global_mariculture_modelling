@@ -552,13 +552,11 @@ plot_grid(p1, p_ings, nrow = 2)
 ## Model population and biomass
 
 ```{r raw biomass and weight data}
-farmrun_files <- file.path(output_cohort_growth_data_path) %>% 
+farmrun_files <- file.path(output_cohorts_data_path) %>% 
   list.files(full.names = T)
 
-weight <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["weight_stat"]]}) %>%
-  bind_rows()
-biomass <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["biomass_stat"]]}) %>%
-  bind_rows()
+weight <- find_read(output_cohorts_data_path, "allfarms_comparisons_weight_stat")
+biomass <- find_read(output_cohorts_data_path, "allfarms_comparisons_biomass_stat")
 ```
 
 ```{r fig-cohorts}
@@ -566,7 +564,7 @@ biomass <- purrr::map(farmrun_files, function(f) {qs::qread(f)[["biomass_stat"]]
 #|   Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days.
 #| eval: true
 
-fnms <- output_farm_growth_data_path %>% 
+fnms <- output_growth_data_path %>% 
   list.files(full.names = T) %>% 
   str_subset("reference")
 
@@ -693,19 +691,13 @@ In general, data outputs comes in the following dimensions:
 
 ## Uneaten feed and faeces
 
-```{r uneaten feed data}
-#| code-summary: Load and prep uneaten feed data
+```{r inputs data}
+#| code-summary: Load and prep uneaten feed and faeces data (keep in g faeces/feed)
 
-uneaten_total <- farmrun_files %>% 
-  purrr::map(function(f) {qs::qread(f)[["total_uneat_stat"]]}) %>% 
-  bind_rows() %>% 
-  merge(biomass, by = c("farm_ID", "feed", "t")) %>% 
-  rename(uneat_mean = mean.x, biomass_mean = mean.y,
-         uneat_sd = sd.x, biomass_sd = sd.y) %>% 
-  mutate(uneat_sd = uneat_sd/uneat_mean,
-         biomass_sd = biomass_sd/biomass_mean,
-         uneat_biom_mean = uneat_mean/biomass_mean,
-         uneat_biom_sd = sqrt(uneat_sd^2+biomass_sd^2)*uneat_biom_mean)
+mass_inputs_ts <- find_read(data_analysis_path, "all_waste_inputs")
+mass_inputs_end <- find_read(data_analysis_path, "sumtotal_waste_inputs.qs")
+N_inputs_ts <- find_read(data_analysis_path, "all_N_inputs")
+N_inputs_end <- find_read(data_analysis_path, "sumtotal_N_inputs")
 ```
 
 ```{r uneaten feed analysis}
