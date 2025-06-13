@@ -8,13 +8,11 @@ details > summary {
   font-size: 0.9em;
   font-style: italic;
 }
- 
+
 .figure > .figcaption {
-  text-align: left;
+  text-align: center;
 }
 
-.quarto-float-caption {
-  text-align: left;
-  padding-left: 1rem;
-  padding-right: 1rem;
+.quarto-figure-center {
+  text-align: center;
 }

@@ -18,15 +18,6 @@ library(tictoc)
 library(conflicted)
 conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
 
-# functions
-source("00_model_functions.R")
-
-# species paths
-this_species <- "atlantic_salmon"
-this_path <- file.path("data", this_species)
-fig_path <- file.path(this_path, "figures")
-prod_path <- file.path(this_path, "data_products")
-
 # Prep temperature forcings for each farm site
 # production_cycle <- read.csv("data/_general_data/production_cycles/production_cycle.csv") %>% 
 #   filter(species == this_species) %>% 
@@ -34,14 +25,15 @@ prod_path <- file.path(this_path, "data_products")
 #   pull(production_cycle_length)
 production_cycle <- 1100
 
-farms <-  qread("data/_general_data/farm_locations/locations_w_species_fao_area_stocking.qs") %>% 
+farms <- file.path(input_farm_coords_path, "locations_w_species_fao_area_stocking.qs") %>% 
+  qread() %>% 
   filter(model_name == this_species) %>% 
   select(-row_num) %>% 
   mutate(farm_id = row_number())
 
 hemi <- cbind(farms$farm_id, sf::st_coordinates(farms$geometry)) %>% 
   as.data.frame() %>% rename(farm_ID = V1, lon = X, lat = Y) %>% 
-  write_parquet("data/_general_data/farm_locations/farm_coords.parquet")
+  write_parquet(file.path(input_farm_coords_path, "farm_coords.parquet"))
 
 day_number <- seq(1:production_cycle)
 
@@ -51,7 +43,9 @@ temp_data <- purrr::map_dfc(.x = day_number, .f = function(day_number){
   rast_day_number <- if_else(rast_day_number <= 365, true = rast_day_number, false = rast_day_number-365)
   message("Getting temperature data for all sites for ", this_species,  " - day ", day_number)
   
-  sst_test <- terra::rast(sprintf("data/_general_data/SST/SST_gf_rasters/sst_nasa_mur_L4_0.25_mean2010-2019_day_%s.tif", rast_day_number))
+  sst_test <- file.path(input_farm_sst_path, "SST_gf_rasters", 
+                        sprintf("sst_nasa_mur_L4_0.25_mean2010-2019_day_%s.tif", rast_day_number)) %>% 
+    terra::rast()
   
   terra::extract(sst_test, farms) %>%
     mutate(day = paste0("day_", day_number)) %>%
@@ -104,11 +98,11 @@ farms_w_temp_df <- bind_rows(farm_list)
 
 # With geometry, for plotting
 qsave(x = farms_w_temp_df, 
-      file = sprintf("data/_general_data/farm_locations/%s_locations_w_temps.qs", this_species))
+      file = file.path(input_farm_coords_path, sprintf("%s_locations_w_temps.qs", this_species)))
 
 # Without geometry, for targets
 sf::st_drop_geometry(farms_w_temp_df) %>%
-  write_parquet("data/_general_data/SST/farm_SST_extracted.parquet")
+  write_parquet(file.path(input_farm_sst_path, "farm_SST_extracted.parquet"))
 
 # Get the mean temps for each farm - this is needed to check which annual temps the fish can deal with
 mean_farm_temp <- farm_list %>% 
@@ -124,4 +118,4 @@ farms_to_omit <- mean_farm_temp %>%
   pull(farm_id)
 
 qsave(x = farms_to_omit, 
-      file = sprintf("data/_general_data/farm_locations/%s_farms_to_omit.qs", this_species))
+      file = file.path(input_farm_coords_path, sprintf("%s_farms_to_omit.qs", this_species)))

@@ -29,6 +29,13 @@ maxna <- function(x, ...) max(x, na.rm = TRUE, ...)
 sdna <- function(x, ...) sd(x, na.rm = TRUE, ...)
 sumna <- function(x, ...) sum(x, na.rm = TRUE, ...)
 medianna <- function(x, ...) median(x, na.rm = TRUE, ...)
+find_read <- function(path, pattern){
+  file <- list.files(path, full.names = T, pattern = pattern)
+  if (length(file) > 1) {print("Multiple files found - try again")} else {
+    if (str_detect(file, ".qs")) {return(qs::qread(file))}
+    if (str_detect(file, ".parquet")) {return(arrow::read_parquet(file))}
+  }
+}
 
 # Parameters definition
 # species_params['alpha']         [-] Feeding catabolism coefficient
@@ -365,6 +372,20 @@ lim_robin <- function(lons = c(144.0, 149.5), lats = c(-39.75, -44.00)) {
     xlims = range(coords[, "X"]),
     ylims = range(coords[, "Y"])
   )
+}
+
+farm_to_cohort <- function(matrix, time_offset = 0) {
+  matrix %>% 
+    as.data.frame() %>% 
+    rename(t = V1, mean = V2, sd = V3) %>%
+    mutate(t = t + time_offset)
+}
+
+# Process each time period (current, +365 days, +730 days)
+combine_cohorts <- function(lst) {
+  bind_rows(farm_to_cohort(lst[[i]], 0),
+            farm_to_cohort(lst[[i]], 365),
+            farm_to_cohort(lst[[i]], 730))
 }
 
 # nolint end

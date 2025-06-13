@@ -273,12 +273,7 @@ window.Quarto = {
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a>
   <ul class="collapse">
   <li><a href="#uneaten-feed-and-faeces" id="toc-uneaten-feed-and-faeces" class="nav-link" data-scroll-target="#uneaten-feed-and-faeces">Uneaten feed and faeces</a></li>
-  <li><a href="#excreted-faeces" id="toc-excreted-faeces" class="nav-link" data-scroll-target="#excreted-faeces">Excreted faeces</a>
-  <ul class="collapse">
-  <li><a href="#amount" id="toc-amount" class="nav-link" data-scroll-target="#amount">Amount</a></li>
-  <li><a href="#composition" id="toc-composition" class="nav-link" data-scroll-target="#composition">Composition</a></li>
-  </ul></li>
-  <li><a href="#total-nutrients" id="toc-total-nutrients" class="nav-link" data-scroll-target="#total-nutrients">Total nutrients</a></li>
+  <li><a href="#total-nutrient-inputs" id="toc-total-nutrient-inputs" class="nav-link" data-scroll-target="#total-nutrient-inputs">Total nutrient inputs</a></li>
   </ul></li>
   <li><a href="#supplementary-materials" id="toc-supplementary-materials" class="nav-link" data-scroll-target="#supplementary-materials">Supplementary materials</a>
   <ul class="collapse">
@@ -297,7 +292,7 @@ window.Quarto = {
   
 
 
-<p>This document was last updated at 14:26 on 10 Jun, 2025.</p>
+<p>This document was last updated at 15:42 on 12 Jun, 2025.</p>
 <section id="methods" class="level1 page-columns page-full">
 <h1>Methods</h1>
 <section id="feeding-rate" class="level3">
@@ -367,7 +362,7 @@ Table&nbsp;1: Model growth parameters for Atlantic salmon (for double-checking n
 <tr class="odd">
 <td style="text-align: center;"><span class="math inline">\(\alpha\)</span></td>
 <td style="text-align: center;">0.04</td>
-<td style="text-align: center;"><span class="citation" data-cites="broekhuizen_modelling_1994">(<a href="#ref-broekhuizen_modelling_1994" role="doc-biblioref">Broekhuizen et al. 1994</a>)</span></td>
+<td style="text-align: center;"><span class="citation" data-cites="broekhuizen_modelling_1994">Broekhuizen et al. (<a href="#ref-broekhuizen_modelling_1994" role="doc-biblioref">1994</a>)</span></td>
 </tr>
 <tr class="even">
 <td style="text-align: center;"><span class="math inline">\(\epsilon_{P}\)</span></td>
@@ -551,7 +546,7 @@ Figure&nbsp;4: Frequency distribution of harvest sizes used to create the popula
 
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
 <div class="cell-output-display">
-<div id="fig-biomass-variation" class="quarto-float quarto-figure quarto-figure-center anchored" width="816" data-fig-align="center">
+<div id="fig-biomass-variation" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" width="816">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-biomass-variation-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <a href="manuscript_files/figure-html/fig-biomass-variation-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-6" title="Figure&nbsp;5: "><img src="manuscript_files/figure-html/fig-biomass-variation-1.png" id="fig-biomass-variation" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="816"></a>
@@ -616,40 +611,37 @@ Figure&nbsp;6: Modelled vs observed salmon biomass produced
 <li>Main point is the difference between feeds (kg/t salmon).</li>
 <li>Also interesting to see if difference between feeds varies geographically (correlates with latitude, or maybe mean/median/max temperature?)</li>
 </ul>
-<section id="uneaten-feed-and-faeces" class="level2">
+<section id="uneaten-feed-and-faeces" class="level2 page-columns page-full">
 <h2 class="anchored" data-anchor-id="uneaten-feed-and-faeces">Uneaten feed and faeces</h2>
-<p>Total uneaten feed across a cohort (548 days) fed the reference feed ranged from 48.46 to 73.82 g kg<span class="math inline">\(^{-1}\)</span> fish, with a mean of 61.71 g kg<span class="math inline">\(^{-1}\)</span> fish. Differences between the feeds were very small, but slightly less feed was left uneaten in the reference scenario (<a href="#fig-total-uneaten-perday" class="quarto-xref">Figure&nbsp;7</a>). Uneaten feed in the past scenario ranged from 48.72 to 74.52 g kg<span class="math inline">\(^{-1}\)</span> fish (mean of 62.17 g kg<span class="math inline">\(^{-1}\)</span> fish) while uneaten feed in the future scenario ranged from 48.73 to 74.25 g kg<span class="math inline">\(^{-1}\)</span> (mean of 62.05 g kg<span class="math inline">\(^{-1}\)</span> fish).</p>
-<div id="cell-fig-total-uneaten-perday" class="cell" data-layout-align="center">
+<ul>
+<li>Total waste inputs across a single production period of fish fed the reference feed ranged from 151.45 to 252.66 g kg<span class="math inline">\(^{-1}\)</span> fish, with a mean of 15.74 g kg<span class="math inline">\(^{-1}\)</span> fish.</li>
+<li>Total waste inputs across a single production period of fish fed the past feed ranged from 127.58 to 213.51 g kg<span class="math inline">\(^{-1}\)</span> fish, with a mean of 13.31 g kg<span class="math inline">\(^{-1}\)</span> fish.</li>
+<li>Total waste inputs across a single production period of fish fed the future feed ranged from 157.16 to 262.39 g kg<span class="math inline">\(^{-1}\)</span> fish, with a mean of 16.35 g kg<span class="math inline">\(^{-1}\)</span> fish.</li>
+</ul>
+<div id="cell-fig-waste-inputs-total" class="cell" data-layout-align="center">
 <div class="cell-output-display">
-<div id="fig-total-uneaten-perday" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<div id="fig-waste-inputs-total" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-uneaten-perday-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-total-uneaten-perday-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;7: Feed left uneaten when fish are fed the reference (blue), past (red) or future (green) feed. Countries are arranged by descending mean latitude."><img src="manuscript_files/figure-html/fig-total-uneaten-perday-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<div aria-describedby="fig-waste-inputs-total-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<a href="manuscript_files/figure-html/fig-waste-inputs-total-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-8" title="Figure&nbsp;7: Total waste intputs (uneaten feed + excreted faeces) across the whole production period at each farm location."><img src="manuscript_files/figure-html/fig-waste-inputs-total-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="912"></a>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-uneaten-perday-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7: Feed left uneaten when fish are fed the reference (blue), past (red) or future (green) feed. Countries are arranged by descending mean latitude.
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-waste-inputs-total-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Total waste intputs (uneaten feed + excreted faeces) across the whole production period at each farm location.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>The composition of the uneaten feed is (obviously) the same as the total feed composition detailed in (<a href="#sec-feeds" class="quarto-xref">Section&nbsp;1.3</a>).</p>
-</section>
-<section id="excreted-faeces" class="level2 page-columns page-full">
-<h2 class="anchored" data-anchor-id="excreted-faeces">Excreted faeces</h2>
-<section id="amount" class="level3 page-columns page-full">
-<h3 class="anchored" data-anchor-id="amount">Amount</h3>
-<p>Overall, total excretion was lowest when when fish were fed the past feed and highest when fish were fed the reference feed (<a href="#fig-total-excreted-perday" class="quarto-xref">Figure&nbsp;8</a>). Total excreted faeces across a cohort (548 days) in the reference scenario ranged from 194.24 to 295.9 g kg<span class="math inline">\(^{-1}\)</span> fish d<span class="math inline">\(^{-1}\)</span>, with a mean of 247.38. Total excreted faeces across a cohort in the past scenario ranged from 154.33 to 236.05 g kg<span class="math inline">\(^{-1}\)</span> fish d<span class="math inline">\(^{-1}\)</span> (mean of 196.94 g kg<span class="math inline">\(^{-1}\)</span> fish d<span class="math inline">\(^{-1}\)</span>). Total excreted faeces across a cohort in the future scenario ranged from 202.55 to 308.61 g kg<span class="math inline">\(^{-1}\)</span> fish d<span class="math inline">\(^{-1}\)</span> (mean of 257.91 g kg<span class="math inline">\(^{-1}\)</span> fish d<span class="math inline">\(^{-1}\)</span>).</p>
-<div id="cell-fig-total-excreted-perday" class="cell" data-layout-align="center">
+<div class="cell" data-layout-align="center">
 <div class="cell-output-display">
-<div id="fig-total-excreted-perday" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-excreted-perday-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-total-excreted-perday-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Figure&nbsp;8: Feed left uneaten when fish are fed the reference (blue), past (red) or future (green) feed. Countries are arranged by descending mean latitude."><img src="manuscript_files/figure-html/fig-total-excreted-perday-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><a href="manuscript_files/figure-html/patchwork-waste-map-mercator-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-9" title="Example of a patchwork"><img src="manuscript_files/figure-html/patchwork-waste-map-mercator-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="912" alt="Example of a patchwork"></a></p>
+</figure>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-excreted-perday-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;8: Feed left uneaten when fish are fed the reference (blue), past (red) or future (green) feed. Countries are arranged by descending mean latitude.
-</figcaption>
+<figcaption>Example of a patchwork</figcaption>
 </figure>
 </div>
 </div>
@@ -664,50 +656,25 @@ Figure&nbsp;8: Feed left uneaten when fish are fed the reference (blue), past (r
 <div class="no-row-height column-margin column-container"><div class="margin-aside">
 
 </div></div></div>
-<p>However, the actual difference in excreted faeces varied by feed, time in the production cycle, and location of the farm <strong>?@fig-total-excr-act_diff</strong>.</p>
 </section>
-<section id="composition" class="level3 page-columns page-full">
-<h3 class="anchored" data-anchor-id="composition">Composition</h3>
-<div class="page-columns page-full"><p>Unlike the uneaten feed, the composition of excreted faeces differs from that of the incoming feed. </p><div class="no-row-height column-margin column-container"><span class="margin-aside">Note that composition does not change through time or with increasing biomass (because digestibility does not change with fish size or temeprature)</span></div></div>
-<div class="cell page-columns page-full" data-layout-align="center">
-
-<div class="no-row-height column-margin column-container"><div class="margin-aside">
-
-</div></div></div>
-<div id="cell-fig-composition-comparison" class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-composition-comparison" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-composition-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-composition-comparison-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;9: Comparison of the composition of the reference (blue), past (red) and future (green) feed and faeces of salmon fed each feed."><img src="manuscript_files/figure-html/fig-composition-comparison-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-composition-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;9: Comparison of the composition of the reference (blue), past (red) and future (green) feed and faeces of salmon fed each feed.
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-</section>
-</section>
-<section id="total-nutrients" class="level2">
-<h2 class="anchored" data-anchor-id="total-nutrients">Total nutrients</h2>
+<section id="total-nutrient-inputs" class="level2">
+<h2 class="anchored" data-anchor-id="total-nutrient-inputs">Total nutrient inputs</h2>
 </section>
 </section>
 <section id="supplementary-materials" class="level1">
 <h1>Supplementary materials</h1>
 <section id="sec-parameter-sensitivity" class="level2">
 <h2 class="anchored" data-anchor-id="sec-parameter-sensitivity">Parameter sensitivity</h2>
-<p>The most sensitive parameter by far in <a href="#fig-param-sens-weight" class="quarto-xref">Figure&nbsp;10</a> is <span class="math inline">\(m\)</span> (the weight exponent for anabolism), followed closely by <span class="math inline">\(n\)</span> the (weight exponent for catabolism). These two are also relatively uncertain, as <span class="math inline">\(m\)</span> was taken from <em>Salmo trutta</em> measurements in a fairly old paper <span class="citation" data-cites="broekhuizen_modelling_1994">(<a href="#ref-broekhuizen_modelling_1994" role="doc-biblioref">Broekhuizen et al. 1994</a>)</span> and <span class="math inline">\(n\)</span> was taken from <span class="citation" data-cites="baldan_r_2018">Baldan et al. (<a href="#ref-baldan_r_2018" role="doc-biblioref">2018</a>)</span> which did not specifically look at Atlantic salmon.</p>
+<p>The most sensitive parameter by far in <a href="#fig-param-sens-weight" class="quarto-xref">Figure&nbsp;8</a> is <span class="math inline">\(m\)</span> (the weight exponent for anabolism), followed closely by <span class="math inline">\(n\)</span> the (weight exponent for catabolism). These two are also relatively uncertain, as <span class="math inline">\(m\)</span> was taken from <em>Salmo trutta</em> measurements in a fairly old paper <span class="citation" data-cites="broekhuizen_modelling_1994">(<a href="#ref-broekhuizen_modelling_1994" role="doc-biblioref">Broekhuizen et al. 1994</a>)</span> and <span class="math inline">\(n\)</span> was taken from <span class="citation" data-cites="baldan_r_2018">Baldan et al. (<a href="#ref-baldan_r_2018" role="doc-biblioref">2018</a>)</span> which did not specifically look at Atlantic salmon.</p>
 <div id="cell-fig-param-sens-weight" class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-param-sens-weight" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-param-sens-weight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-11" title="Figure&nbsp;10: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period."><img src="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
+<a href="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-10" title="Figure&nbsp;8: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period."><img src="manuscript_files/figure-html/fig-param-sens-weight-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-param-sens-weight-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;10: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period.
+Figure&nbsp;8: Impact of increasing each model parameter by 10% on final farm biomass (red) and total excreted nutrients (blue) over the whole production period.
 </figcaption>
 </figure>
 </div>
@@ -1234,7 +1201,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
-<script>var lightboxQuarto = GLightbox({"loop":false,"selector":".lightbox","closeEffect":"zoom","openEffect":"zoom","descPosition":"bottom"});
+<script>var lightboxQuarto = GLightbox({"descPosition":"bottom","selector":".lightbox","loop":false,"closeEffect":"zoom","openEffect":"zoom"});
 (function() {
   let previousOnload = window.onload;
   window.onload = () => {

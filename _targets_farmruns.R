@@ -8,23 +8,49 @@ tar_option_set(
   workspace_on_error = TRUE
 )
 
-# Helper function to process each matrix
-farm_to_cohort <- function(matrix, time_offset = 0) {
-  matrix %>% 
-    as.data.frame() %>% 
-    rename(t = V1, mean = V2, sd = V3) %>%
-    mutate(t = t + time_offset)
-}
-
-# Process each time period (current, +365 days, +730 days)
-combine_cohorts <- function(lst) {
-  bind_rows(farm_to_cohort(lst[[i]], 0),
-            farm_to_cohort(lst[[i]], 365),
-            farm_to_cohort(lst[[i]], 730))
-}
+tar_source(files = c("00_model_functions.R", "00_dirs.R"))
 
 list(
+# Get previously saved data ---------------------------------------------------------------------------------------
+  tar_target(farms_to_omit_file, file.path(input_farm_coords_path, "atlantic_salmon_farms_to_omit.qs"), format = "file"),
+  tar_target(farm_coords_file, file.path(output_farm_data_path, "farm_coords.qs"), format = "file"),
+  tar_target(farm_ts_data_file, file.path(output_farm_data_path, "farm_ts_data.qs"), format = "file"),
+  tar_target(species_params_file, file.path(output_species_data_path, "species_params.qs"), format = "file"),
+  tar_target(pop_params_file, file.path(output_species_data_path, "pop_params.qs"), format = "file"),
+  tar_target(feed_params_file, file.path(output_species_data_path, "feed_params.qs"), format = "file"),
+  tar_target(harvest_size_file, file.path(output_farm_data_path, "farm_harvest_size.qs"), format = "file"),
+  tar_target(farm_static_data_file, file.path(input_farm_coords_path, "atlantic_salmon_locations_w_temps.qs"), format = "file"),
+
+  tar_target(farms_to_omit, farms_to_omit_file %>% qs::qread()),
+  tar_target(farm_coords, farm_coords_file %>% qs::qread() %>% filter(!farm_ID %in% farms_to_omit)),
+  tar_target(farm_ts_data, farm_ts_data_file %>% qs::qread() %>% filter(!farm_ID %in% farms_to_omit)),
+  tar_target(species_params, species_params_file %>% qs::qread()),
+  tar_target(pop_params, pop_params_file %>% qs::qread()),
+  tar_target(feed_params, feed_params_file %>% qs::qread()),
+  tar_target(
+    farm_harvest_size,
+    harvest_size_file %>%
+      qs::qread() %>%
+      select(c(farm_ID, weight)) %>%
+      mutate(weight = units::set_units(weight, "g"))
+  ), 
+  tar_target(
+    tar_static_data, 
+    farm_static_data_file %>% 
+      qs::qread() %>% 
+      distinct(farm_id, tonnes_per_farm) %>% 
+      mutate(tonnes_per_farm = tonnes_per_farm %>% units::set_units("t") %>% units::set_units("g") %>% units::drop_units())
+  ),
+
 # Prepare parameters ----------------------------------------------------------------------------------------------
+  tar_target(
+    stat_names,
+    c("weight_stat", "dw_stat", "water_temp_stat", "T_response_stat", "P_excr_stat", "L_excr_stat", "C_excr_stat", 
+      "P_uneat_stat", "L_uneat_stat", "C_uneat_stat", "food_prov_stat", "food_enc_stat", "rel_feeding_stat", 
+      "ing_pot_stat", "ing_act_stat", "E_assim_stat", "E_somat_stat", "anab_stat","catab_stat", "O2_stat", 
+      "NH4_stat", "total_excr_stat", "total_uneat_stat", "metab_stat","biomass_stat"),
+  ),
+
   tar_target(
     tar_farm_IDs,
     farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) #%>% sample(750)
@@ -50,13 +76,6 @@ list(
     pattern = map(tar_farm_IDs, tar_common_params)
   ),
   
-  tar_target(
-    tar_static_data, 
-    file.path(input_farm_coords_path, str_c(this_species, "_locations_w_temps.qs")) %>% 
-      qs::qread() %>% 
-      distinct(farm_id, tonnes_per_farm) %>% 
-      mutate(tonnes_per_farm = tonnes_per_farm %>% units::set_units("t") %>% units::set_units("g") %>% units::drop_units())
-  ),
   tar_target(
     tar_harvest_size,
     farm_harvest_size$weight[farm_harvest_size$farm_ID == tar_farm_IDs],
@@ -181,7 +200,8 @@ list(
       # Put them all together
       purrr::map(1:length(stat_names), function(st) {
         bind_rows(ref[[st]], pas[[st]], fut[[st]]) %>% 
-          mutate(farm_ID = tar_farm_IDs)
+          mutate(farm_ID = as.integer(tar_farm_IDs),
+                 t = as.integer(t))
       })
     },
     pattern = map(tar_farm_IDs, tar_farmrun_reference, tar_farmrun_past, tar_farmrun_future)

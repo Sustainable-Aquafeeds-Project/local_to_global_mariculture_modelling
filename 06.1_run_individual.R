@@ -24,31 +24,8 @@ conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 # Set up parallel processing
 # plan(multisession, workers = parallelly::availableCores()-1)
 
-# Basic configuration
-overwrite <- F
-this_species <- "atlantic_salmon"
-
-# Directory structure
-output_path <- here() %>% file.path("outputs")
-gendata_path <- here() %>% file.path("data", "_general_data")
-species_path <- here() %>% file.path("data", this_species)
-
-# Input paths
-input_farm_coords_path <- file.path(gendata_path, "farm_locations")
-input_farm_sst_path <- file.path(gendata_path, "SST")
-input_species_param_path <- file.path(species_path, "params")
-input_feed_profile_path <- file.path(gendata_path, "diets")
-
-# Output paths
-output_farm_data_path <- file.path(output_path, "farm_data")
-output_species_data_path <- file.path(output_path, "species_data")
-output_sens_data_path <- file.path(output_path, "sensitivity_data")
-
-# Create output directories
-dir_create(c(output_farm_data_path, 
-             output_species_data_path, 
-             output_sens_data_path
-))
+here("00_model_functions.R") %>% source()
+here("00_dirs.R") %>% source()
 
 # Filenames
 farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
@@ -65,21 +42,6 @@ message(sprintf("Configuration:\n- Species: %s\n- Overwrite existing: %s\n- Outp
                this_species,
                ifelse(overwrite, "yes", "no"),
                output_path))
-
-# Helper functions ------------------------------------------------------------------------------------------------
-source("00_model_functions.R")
-file_exists_skip <- function(filepath, section_name, fn) {
-  if (file.exists(filepath) && !overwrite) {
-    message(sprintf("Skipping %s - file exists", section_name))
-    return(qs::qread(filepath))
-  } else {
-    tic()
-    result <- fn()
-    qs::qsave(result, filepath)
-    message(sprintf("Saved %s - %s", section_name, toc(quiet = T)$callback_msg))
-    return(result)
-  }
-}
 
 # Farm coordinates ------------------------------------------------------------------------------------------------
 farm_coords <- file_exists_skip(farm_coords_file, "farm coordinates", function() {
@@ -134,25 +96,7 @@ pop_params <- file_exists_skip(pop_params_file, "population parameters", functio
   })
 
 # Feed parameters -------------------------------------------------------------------------------------------------
-feed_params <- file_exists_skip(feed_params_file, "feed parameters", function() {
-    feed_types <- c("reference", "past", "future")
-    feed_profile_file <- file.path(input_feed_profile_path, "feed_profiles_and_composition_Atlantic_salmon.xlsx")
-    
-    future_map(feed_types, function(ft) {
-      df <- readxl::read_excel(feed_profile_file, sheet = ft)
-      list(
-        Proteins = df %>% select(ingredient, proportion, contains("protein")) %>%
-          select(-contains("feed")) %>%
-          rename(macro = ing_protein, digest = ing_protein_digestibility),
-        Carbohydrates = df %>% select(ingredient, proportion, contains("carb")) %>%
-          select(-contains("feed")) %>%
-          rename(macro = ing_carb, digest = ing_carb_digestibility),
-        Lipids = df %>% select(ingredient, proportion, contains("lipid")) %>%
-          select(-contains("feed")) %>%
-          rename(macro = ing_lipid, digest = ing_lipid_digestibility)
-      )
-    }, .options = furrr::furrr_options(seed = TRUE)) %>% setNames(feed_types)
-  })
+feed_params <- feed_params_file %>% qs::qread()
 
 # Farm harvest size -----------------------------------------------------------------------------------------------
 farm_harvest_size <- file_exists_skip(farm_harvest_file, "farm harvest size", function() {
@@ -206,17 +150,16 @@ sens_params_names <- names(sens_all_params)
 Sys.setenv(TAR_PROJECT = "project_sensitivities")
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
 targets::tar_make(
-  names = contains("tar_sens_run_spec_"),
+  # names = contains("tar_sens_run_pop"),
   callr_function = NULL
 )
 
 overwrite <- T
+mani <- tar_manifest()
 sens_results <- rbind(
   tar_read(tar_sens_results_spec),
   tar_read(tar_sens_results_pop)
-  ) %>% 
-  mutate(measure = as.factor(measure),
-         adj_param = factor(adj_param, levels = sens_params_names))
+  )
 sens_measures <- levels(sens_results$measure)
 sens_results_files <- file.path(output_sens_data_path, paste0("sens_results_", sens_measures, ".qs"))
 sens_results_figfiles <- file.path(output_sens_data_path, paste0("sens_plot_", sens_measures, ".qs"))

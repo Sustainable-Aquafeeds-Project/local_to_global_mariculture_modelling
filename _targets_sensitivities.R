@@ -16,7 +16,7 @@ list(
   ),
   tar_target(
     tar_farm_ID_sample,
-    farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) %>% sample(25) # %>% sample(271)
+    farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) %>% sample(271) # %>% sample(271)
   ),
   
   tar_target(tar_param_names_pop, c("meanW", "deltaW", "meanImax", "deltaImax", "overFmean", "overFdelta")),
@@ -334,7 +334,7 @@ list(
   ),
   
   tar_target(
-    tar_sens_results_pop,
+    tar_sens_results_pop_0,
     command = {
       cols <- colnames(tar_sens_run_pop_lo)[
         !colnames(tar_sens_run_pop_lo) %in% c("adj_param", "farm_ID", "factor")
@@ -347,11 +347,17 @@ list(
         pivot_longer(cols = all_of(cols), names_to = "measure", values_to = "value", 
                      names_transform = list(measure = as.factor)) %>% 
         pivot_wider(names_from = "factor", values_from = "value", names_prefix = "fact_") %>% 
-        mutate(sensitivity = (fact_1.1-fact_0.9)/(0.2*fact_1)) %>% 
+        mutate(sensitivity = (fact_1.1-fact_0.9)/(0.2*fact_1))
+    },
+    pattern = map(tar_sens_run_pop_lo, tar_sens_run_pop_mi, tar_sens_run_pop_hi)
+  ),
+  tar_target(
+    tar_sens_results_pop,
+    command = {
+      tar_sens_results_pop_0 %>% 
         group_by(adj_param, measure) %>%
         reframe(mean_sens = meanna(sensitivity),
                 sd_sens = sdna(sensitivity))
     },
-    pattern = map(tar_sens_run_pop_lo, tar_sens_run_pop_mi, tar_sens_run_pop_hi)
   )
 )

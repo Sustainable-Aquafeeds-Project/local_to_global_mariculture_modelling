@@ -22,28 +22,18 @@ suppressPackageStartupMessages({
   conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
 })
 
-# This script aims to take the outputs from the model and answer specific questions 
+# This script aims to take the model outputs from the targets pipeline and answer specific questions.
 # Paths & globals -------------------------------------------------------------------------------------------------
 source("00_model_functions.R")
+source("00_dirs.R")
 
-input_coho_path <- here() %>% file.path("outputs", "cohort_growth_data")
-input_farm_path <- here() %>% file.path("outputs", "farm_growth_data")
-cohort_comp_fnms <- input_coho_path %>% 
+cohort_comp_fnms <- output_cohorts_data_path %>% 
   list.files(full.names = T) %>% 
   str_subset("farmrun_comparisons")
-cohort_refe_fnms <- input_farm_path %>% 
-  list.files(full.names = T) %>% 
-  str_subset("farmrun_reference")
-cohort_past_fnms <- input_farm_path %>% 
-  list.files(full.names = T) %>% 
-  str_subset("farmrun_past")
-cohort_futu_fnms <- input_farm_path %>% 
-  list.files(full.names = T) %>% 
-  str_subset("farmrun_future")
 
-output_coho_path <- file.path("data", "atlantic_salmon", "data_products", "model_outputs_cohort")
-data_analysis_path <- file.path("outputs", "data_analysis")
-dir.create(data_analysis_path)
+aggregate_comparison_files <- output_cohorts_data_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("allfarms_comparisons")
 
 # * Main point is the difference between feeds. 
 # * This should be expressed in t/t salmon, so farm biomass is also important. 
@@ -51,47 +41,115 @@ dir.create(data_analysis_path)
 remove_unit("g_fish")
 remove_unit("kg_fish")
 remove_unit("t_fish")
-install_unit(symbol = "g_fish", name = "grams of salmon biomass")
+install_unit(symbol = "g_fish")
 install_unit(symbol = "kg_fish", def = "1000 g_fish")
 install_unit(symbol = "t_fish", def = "1000 kg_fish")
 
-# Biomass produced ------------------------------------------------------------------------------------------------
-# How accurately is the model producing the correct biomass production levels?
-farm_info <- file.path("data", "_general_data", "farm_locations", "atlantic_salmon_locations_w_temps.qs") %>% 
-  qread() %>% 
-  filter(day == "day_1") %>% 
-  mutate(country = as.factor(country),
-         day = str_split_i(day, "_", 2) %>% as.integer()) %>% 
-  dplyr::select(-c(model_name, F_CODE, data_year, data_source, details, data_type_2, data_type, species_group, 
-                   harvest_n, stocking_n, harvest_size_t, daily_mort_rate, day))
-hist(farm_info$tonnes_per_farm)
-
-coho_biom <- purrr::map_dfr(cohort_refe_fnms, function(fnm) {
-    qs::qread(fnm)[["biomass_stat"]] %>% as.data.frame()
-  }) %>% 
-  group_by(farm_ID) %>% 
-  slice_max(t) %>% 
-  mutate(mean = mean %>% set_units("g") %>% set_units("t") %>% drop_units()) %>% 
-  merge(farm_info, by.x = "farm_ID", by.y = "farm_id")
-
-qsave(coho_biom, file.path(data_analysis_path, "biomass_produced_comparison.qs"))
-
-ggplot(coho_biom, aes(x = tonnes_per_farm, y = mean, colour = country)) +
-  geom_point() +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-  theme_classic() +
-  # scale_x_continuous(limits = c(0,1700)) +
-  # scale_y_continuous(limits = c(0,1700)) +
-  labs(y = "Modelled biomass produced (t)", x = "Observed biomass produced (t)")
-
-ggsave(file.path(data_analysis_path, "biomass_produced_comparison_plot.png"))
-
 # Different feeds -------------------------------------------------------------------------------------------------
 ## Question 1 -----------------------------------------------------------------------------------------------------
+# How does the change in feed affect daily and overall excretion and uneaten feed waste (P, L, C, total)?
+
+coho_biom <- aggregate_comparison_files %>% 
+  str_subset("biomass_stat") %>% 
+  qs::qread() %>% 
+  mutate(t = as.integer(t))
+
+all_inputs <- rbind(
+  aggregate_comparison_files %>% 
+    str_subset("total_excr_stat") %>% qread() %>% mutate(measure = "excr", category = "total"),
+  aggregate_comparison_files %>% 
+    str_subset("P_excr_stat") %>% qread() %>% mutate(measure = "excr", category = "P"),
+  aggregate_comparison_files %>% 
+    str_subset("L_excr_stat") %>% qread() %>% mutate(measure = "excr", category = "L"),
+  aggregate_comparison_files %>% 
+    str_subset("C_excr_stat") %>% qread() %>% mutate(measure = "excr", category = "C"),
+  aggregate_comparison_files %>% 
+    str_subset("total_uneat_stat") %>% qread() %>% mutate(measure = "uneat", category = "total"),
+  aggregate_comparison_files %>% 
+    str_subset("P_uneat_stat") %>% qread() %>% mutate(measure = "uneat", category = "P"),
+  aggregate_comparison_files %>% 
+    str_subset("L_uneat_stat") %>% qread() %>% mutate(measure = "uneat", category = "L"),
+  aggregate_comparison_files %>% 
+    str_subset("C_uneat_stat") %>% qread() %>% mutate(measure = "uneat", category = "C")
+) %>% 
+  mutate(measure = as.factor(measure),
+         category = as.factor(category), 
+         t = as.integer(t))
+
+all_inputs <- all_inputs %>% 
+  merge(coho_biom, by = c("farm_ID", "feed", "t"), all = T) %>% 
+  rename(mean = mean.x, sd = sd.x, biomass_mean = mean.y, biomass_sd = sd.y) %>% 
+  mutate(mean = set_units(mean, "g d-1"),
+         sd = set_units(sd, "g d-1"),
+         biomass_mean = set_units(biomass_mean, "g_fish"),
+         biomass_sd = set_units(biomass_sd, "g_fish"))
+
+qs::qsave(all_inputs, file.path(data_analysis_path, "all_waste_inputs.qs"))
+
+### Total mass lost -----------------------------------------------------------------------------------------------
+total_inputs <- all_inputs %>% 
+  filter(category == "total") %>% 
+  group_by(farm_ID, feed, measure) %>% 
+  reframe(biomass_total = max(biomass_mean),
+          total = sum(mean) %>% drop_units() %>% set_units("g")) 
+
+qs::qsave(total_inputs, file.path(data_analysis_path, "sumtotal_waste_inputs.qs"))
+
+# Quick glance
+# total_inputs %>% 
+#   group_by(feed, measure) %>% 
+#   reframe(protein_lost = mean(P_total/biomass_total)) %>% 
+#   mutate(protein_lost = protein_lost %>% set_units("g kg_fish-1")) %>% 
+#   pivot_wider(names_from = measure, values_from = protein_lost) %>% 
+#   mutate(from_faeces = excr/(excr + uneat))
+
+### Total protein lost --------------------------------------------------------------------------------------------
+total_P_inputs <- all_inputs %>% 
+  filter(category == "P") %>% 
+  group_by(farm_ID, feed, measure) %>% 
+  reframe(biomass_total = max(biomass_mean),
+          P_total = sum(mean) %>% drop_units() %>% set_units("g")) 
+
+qs::qsave(total_P_inputs, file.path(data_analysis_path, "sumtotal_waste_P_inputs.qs"))
+
+# Quick glance
+# total_inputs %>% 
+#   group_by(feed, measure) %>% 
+#   reframe(protein_lost = mean(P_total/biomass_total)) %>% 
+#   mutate(protein_lost = protein_lost %>% set_units("g kg_fish-1")) %>% 
+#   pivot_wider(names_from = measure, values_from = protein_lost) %>% 
+#   mutate(from_faeces = excr/(excr + uneat))
+
+## Question 2 -----------------------------------------------------------------------------------------------------
+# How does the change in feed affect daily and overall N inputs (total, % from faeces)?
+N_inputs <- all_inputs %>% 
+  filter(category == "P") %>% 
+  mutate(mean = mean * 0.16,
+         sd = sd * 0.16)
+
+qs::qsave(N_inputs, file.path(data_analysis_path, "all_N_inputs.qs"))
+
+total_N_inputs <- N_inputs %>% 
+  group_by(farm_ID, feed, measure) %>% 
+  reframe(biomass_total = max(biomass_mean),
+          N_total = sum(mean) %>% drop_units() %>% set_units("g")) 
+
+qs::qsave(total_N_inputs, file.path(data_analysis_path, "sumtotal_N_inputs.qs"))
+
+# total_N_inputs %>%
+#   group_by(feed, measure) %>%
+#   reframe(N_lost = mean(N_total/biomass_total)) %>%
+#   mutate(N_lost = N_lost %>% set_units("g kg_fish-1")) %>%
+#   pivot_wider(names_from = measure, values_from = N_lost) %>%
+#   mutate(from_faeces = excr/(excr + uneat))
+
+
+## Question 3 -----------------------------------------------------------------------------------------------------
 # Does total_excr (g/gfish/day) change over time for any farm, and does the feed make a difference in that?
+
 total_excr <- purrr::map_dfr(cohort_comp_fnms, function(fnm) {
-  excr <- qs::qread(fnm)[["total_excr_stat"]]
-  biom <- qs::qread(fnm)[["biomass_stat"]]
+  excr <- aggregate_comparison_files %>% str_subset("total_excr_stat") %>% qread()
+  biom <- aggregate_comparison_files %>% str_subset("biomass_stat") %>% qread()
   merge(excr, biom, by = c("farm_ID", "feed", "t")) %>% 
     rename(total_excr = mean.x, biomass = mean.y) %>% 
     dplyr::select(-c(sd.x, sd.y))
@@ -115,66 +173,41 @@ over_time %>%
 # The answer is barely
 rm(total_excr, over_time)
 
-## Question 2 -----------------------------------------------------------------------------------------------------
-# How does the change in feed affect:
-# * Daily and overall excretion (P, L, C, total)
-# * Daily and overall uneaten feed (P, L, C, total)
-# * Daily and overall inputs (excretion + uneaten feed)
 
-# All times
-all_inpts <- purrr::map_dfr(cohort_comp_fnms, function(fnm) {
-  excr <- rbind(
-    qs::qread(fnm)[["total_excr_stat"]] %>% mutate(measure = "excr", category = "total"),
-    qs::qread(fnm)[["P_excr_stat"]] %>% mutate(measure = "excr", category = "P"),
-    qs::qread(fnm)[["L_excr_stat"]] %>% mutate(measure = "excr", category = "L"),
-    qs::qread(fnm)[["C_excr_stat"]] %>% mutate(measure = "excr", category = "C"),
-    qs::qread(fnm)[["total_uneat_stat"]] %>% mutate(measure = "uneat", category = "total"),
-    qs::qread(fnm)[["P_uneat_stat"]] %>% mutate(measure = "uneat", category = "P"),
-    qs::qread(fnm)[["L_uneat_stat"]] %>% mutate(measure = "uneat", category = "L"),
-    qs::qread(fnm)[["C_uneat_stat"]] %>% mutate(measure = "uneat", category = "C")
-  ) %>% 
-    merge(qs::qread(fnm)[["biomass_stat"]], by = c("farm_ID", "feed", "t"), all = T) %>% 
-    rename(mean = mean.x, sd = sd.x, biomass_mean = mean.y, biomass_sd = sd.y) %>% 
-    mutate(measure = as.factor(measure), category = as.factor(category))
-}) %>% 
-  mutate(mean = set_units(mean, "g d-1"),
-         sd = set_units(sd, "g d-1"),
-         biomass_mean = set_units(biomass_mean, "g_fish"),
-         biomass_sd = set_units(biomass_sd, "g_fish"),
-         mean_biom = mean/biomass_mean)
+# Biomass produced ------------------------------------------------------------------------------------------------
+# How accurately is the model producing the correct biomass production levels?
+coho_biom <- aggregate_comparison_files %>% 
+  str_subset("biomass_stat") %>% 
+  qs::qread() %>% 
+  filter(feed == "reference") %>% 
+  group_by(farm_ID) %>% 
+  slice_max(t) %>% 
+  mutate(mean = mean %>% set_units("g") %>% set_units("t") %>% drop_units()) %>% 
+  merge(farm_info, by.x = "farm_ID", by.y = "farm_id")
 
-qs::qsave(all_inpts, file.path(data_analysis_path, "all_inputs.qs"))
+farm_info <- file.path(input_farm_coords_path, "atlantic_salmon_locations_w_temps.qs") %>% 
+  qread() %>% 
+  filter(day == "day_1") %>% 
+  mutate(country = as.factor(country),
+         day = str_split_i(day, "_", 2) %>% as.integer()) %>% 
+  dplyr::select(-c(model_name, F_CODE, data_year, data_source, details, data_type_2, data_type, species_group, 
+                   harvest_n, stocking_n, harvest_size_t, daily_mort_rate, day))
+hist(farm_info$tonnes_per_farm)
 
-all_inpts %>% 
-  group_by(feed, t, measure, category) %>% 
-  reframe(mean = meanna(mean)) %>% 
-  ggplot(aes(x = t, y = mean, colour = feed)) +
-  geom_line(linewidth = 0.75) +
-  facet_grid(rows = vars(category), cols = vars(measure)) +
+
+
+qsave(coho_biom, file.path(data_analysis_path, "biomass_produced_comparison.qs"))
+
+ggplot(coho_biom, aes(x = tonnes_per_farm, y = mean, colour = country)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
   theme_classic() +
-  labs(x = "Day of the year", y = "Mean")
+  # scale_x_continuous(limits = c(0,1700)) +
+  # scale_y_continuous(limits = c(0,1700)) +
+  labs(y = "Modelled biomass produced (t)", x = "Observed biomass produced (t)")
 
-# Stats throughout 1 cohort production period
-inpts_stats <- all_inpts %>% 
-  group_by(farm_ID, feed, measure, category) %>% 
-  reframe(mean_value = meanna(mean),
-          sd_value = sdna(mean) %>% set_units("g d-1"),
-          min_value = minna(mean),
-          max_value = maxna(mean),
-          mean_value_biom = meanna(mean_biom),
-          sd_value_biom = sdna(mean_biom) %>% set_units("g g_fish-1 d-1"),
-          min_value_biom = minna(mean_biom),
-          max_value_biom = maxna(mean_biom)) %>% 
-  merge(farm_info, by.x = "farm_ID", by.y = "farm_id")
+ggsave(file.path(data_analysis_path, "biomass_produced_comparison_plot.png"))
 
-qs::qsave(inpts_stats, file.path(data_analysis_path, "inputs_stats.qs"))
 
-# Total throughout 1 cohort production period
-inpts_end <- all_inpts %>% 
-  group_by(farm_ID, feed, measure, category) %>% 
-  reframe(sum_value = meanna(mean),
-          sum_value_biom = meanna(mean_biom)) %>% 
-  merge(farm_info, by.x = "farm_ID", by.y = "farm_id")
 
-qs::qsave(inpts_end, file.path(data_analysis_path, "inputs_endsums.qs"))
 

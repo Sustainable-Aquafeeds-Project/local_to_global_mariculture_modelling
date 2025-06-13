@@ -17,3 +17,4 @@ west_canada_bbox <- c(xmin =-140, xmax = -115, ymin = 45, ymax = 57)
 chile_bbox <- c(xmin = -82, xmax = -63, ymin = -57, ymax = -18)
 europe_iceland_bbox <- c(xmin = -29, xmax = 48, ymin = 46, ymax = 73)
 australia_bbox <- c(xmin = 143, xmax = 149, ymin = -44, ymax = -40)
+
