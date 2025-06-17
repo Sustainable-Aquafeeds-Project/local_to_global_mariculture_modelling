@@ -30,6 +30,7 @@ source("00_dirs.R")
 source("04_extracting_temperatures.R")
 
 # STEP 2: Formulate feeds -----------------------------------------------------------------------------------------
+overwrite <- F
 source("05_formulating_feeds.R")
 
 # STEP 3: Run model -----------------------------------------------------------------------------------------------

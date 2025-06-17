@@ -5,7 +5,7 @@ library(parallelly)
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "tibble"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 18, seconds_timeout = 90),
+  controller = crew_controller_local(workers = 14, seconds_timeout = 90),
   workspace_on_error = TRUE
 )
 
@@ -16,7 +16,7 @@ list(
   ),
   tar_target(
     tar_farm_ID_sample,
-    farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) %>% sample(271) # %>% sample(271)
+    farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID) %>% sample(271)
   ),
   
   tar_target(tar_param_names_pop, c("meanW", "deltaW", "meanImax", "deltaImax", "overFmean", "overFdelta")),
@@ -25,15 +25,15 @@ list(
   tar_target(
     tar_farm_ts,
     command = {
-      t_start <- farm_coords$t_start[farm_coords$farm_ID == tar_farm_IDs]
-      t_end <- farm_coords$t_end[farm_coords$farm_ID == tar_farm_IDs]
       farm_ts_data %>%
-        dplyr::filter(farm_ID == tar_farm_IDs) %>%
-        dplyr::filter(between(day, t_start, t_end))
-    },
-    pattern = tar_farm_IDs
+        merge(farm_coords, by = "farm_ID") %>% 
+        dplyr::filter(farm_ID %in% tar_farm_IDs) %>%
+        mutate(keep = case_when(day >= t_start & day <= t_end ~ T, T ~ F)) %>% 
+        dplyr::filter(keep) %>% 
+        dplyr::select(farm_ID, day, temp_c)
+    }
   ),
-  
+
   tar_target(
     tar_sens_run_spec_lo, 
     command = {
@@ -42,14 +42,13 @@ list(
         adj_params <- sens_all_params
         adj_params[tar_param_names_spec] <- adj_params[tar_param_names_spec] * factors[1]
         
-        sens <- farm_growth(
+        sens <- uni_farm_growth(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
           feed_params = reference_feed,
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
-          N_pop = rep(1, nrow(ts)),
-          nruns = 10
+          N_pop = rep(1, nrow(ts))
         )
         
         data.frame(
@@ -75,16 +74,7 @@ list(
           mutate(farm_ID = farm)
       }) %>%
         mutate(factor = factors[1])
-      
-      # colnms <- colnames(sens_farm)[!colnames(sens_farm) %in% c("adj_param", "factor", "farm_ID")]
-      # df <- sens_farm %>% 
-      #   pivot_longer(cols = all_of(colnms), values_to = "value", 
-      #                names_to = "measure", names_transform = list(measure = as.factor)) %>%
-      #   group_by(adj_param, factor, farm_ID, measure) %>%
-      #   pivot_wider(names_from = "factor", names_prefix = "factor_", values_from = "value") %>%
-      #   mutate(sensitivity = (factor_1.1 - factor_0.9) / (0.2 * factor_1)) %>%
-      #   group_by(adj_param, measure, farm_ID) %>%
-      #   reframe(sensitivity = meanna(sensitivity))
+      sens_farm
     },
     pattern = tar_param_names_spec
   ),
@@ -97,14 +87,13 @@ list(
         adj_params <- sens_all_params
         adj_params[tar_param_names_spec] <- adj_params[tar_param_names_spec] * factors[2]
         
-        sens <- farm_growth(
+        sens <- uni_farm_growth(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
           feed_params = reference_feed,
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
-          N_pop = rep(1, nrow(ts)),
-          nruns = 10
+          N_pop = rep(1, nrow(ts))
         )
         
         data.frame(
@@ -142,14 +131,13 @@ list(
         adj_params <- sens_all_params
         adj_params[tar_param_names_spec] <- adj_params[tar_param_names_spec] * factors[3]
         
-        sens <- farm_growth(
+        sens <- uni_farm_growth(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
           feed_params = reference_feed,
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
-          N_pop = rep(1, nrow(ts)),
-          nruns = 10
+          N_pop = rep(1, nrow(ts))
         )
         
         data.frame(

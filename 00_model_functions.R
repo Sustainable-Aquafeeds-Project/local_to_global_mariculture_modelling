@@ -105,15 +105,16 @@ feeding_rate <- function(water_temp, species_params) {
     (species_params['betac'] * (species_params['Tma'] - species_params['Toa']))
 }
 
-food_prov_rate <- function(pop_params, rel_feeding, ing_pot, ing_pot_10) {
+food_prov_rate <- function(pop_params, water_temp, ing_pot, ing_pot_10, species_params) {
   # Use ifelse vectorization instead of individual if statements
   ifelse(
-    rel_feeding > 0.1,
+    water_temp > species_params['Taa'],
     ing_pot * (1 + rnorm(1, pop_params['overFmean'], pop_params['overFdelta'])),
     ing_pot_10
   ) # old formula: 0.25 * 0.066 * weight^0.75
 }
 
+# Apportion ingested feed into relevant components
 app_feed <- function(provided, ingested, prop, macro, digestibility) {
   # Pre-compute common values and use vectorized operations
   provided_amount <- provided * prop * macro
@@ -153,9 +154,10 @@ fish_growth <- function(pop_params, species_params, water_temp, feed_params, tim
     # Food provision and ingestion
     result[i, 'food_prov'] <- food_prov_rate(
       pop_params = pop_params, 
-      rel_feeding = result[i, 'rel_feeding'],
+      water_temp = result[i, 'water_temp'],
       ing_pot = result[i, 'ing_pot'],
-      ing_pot_10 = ingmax * (result[i, 'weight']^species_params['m']) * 0.1
+      ing_pot_10 = ingmax * (result[i, 'weight']^species_params['m']) * 0.1,
+      species_params
     )
     result[i, 'food_enc'] <- species_params['eff'] * result[i, 'food_prov']
     result[i, 'ing_act'] <- min(result[i, 'food_enc'], result[i, 'ing_pot'])
@@ -264,6 +266,50 @@ farm_growth <- function(pop_params, species_params, feed_params, water_temp, tim
     cbind(days, all_results[[col_idx]]) %>% 
       as.matrix() %>% unname() 
   }) %>% setNames(paste0(names(all_results), "_stat"))
+  
+  return(out_list)
+}
+
+# This is identical to the farm_growth function except without the Monte-Carlo sampling of initial weights (all uniform)
+uni_farm_growth <- function(pop_params, species_params, feed_params, water_temp, times, N_pop){
+  
+  days <- (times['t_start']:times['t_end'])*times['dt']
+  
+  # Run parallel simulation for individuals
+  mc_results2 <- fish_growth(
+      pop_params = pop_params,
+      species_params = species_params,
+      water_temp = water_temp,
+      feed_params = feed_params,
+      times = times,
+      init_weight = pop_params['meanW'],
+      ingmax = pop_params['meanImax']
+    ) %>% unname()
+  
+  stat_names <- c("days", "weight", "dw", "water_temp", "T_response", "P_excr", "L_excr", "C_excr", "P_uneat", 
+                  "L_uneat", "C_uneat", "food_prov", "food_enc", "rel_feeding", "ing_pot", "ing_act", "E_assim", 
+                  "E_somat", "anab", "catab", "O2", "NH4")
+  
+  all_results2 <- setNames(split(t(mc_results2), row(t(mc_results2))), stat_names)
+  all_results2 <- all_results2[-1]
+
+  # Some stats need to be summed/added
+  all_results2[["total_excr"]] <- all_results2[["P_excr"]] + all_results2[["L_excr"]] + all_results2[["C_excr"]]
+  all_results2[["total_uneat"]] <- all_results2[["P_uneat"]] + all_results2[["L_uneat"]] + all_results2[["C_uneat"]]
+  all_results2[["metab"]] <- all_results2[["anab"]] - all_results2[["catab"]]
+  all_results2[["biomass"]] <- all_results2[["weight"]]
+  
+  # Some stats should be multiplied by the farm population (Npop)
+  pop_names <- c("biomass", "P_excr", "L_excr", "C_excr", "P_uneat", "L_uneat", "C_uneat", "ing_act", 
+                 "total_excr", "total_uneat", "O2", "NH4", "food_prov")
+  for (stat_nm in pop_names) {
+    all_results2[[stat_nm]] <- all_results2[[stat_nm]] * N_pop[1:length(days)]
+  }
+  
+  out_list <- lapply(1:length(all_results2), function(col_idx) {
+    cbind(days, all_results2[[col_idx]]) %>% 
+      as.matrix() %>% unname() 
+  }) %>% setNames(paste0(names(all_results2), "_stat"))
   
   return(out_list)
 }
