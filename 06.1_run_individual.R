@@ -170,9 +170,9 @@ factors <- c(0.9, 1, 1.1)
 Sys.setenv(TAR_PROJECT = "project_sensitivities")
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
 tar_validate()
-tar_outdated()
+tar_outdated(callr_function = NULL)
 targets::tar_make(
-  # names = contains("tar_sens_run_pop"),
+  # names = "tar_sens_results_spec",
   callr_function = NULL
 )
 

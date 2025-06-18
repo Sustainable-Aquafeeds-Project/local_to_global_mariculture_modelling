@@ -40,11 +40,7 @@ message(sprintf("Configuration:\n- Species: %s\n- Overwrite existing: %s\n- Outp
 # Main farm growth ------------------------------------------------------------------------------------------------
 Sys.setenv(TAR_PROJECT = "project_farmruns")
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
-targets::tar_make(
-  reporter = "balanced",
-  # callr_function = NULL,
-  seconds_meta_append = 90
-)
+targets::tar_make(seconds_meta_append = 90)
 
 tar_farm_IDs <- targets::tar_read(tar_farm_IDs)
 stat_names <- targets::tar_read(stat_names)

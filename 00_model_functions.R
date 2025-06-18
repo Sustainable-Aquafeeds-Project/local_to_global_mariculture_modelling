@@ -1,3 +1,8 @@
+# These packages are called here so that renv doesn't clean them
+library(devtools)
+library(yaml)
+library(gitcreds)
+
 ### Functions modified from Baldan et al 2018 R package for aquaculture. 
 ### https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0195732
 ### https://github.com/cran/RAC/tree/master/R
@@ -5,17 +10,15 @@
 # Disable all linters for this file
 # nolint start
 
-# Load required packages silently
-suppressWarnings(suppressPackageStartupMessages({
-  library(qs)
-  library(qs2) 
-  library(terra)
-  library(readxl)
-  library(matrixStats)
-  library(furrr)
-  library(future)
-  library(dplyr)
-}))
+# Load required packages
+library(qs)
+library(qs2) 
+library(terra)
+library(readxl)
+library(matrixStats)
+library(furrr)
+library(future)
+library(dplyr)
 
 make_label <- function(lab){lab %>% str_remove_all("_stat") %>% str_replace_all("_", " ") %>% str_to_title()}
 fixnum <- function(n, digits = 4) {

@@ -1,0 +1,279 @@
+---
+title: "07_species_layers"
+format: html
+editor: source
+---
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(magrittr)
+library(stringr)
+library(here)
+library(terra)
+library(sf)
+library(qs)
+library(ggplot2)
+library(countrycode)
+library(terra)
+library(tidyterra)
+library(cowplot)
+library(furrr)
+library(rnaturalearth)
+library(aquamapsdata) # https://raquamaps.github.io/aquamapsdata/articles/intro.html
+library(worrms)
+library(grid)
+
+source("00_dirs.R")
+
+overwrite <- F
+```
+
+# Base rasters for resolution
+
+Create a blank raster with enough resolution to get farms in there (100m)
+
+```{r base-raster}
+base_rast <- rast(res = 0.1/111.32, extent = ext(-180, 180, -90, 90), crs = "EPSG:4326")
+
+inset_boxes <- list(
+  CAN1 = c(-132, -122, 47.75, 54.25),
+  CAN2 = c(-70, -54, 43, 48.5),
+  EUR = c(-26, 30, 51, 72),
+  CHI = c(-77.5, -62.5, -56, -25),
+  AUS = c(144, 149.5, -44, -39.75)
+)
+
+inset_rasters <- list(
+  CAN1 = crop(base_rast, ext(inset_boxes[["CAN1"]])),
+  CAN2 = crop(base_rast, ext(inset_boxes[["CAN2"]])),
+  EUR  = crop(base_rast, ext(inset_boxes[["EUR"]])),
+  CHI  = crop(base_rast, ext(inset_boxes[["CHI"]])),
+  AUS  = crop(base_rast, ext(inset_boxes[["AUS"]]))
+)
+```
+
+# Farm circles
+
+Give each farm a basic "circle of influence" - currently set at 2km. Possibility to reduce this/create a dispersion pattern later. 
+
+```{r farm-circles}
+farm_circles_file <- file.path(output_farm_data_path, "farm_circles_2km.tif")
+
+farm_circles_rast <- if (!file.exists(farm_circles_file) | overwrite) {
+  # Read in farm locations (sf objects)
+  farm_locs <- file.path(output_farm_data_path, "farm_geometry.qs") %>% 
+    qread()
+  
+  # Create circular buffers for crude (~1km) area of impact and merge overlapping areas
+  farm_circles <- st_sf(farm_id = farm_locs$farm_id, geometry = farm_locs$geometry) %>%
+    st_transform(crs = crs(base_rast)) %>%  # transform to match background N projection
+    st_buffer(dist = 2000) %>%  # 2 km radius circles - for maximum possible impact (temporary for testing method)
+    st_union() %>%  # merge overlapping polygons
+    st_sf() %>%  # convert back to sf object
+    mutate(id = 1)  # add single ID for rasterization
+  
+  farm_rast <- rasterize(vect(farm_circles), base_rast, field = "id") # this takes a long time because the base raster is so fine
+  writeRaster(farm_rast, farm_circles_file, overwrite = T)
+  farm_rast
+} else {
+  rast(farm_circles_file)
+}
+```
+
+Also save the individual areas of farm clusters so later species-overlaying is a bit faster.
+
+```{r small-bb-farm-circles}
+fa_list <- file.path(output_farm_data_path, sprintf("farm_circles_2km_inset_%s.tif", 1:5))
+for (i in 1:5) {
+  if (!file.exists(fa_list[i]) | overwrite) {
+    fa_rast <- crop(farm_circles_rast, inset_rasters[[i]])
+    writeRaster(fa_rast, fa_list[i])
+  }
+}
+
+# Testing out different resolutions for the farm_circles
+fa_rast_100m <- rast(fa_list[4])
+fa_rast_250m <- aggregate(fa_rast_100m, fact = 2.5, fun = "modal")
+fa_rast_500m <- aggregate(fa_rast_100m, fact = 5, fun = "modal")
+fa_rast_1000m <- aggregate(fa_rast_100m, fact = 10, fun = "modal")
+
+fa_ggplot <- function(df) {
+  ggplot() +
+    geom_spatraster(data = df, mapping = aes(fill = id), na.rm = T) +
+    scale_fill_viridis_c(na.value = "transparent") +
+    coord_sf(expand = FALSE) +
+    theme_void()
+}
+
+plot_grid(
+  fa_ggplot(fa_rast_100m),
+  fa_ggplot(fa_rast_250m),
+  fa_ggplot(fa_rast_500m),
+  fa_ggplot(fa_rast_1000m),
+  ncol = 2
+)
+```
+
+# Species vulnerabilities
+
+Using trait-based vulnerability data downloaded from @ohara_code_2021 [@butt_trait-based_2022].
+
+``` {r vulnerability data}
+vulnerabilities <- file.path(input_spec_layers_path, "spp_gp_vuln_w_distribution.csv") %>% 
+  read.csv() %>% 
+  mutate(spp_gp = str_to_sentence(spp_gp)) %>% 
+  filter(stressor == "eutrophication_nutrient_pollution") %>% 
+  mutate(taxon = as.factor(taxon)) %>% 
+  mutate(spp_gp = str_remove(spp_gp, "\\s*\\([^)]*\\)")) %>%  # remove non-accepted names in parentheses
+  filter(exposure_mod != 0) %>% 
+  select(-contains("sd"), -stressor)
+
+ggplot(vulnerabilities, aes(x = taxon, y = vuln, fill = taxon)) +
+  geom_boxplot() +
+  coord_flip()
+```
+
+## Species ranges
+
+```{r aquamaps database}
+# download_db(force = FALSE) # This step downloads the Aquamaps database, ~ 2GB. Only need to do this once
+default_db("sqlite") # Need this step in order to set up to query database
+```
+
+```{r aquamaps-species-keys}
+vuln_am_keys <- split(vulnerabilities, vulnerabilities$spp_gp) %>% 
+  lapply(function(vdf) {
+    keys <- am_search_fuzzy(vdf$spp_gp) %>% 
+      mutate(key = as.character(key),
+             terms = as.character(terms),
+             spp_gp = vdf$spp_gp,
+             genus_species = str_extract(terms, "^\\S+\\s+\\S+"))
+    merge(vdf, keys, by = "spp_gp")
+  }) %>% 
+  bind_rows() %>% 
+  # The vulnerabilities are applied at different levels depending on data available, which can affect distribution lookups
+  mutate(
+    match_level = case_when(
+      genus_species == spp_gp ~ "species",
+      str_detect(str_to_lower(genus_species), str_to_lower(spp_gp)) ~ "genus",
+      str_detect(spp_gp, "ae$") ~ "family",
+      str_detect(str_to_lower(terms), str_to_lower(spp_gp)) & !str_detect(str_to_lower(genus_species), str_to_lower(spp_gp)) ~ "common",
+      str_detect(str_to_lower(terms), str_to_lower(spp_gp)) ~ "other_taxon",
+      T ~ NA
+    ),
+    match_level = factor(match_level, levels = c("species", "genus", "family", "other_taxon", "common"))
+  ) %>% 
+  arrange(match_level) %>% 
+  # Keep only one key (aquamaps dataset) per species, but there may be multiple vulnerabilities
+  distinct(key, .keep_all = T)
+```
+
+### Get species rasters
+
+```{r species-rasters}
+all_keys <- vuln_am_keys$key
+for (i in seq_along(all_keys)) {
+  ras <- am_raster(key = all_keys[i]) %>% rast()
+  names(ras) <- "probability"
+  writeRaster(ras, file.path(input_aquamaps_path, str_c(all_keys[i], ".tif")), overwrite = T)
+}
+```
+
+Convert to Gall projection for equal area?
+
+# Calculate overlapping area
+
+```{r species-area-setup}
+vuln_am_keys <- vuln_am_keys %>% 
+  mutate(total_species_area = NA,
+         farm_overlap_area = NA,
+         file_nm = file.path(input_aquamaps_path, str_c(key, ".tif"))) %>% 
+  select(-terms)
+
+fa_rasts <- list.files(output_farm_data_path, full.names = T, pattern = "farm_circles_2km_inset") %>% 
+  as.list() %>% 
+  lapply(function(fnm){
+    rast(fnm) %>% aggregate(fact = 10, fun = "modal") # use 1km resolution for speed
+  })
+fa_exts <- lapply(fa_rasts, ext) %>% unlist()
+```
+
+Get the total overlap between the farm buffer circles (1km radius) and the species range (presence/absence). The data from aquamaps gives a probability of species presence (0-1) but that is not incorporated here (yet).
+
+I tried to do this in parallel but `terra` has issues with parallel processing - couldn't get it to work. But it only takes ~25 minutes (with all the speed measures taken above).
+
+```{r species-area}
+for (sp in 1:nrow(vuln_am_keys)) {
+  species_range_raster <- rast(vuln_am_keys$file_nm[sp])
+  
+  # Temporary - exclude cells where probability < 0.05 and set remaining cells to 1 for presence
+  species_range_raster[species_range_raster < 0.05] <- NA 
+  species_range_raster[!is.na(species_range_raster)] <- 1
+  
+  # Get total species range area
+  vuln_am_keys$total_species_area[sp] <- global(
+    cellSize(species_range_raster, unit = "km") * !is.na(species_range_raster), "sum", na.rm = TRUE
+    )$sum
+  
+  # Check species extent against farm extents to see if it's worth continuing
+  pre_check <- lapply(fa_rasts, function(ras) {
+      check1 <- !is.null(terra::intersect(ext(ras), ext(species_range_raster))) # do extents overlap?
+      if (check1) {
+        check2 <- crop(species_range_raster, ras) %>% # is any value != NA?
+          minmax() %>% as.vector() %>% is.na() %>% any() %>% isFALSE()
+      } else {check2 <- F}
+      all(check1, check2) # if any are F ~ F
+    }) %>% unlist()
+  
+  # For areas worth overlaying (passed pre-check)
+  overlap_rasts_fa <- fa_rasts[pre_check]
+  overlap_rasts_sp <- lapply(overlap_rasts_fa, function(ras) {
+      sp_rast <- crop(species_range_raster, ras)
+      sp_rast <- resample(sp_rast, ras, method = "bilinear")
+      overlap_mask <- !is.na(sp_rast) & !is.na(ras)
+      global(cellSize(overlap_mask, unit = "km") * overlap_mask, "sum", na.rm = TRUE)$sum
+    })
+  vuln_am_keys$farm_overlap_area[sp] <- overlap_rasts_sp %>% unlist() %>% sum()
+  
+  if (sp %in% as.integer(seq(0,nrow(vuln_am_keys), length.out = 21))) {
+    print(paste0(sp, " of ", nrow(vuln_am_keys), " done, ",
+                 round(100*sp/nrow(vuln_am_keys),0), "% finished at ", Sys.time()))
+  }
+}
+
+vuln_am_keys <- vuln_am_keys %>% 
+  mutate(overlap_percent = 100*farm_overlap_area/total_species_area) 
+
+qsave(vuln_am_keys, file.path(impacts_path, "vulnerability_areaoverlap_allspecies.qs"))
+
+vuln_am_keys <- vuln_am_keys %>% 
+  filter(overlap_percent > 0) %>% 
+  arrange(-overlap_percent)
+
+qsave(vuln_am_keys, file.path(impacts_path, "vulnerability_areaoverlap_nonzero.qs"))
+```
+
+In this very crude and liberal estimation, the maximum exposure of any species to farm nutrient inputs was `r round(max(vuln_am_keys$overlap_percent), 2)`%. 
+
+```{roverlap-plot}
+xbreaks <- c(min(vuln_am_keys$overlap_percent/100), max(vuln_am_keys$overlap_percent/100)) %>% log()
+xbreaks <- seq(xbreaks[1], xbreaks[2], length.out = 5)
+xlabels <- exp(xbreaks)
+
+scientific_10 = function(x) {
+  ifelse(
+    x==0, "0",
+    parse(text = sub("e[+]?", " %*% 10^", scales::scientific_format()(x)))
+  )
+} 
+
+ggplot(vuln_am_keys, aes(x = log(overlap_percent/100), y = vuln, colour = taxon)) +
+  geom_point() +
+  theme_classic() +
+  scale_x_continuous(breaks = xbreaks, labels = scientific_10(xlabels)) +
+  labs(y = "Vulnerability", x = "% overlap with species range")
+```
+
+
+

@@ -79,7 +79,7 @@ install_unit("g_fish")
 install_unit("kg_fish", "1000 g_fish")
 install_unit("t_fish", "1000 kg_fish")
 
-packages <- c("magrittr", "dplyr", "tidyr", "stringr", "ggplot2", "arrow", "targets", "sf", "terra", "rnaturalearth", "furrr", "future", "units", "lubridate")
+packages <- c("magrittr", "dplyr", "tidyr", "stringr", "ggplot2", "arrow", "targets", "sf", "terra", "rnaturalearth", "furrr", "future", "units", "lubridate", "worrms", "aquamapsdata") %>% sort()
 
 here("00_model_functions.R") %>% source()
 
@@ -668,7 +668,7 @@ General thoughts is that a risk-assessment approach is most compelling:
 * Exposure: Species presence. Use IUCN/Aquamap data to estimate the % of each species range is occupied by farms
   * give each farm a 1km radius, check for overlaps
   * Gage already has the data to process the Aquamap data
-* Vulnerability: species vulnerability to eutrophication + nutrient input - from @butt_trait-based_2022. Possibly also use IUCN threat levels for prioritisation?
+* Vulnerability: species vulnerability to eutrophication + nutrient input [@butt_trait-based_2022; @ohara_code_2021]. Possibly also use IUCN threat levels for prioritisation?
 
 # Statistical analysis & code availability
 

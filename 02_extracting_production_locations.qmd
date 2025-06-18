@@ -6,10 +6,10 @@ editor: source
 
 ## Set up
 
-```{r}
-
-
-library(tidyverse)
+```{r setup}
+library(tidyr)
+library(dplyr)
+library(magrittr)
 library(here)
 library(janitor)
 library(sf)
@@ -17,8 +17,7 @@ library(qs)
 library(countrycode)
 library(terra)
 
-source("src/dir.R")
-
+source(here("00_dir.R"))
 
 species <- c("atlantic_salmon", 
              "general_salmonid", 
@@ -30,27 +29,23 @@ species <- c("atlantic_salmon",
              "general_grouper",
              "pompano",
              "milkfish")
-
 ```
 
 Isolate production data for species of interest
 
 ```{r}
-
-
 aquaculture_raw <- read_csv(file.path(rdsi_dir, "raw_data/fao/FAO_fishstat_2020/global_aquaculture_production_1950_2020.csv"))
 
-
 (aquaculture_prod <- 
-  aquaculture_raw |> 
-  clean_names() |> 
-  select(c(1:7, starts_with("x"))) |> 
-  pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) |> 
-  mutate(year = gsub(pattern="x", replacement = "", year)) |> 
-  filter(year %in% c(2015:2020)) |> 
-  group_by(asfis_species_name_2, asfis_species_name_3, environment_name, year) |> 
-  summarise(production = sum(production)) |> 
-    ungroup() |> 
+  aquaculture_raw %>% 
+  clean_names() %>% 
+  select(c(1:7, starts_with("x"))) %>% 
+  pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) %>% 
+  mutate(year = gsub(pattern="x", replacement = "", year)) %>% 
+  filter(year %in% c(2015:2020)) %>% 
+  group_by(asfis_species_name_2, asfis_species_name_3, environment_name, year) %>% 
+  summarise(production = sum(production)) %>% 
+    ungroup() %>% 
      filter(environment_name=="Marine" & 
            !asfis_species_name_3 %in% c("Clams, cockles, arkshells", 
                                         "Abalones, winkles, conchs",
@@ -64,17 +59,17 @@ aquaculture_raw <- read_csv(file.path(rdsi_dir, "raw_data/fao/FAO_fishstat_2020/
                                         "Miscellaneous aquatic plants",
                                         "Scallops, pectens"),
          !grepl("seaweeds" , asfis_species_name_3),
-         !grepl("molluscs|cucumber|invertebrates", asfis_species_name_2)) |> 
-    filter(!asfis_species_name_2 %in% c("Marine fishes nei")) |> 
-     group_by(asfis_species_name_2) |> 
-     summarise(production = mean(production)) |> 
-  arrange(-production) |> 
+         !grepl("molluscs|cucumber|invertebrates", asfis_species_name_2)) %>% 
+    filter(!asfis_species_name_2 %in% c("Marine fishes nei")) %>% 
+     group_by(asfis_species_name_2) %>% 
+     summarise(production = mean(production)) %>% 
+  arrange(-production) %>% 
     mutate(cum_prop = cumsum(production)/sum(production),
            prop = production/sum(production))
 )
 
 spp_names <- 
-  aquaculture_prod |> 
+  aquaculture_prod %>% 
   filter(asfis_species_name_2 %in% c("Atlantic salmon", 
                                      "Rainbow trout", 
                                      "European seabass", 
@@ -86,18 +81,18 @@ spp_names <-
                                      "Amberjacks nei",
                                      "Pompano", 
                                      "Milkfish") | 
-           grepl(pattern = "rouper", asfis_species_name_2) & production > 1) |> 
+           grepl(pattern = "rouper", asfis_species_name_2) & production > 1) %>% 
   pull(asfis_species_name_2)
   
 
 
 (mariculture_spp_prod <- 
-    aquaculture_raw |> 
-    clean_names() |> 
-    select(c(1:7, starts_with("x"))) |> 
-    pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) |> 
-    mutate(year = gsub(pattern="x", replacement = "", year)) |> 
-    filter(year %in% c(2017)) |> 
+    aquaculture_raw %>% 
+    clean_names() %>% 
+    select(c(1:7, starts_with("x"))) %>% 
+    pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) %>% 
+    mutate(year = gsub(pattern="x", replacement = "", year)) %>% 
+    filter(year %in% c(2017)) %>% 
     filter(!grepl("Inland waters", fao_major_fishing_area_name)  & 
              !asfis_species_name_3 %in% c("Clams, cockles, arkshells", 
                                           "Abalones, winkles, conchs",
@@ -111,27 +106,27 @@ spp_names <-
                                           "Miscellaneous aquatic plants",
                                           "Scallops, pectens"),
            !grepl("seaweeds" , asfis_species_name_3),
-           !grepl("molluscs|cucumber|invertebrates", asfis_species_name_2)) |> 
-    group_by(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) |> 
-    summarise(production = sum(production)) |> 
-    ungroup() |> 
+           !grepl("molluscs|cucumber|invertebrates", asfis_species_name_2)) %>% 
+    group_by(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) %>% 
+    summarise(production = sum(production)) %>% 
+    ungroup() %>% 
     mutate(asfis_species_name_2 = case_when(asfis_species_name_2 == "Marine fishes nei" & country_name == "Viet Nam" ~ "Groupers nei",
-                                            TRUE ~ asfis_species_name_2)) |> 
-    mutate(iso3c = countrycode(sourcevar = country_name, origin = "country.name", destination = "iso3c", warn =TRUE)) |> 
-    group_by(iso3c, country_name, year) |> 
-    nest() |> 
-    mutate(national_production = map(data, ~(sum(.$production)))) |> 
-    unnest(cols = c(data, national_production)) |> 
-    ungroup() |> 
-    filter(asfis_species_name_2 %in% spp_names) |> 
-    mutate(prop_production = production/national_production) |> 
-    filter(!asfis_species_name_2 %in% c("Marine fishes nei")) |> 
+                                            TRUE ~ asfis_species_name_2)) %>% 
+    mutate(iso3c = countrycode(sourcevar = country_name, origin = "country.name", destination = "iso3c", warn =TRUE)) %>% 
+    group_by(iso3c, country_name, year) %>% 
+    nest() %>% 
+    mutate(national_production = map(data, ~(sum(.$production)))) %>% 
+    unnest(cols = c(data, national_production)) %>% 
+    ungroup() %>% 
+    filter(asfis_species_name_2 %in% spp_names) %>% 
+    mutate(prop_production = production/national_production) %>% 
+    filter(!asfis_species_name_2 %in% c("Marine fishes nei")) %>% 
   mutate(model_name = case_when(grepl("rouper", asfis_species_name_2) ~ "general_grouper", 
                                 asfis_species_name_2 %in% c("Coho(=Silver) salmon", "Rainbow trout") ~ "general_salmonid",
                                 asfis_species_name_2 %in% c("Amberjacks nei") ~ "japanese_amberjack",
-                                TRUE ~ gsub(pattern = " ", replacement = "_", tolower(asfis_species_name_2)))) |> 
-  relocate(model_name, .before = asfis_species_name_2) |> 
-  filter(prop_production>0) |> 
+                                TRUE ~ gsub(pattern = " ", replacement = "_", tolower(asfis_species_name_2)))) %>% 
+  relocate(model_name, .before = asfis_species_name_2) %>% 
+  filter(prop_production>0) %>% 
     mutate(farm_name = case_when(model_name %in% c("atlantic_salmon", "general_salmonid") ~ "Salmonidae fish",
                                  TRUE ~ "General marine fish"))
     ) 
@@ -144,14 +139,13 @@ spp_names <-
 Pull in farm locations, add FAO Major fishing regions
 
 ```{r}
-farms_sf <- qread(file = "data/_general_data/farm_locations/locations.qs") |> 
-  st_as_sf(coords = c("X", "Y"), crs = "EPSG:4326") |> 
-  mutate(row_num = row_number()) |> 
-  group_by(row_num) |> 
+farms_sf <- qread(file = "data/_general_data/farm_locations/locations.qs") %>% 
+  st_as_sf(coords = c("X", "Y"), crs = "EPSG:4326") %>% 
+  mutate(row_num = row_number()) %>% 
+  group_by(row_num) %>% 
   group_split()
 
-
-FAO_shp <- read_sf(file.path(rdsi_dir, "raw_data/fao/FAO_AREAS_CWP_NOCOASTLINE")) |> filter(F_LEVEL == "MAJOR") |> select(F_CODE)
+FAO_shp <- read_sf(file.path(rdsi_dir, "raw_data/fao/FAO_AREAS_CWP_NOCOASTLINE")) %>% filter(F_LEVEL == "MAJOR") %>% select(F_CODE)
 
 #test function
 #this_farm <- farms_sf[[1]]
@@ -160,26 +154,15 @@ FAO_shp <- read_sf(file.path(rdsi_dir, "raw_data/fao/FAO_AREAS_CWP_NOCOASTLINE")
 # define cores for parallel process
 
 cores <- parallel::detectCores()-2
-
-#  process set up
-
 future::plan(strategy = "multisession", workers = cores)
 
-#intersect farm points with FAO fishing code polygons
-
-farm_fao_intersect <- 
-  
-  furrr::future_map(.x = farms_sf, .f = \(this_farm){ # initiate parallel map function
-  
-  this_farm_fao_code <- st_intersection(this_farm, FAO_shp)
-  
-  return(this_farm_fao_code)
-  
-}) |> bind_rows() #combine to data frame
-
+# Intersect farm points with FAO fishing code polygons
+farm_fao_intersect <- furrr::future_map(.x = farms_sf, .f = \(this_farm){ # initiate parallel map function
+    this_farm_fao_code <- st_intersection(this_farm, FAO_shp)
+    return(this_farm_fao_code)
+}) %>% bind_rows() #combine to data frame
 
 qsave(x = farm_fao_intersect, file = here("data/_general_data/farm_locations/locations_w_fishing_areas.qs"))
-
 ```
 
 Check that farm locations for each country sit in the correct FAO fishing area - flag those where there is a misalignment
@@ -189,12 +172,12 @@ Check that farm locations for each country sit in the correct FAO fishing area -
 # filter country level production for all species in non-inland waters where production is greater than 0 tonnes.
 
 mariculture_prod_all <- 
-    aquaculture_raw |> 
-    clean_names() |> 
-    select(c(1:7, starts_with("x"))) |> 
-    pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) |> 
-    mutate(year = gsub(pattern="x", replacement = "", year)) |> 
-    filter(year %in% c(2017)) |> 
+    aquaculture_raw %>% 
+    clean_names() %>% 
+    select(c(1:7, starts_with("x"))) %>% 
+    pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) %>% 
+    mutate(year = gsub(pattern="x", replacement = "", year)) %>% 
+    filter(year %in% c(2017)) %>% 
     filter(!grepl("Inland waters", fao_major_fishing_area_name)  & 
              !asfis_species_name_3 %in% c("Clams, cockles, arkshells", 
                                           "Abalones, winkles, conchs",
@@ -208,25 +191,25 @@ mariculture_prod_all <-
                                           "Miscellaneous aquatic plants",
                                           "Scallops, pectens"),
            !grepl("seaweeds" , asfis_species_name_3),
-           !grepl("molluscs|cucumber|invertebrates", asfis_species_name_2)) |> 
-    group_by(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) |> 
-    summarise(production = sum(production)) |> 
-    ungroup() |> 
-    mutate(iso3c = countrycode(sourcevar = country_name, origin = "country.name", destination = "iso3c", warn =TRUE)) |> 
-    group_by(iso3c, country_name, year) |> 
-    nest() |> 
-    mutate(national_production = map(data, ~(sum(.$production)))) |> 
-    unnest(cols = c(data, national_production)) |> 
-    ungroup() |> 
-  filter(production>0) |> 
-  filter(!asfis_species_name_2 %in% c("Marine fishes nei")) |> 
+           !grepl("molluscs|cucumber|invertebrates", asfis_species_name_2)) %>% 
+    group_by(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) %>% 
+    summarise(production = sum(production)) %>% 
+    ungroup() %>% 
+    mutate(iso3c = countrycode(sourcevar = country_name, origin = "country.name", destination = "iso3c", warn =TRUE)) %>% 
+    group_by(iso3c, country_name, year) %>% 
+    nest() %>% 
+    mutate(national_production = map(data, ~(sum(.$production)))) %>% 
+    unnest(cols = c(data, national_production)) %>% 
+    ungroup() %>% 
+  filter(production>0) %>% 
+  filter(!asfis_species_name_2 %in% c("Marine fishes nei")) %>% 
    mutate(model_name = case_when(grepl("rouper", asfis_species_name_2) ~ "general_grouper", 
                                 asfis_species_name_2 %in% c("Coho(=Silver) salmon", "Rainbow trout") ~ "general_salmonid",
-                                TRUE ~ gsub(pattern = " ", replacement = "_", tolower(asfis_species_name_2)))) |> 
-  relocate(model_name, .before = asfis_species_name_2) |> 
+                                TRUE ~ gsub(pattern = " ", replacement = "_", tolower(asfis_species_name_2)))) %>% 
+  relocate(model_name, .before = asfis_species_name_2) %>% 
   mutate(farm_name = case_when(model_name %in% c("atlantic_salmon", "general_salmonid") ~ "Salmonidae fish",
-                                 TRUE ~ "General marine fish")) |> 
- filter(asfis_species_name_2 %in% spp_names) |> 
+                                 TRUE ~ "General marine fish")) %>% 
+ filter(asfis_species_name_2 %in% spp_names) %>% 
   mutate(prop_production = production/national_production)
 
 
@@ -236,8 +219,8 @@ farm_fao_intersect <- qread(here("data/_general_data/farm_locations/locations_w_
 
 
 farm_list <- 
-  farm_fao_intersect |> 
-  group_by(iso3c, country, species_group) |> 
+  farm_fao_intersect %>% 
+  group_by(iso3c, country, species_group) %>% 
   group_split()
 
 #Test function
@@ -248,33 +231,33 @@ this_country_region <- farm_list[[4]]
 (fao_area_code_check <- 
   map_df(farm_list, \(this_country_region){
     
-    farm_country_name <- this_country_region$country |> unique()
-    farm_iso3c <- this_country_region$iso3c |> unique()
-    farm_fao_code <- this_country_region$F_CODE |> unique() |> sort()
-    farm_spp_grp <- this_country_region$species_group |> unique()
+    farm_country_name <- this_country_region$country %>% unique()
+    farm_iso3c <- this_country_region$iso3c %>% unique()
+    farm_fao_code <- this_country_region$F_CODE %>% unique() %>% sort()
+    farm_spp_grp <- this_country_region$species_group %>% unique()
     
     
     prod_data <- 
-      mariculture_prod_all |> 
+      mariculture_prod_all %>% 
       filter(iso3c == farm_iso3c & 
                fao_major_fishing_area_code %in% farm_fao_code & 
                country_name == farm_country_name & 
                farm_name == farm_spp_grp)
     
     
-    prod_spp_group <- prod_data$farm_name |> unique() 
+    prod_spp_group <- prod_data$farm_name %>% unique() 
     
-    prod_fao_code <- prod_data$fao_major_fishing_area_code |> unique() |> sort()
+    prod_fao_code <- prod_data$fao_major_fishing_area_code %>% unique() %>% sort()
     
     return(
       tibble(iso3c = farm_iso3c, 
              countryname = farm_country_name, 
              farm_spp_group = farm_spp_grp, 
              mapped_fishing_areas = paste(farm_fao_code, collapse = ' '), 
-             production_fishing_areas = paste(prod_fao_code, collapse = ' ')) |> 
+             production_fishing_areas = paste(prod_fao_code, collapse = ' ')) %>% 
              mutate(same_fishing_area = mapped_fishing_areas == production_fishing_areas))
 
-}) |> filter(!production_fishing_areas == "")
+}) %>% filter(!production_fishing_areas == "")
 )
 
 
@@ -286,8 +269,8 @@ Assign species to individual farms
 
 ```{r}
 farm_list <- 
-  farm_fao_intersect |> 
-  group_by(iso3c, country, species_group, F_CODE) |> 
+  farm_fao_intersect %>% 
+  group_by(iso3c, country, species_group, F_CODE) %>% 
   group_split()
 
 
@@ -295,23 +278,23 @@ map_spp_to_locations_list <-
   
   map(.x = farm_list, .f = \(this_country_region){
   
-  this_iso3c <- this_country_region$iso3c |> unique()
-  this_fao_code <- this_country_region$F_CODE |> unique()
-  this_species_group <- this_country_region$species_group |> unique()
+  this_iso3c <- this_country_region$iso3c %>% unique()
+  this_fao_code <- this_country_region$F_CODE %>% unique()
+  this_species_group <- this_country_region$species_group %>% unique()
   
   message("Processing locations for ", this_species_group, " in ", this_iso3c, " and FAO fishing area ", this_fao_code)
   
-  this_n_farms <- this_country_region |> nrow()
+  this_n_farms <- this_country_region %>% nrow()
 
   this_country_region_spp_production_list <- 
-    mariculture_spp_prod |> 
-    filter(iso3c == this_iso3c, farm_name == this_species_group, fao_major_fishing_area_code == this_fao_code) |> 
-    group_by(model_name, national_production) |> 
+    mariculture_spp_prod %>% 
+    filter(iso3c == this_iso3c, farm_name == this_species_group, fao_major_fishing_area_code == this_fao_code) %>% 
+    group_by(model_name, national_production) %>% 
     summarise(production = sum(production),
-              prop_production = production/national_production) |> 
-    ungroup() |> 
-    distinct() |> 
-    group_by(model_name) |> 
+              prop_production = production/national_production) %>% 
+    ungroup() %>% 
+    distinct() %>% 
+    group_by(model_name) %>% 
     group_split()
   
   farm_locations_w_model_spp <- 
@@ -347,18 +330,18 @@ Stocking densities from the tonnage per farm and harvest size.
 
 farms_w_species <- qread("data/_general_data/farm_locations/locations_w_species_fao_area.qs") 
 
-harvest_sizes <- read_csv("data/_general_data/harvest_sizes/all_harvest_sizes.csv") |> select(-harvest_size_g)
+harvest_sizes <- read_csv("data/_general_data/harvest_sizes/all_harvest_sizes.csv") %>% select(-harvest_size_g)
 
-production_cycle <- read_csv("data/_general_data/production_cycles/production_cycle.csv") |> select(species, days)
+production_cycle <- read_csv("data/_general_data/production_cycles/production_cycle.csv") %>% select(species, days)
 
 mortality_rates <- read_csv("data/_general_data/mortality_rates/all_mortality_rates.csv")
 
 farms_w_stocking <- 
-  farms_w_species |> 
-  left_join(harvest_sizes, by = c("model_name" = "species")) |> 
-  left_join(production_cycle, by = c("model_name" = "species")) |> 
-  left_join(mortality_rates, by = c("model_name" = "species")) |> 
-  mutate(harvest_n = tonnes_per_farm/harvest_size_t) |> 
+  farms_w_species %>% 
+  left_join(harvest_sizes, by = c("model_name" = "species")) %>% 
+  left_join(production_cycle, by = c("model_name" = "species")) %>% 
+  left_join(mortality_rates, by = c("model_name" = "species")) %>% 
+  mutate(harvest_n = tonnes_per_farm/harvest_size_t) %>% 
   mutate(stocking_n = harvest_n * exp(daily_mort_rate*days))
   
 

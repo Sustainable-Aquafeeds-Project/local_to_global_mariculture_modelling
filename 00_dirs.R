@@ -17,6 +17,8 @@ input_farm_sst_path <- file.path(gendata_path, "SST")
 input_species_param_path <- file.path(species_path, "params")
 input_feed_profile_path <- file.path(gendata_path, "diets")
 input_spec_layers_path <- file.path(gendata_path, "species_layers")
+input_aquamaps_path <- file.path(input_spec_layers_path, "from_aquamaps")
+input_Ndata_path <- file.path(gendata_path, "background_nitrogen")
 
 # Output paths
 output_farm_data_path <- file.path(output_path, "farm_data")
@@ -29,6 +31,7 @@ output_model_cohort_path <- file.path(output_path, "all_outputs_cohort")
 total_uneaten_path <- file.path(output_path, "total_uneaten_cohort")
 total_excreted_path <- file.path(output_path, "total_excreted_cohort")
 data_analysis_path <- file.path(output_path, "data_analysis")
+impacts_path <- file.path(output_path, "nutrient_impacts")
 
 # Create output directories
 dir.create(output_species_data_path, showWarnings = F)
@@ -41,7 +44,7 @@ dir.create(output_model_cohort_path, showWarnings = F)
 dir.create(total_uneaten_path, showWarnings = F)
 dir.create(total_excreted_path, showWarnings = F)
 dir.create(data_analysis_path, showWarnings = F)
-
+dir.create(impacts_path, showWarnings = F)
 
 
 # From extracting_temperature

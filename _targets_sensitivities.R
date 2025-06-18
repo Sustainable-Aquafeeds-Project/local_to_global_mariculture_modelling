@@ -5,7 +5,7 @@ library(parallelly)
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "tibble"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 14, seconds_timeout = 90),
+  controller = crew_controller_local(workers = 6, seconds_timeout = 90),
   workspace_on_error = TRUE
 )
 
