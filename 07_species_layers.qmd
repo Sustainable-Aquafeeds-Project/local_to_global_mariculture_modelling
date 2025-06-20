@@ -1,10 +1,11 @@
 ---
 title: "07_species_layers"
-format: html
 editor: source
 ---
 
-```{r}
+```{r setup}
+#| include: false
+
 library(tidyr)
 library(dplyr)
 library(magrittr)
@@ -254,7 +255,7 @@ vuln_am_keys <- vuln_am_keys %>%
 qsave(vuln_am_keys, file.path(impacts_path, "vulnerability_areaoverlap_nonzero.qs"))
 ```
 
-In this very crude and liberal estimation, the maximum exposure of any species to farm nutrient inputs was `r round(max(vuln_am_keys$overlap_percent), 2)`%. 
+In this very crude and liberal estimation, the maximum exposure of any species to farm nutrient inputs was ~1.9%. 
 
 ```{roverlap-plot}
 xbreaks <- c(min(vuln_am_keys$overlap_percent/100), max(vuln_am_keys$overlap_percent/100)) %>% log()

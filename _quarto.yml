@@ -1,10 +1,47 @@
 project:
-  type: manuscript
+  title: "myproject"
+  type: default
   output-dir: docs
+  render:
+    - 01_tidying_data.qmd
+    - 02_extracting_production_locations.qmd
+    - 03_assessing_species_potential.qmd
+    - 04_extracting_temperatures.qmd
+    - 05_formulating_feeds.qmd
+    - 07_species_layers.qmd
+    - 08_relative_N_inputs.qmd
 
-manuscript:
-  article: manuscript.qmd
-  # manuscript-url: # The deployed url for this manuscript
+format:
+  html:
+    theme: cosmo
+    css: "extra.css"
+    code-fold: true
+    code-overflow: wrap
+    toc: true
+    toc-expand: true
+    toc-location: left
+    number-sections: true
+    lang: en-GB
+    code-links:
+      - text: Data Import Code
+        icon: file-code
+        href: data-import.py
+    other-links:
+      - text: NASA Open Data
+        href: https://data.nasa.gov/
+    grid:
+      sidebar-width: 250px
+      body-width: 1200px
+      margin-width: 250px
+      gutter-width: 2em
+  
+execute:
+  eval: false
+  freeze: auto
+
+bibliography: 
+  - "refs.bib"
+  - "manual-refs.bib"
 
 # acronyms:
 #   insert_loa: false

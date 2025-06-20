@@ -1,6 +1,7 @@
 ---
 title: "Extracting production locations for each species to obtain environmental forcings"
-format: html
+author: Richard Cottrell
+date: today
 editor: source
 ---
 

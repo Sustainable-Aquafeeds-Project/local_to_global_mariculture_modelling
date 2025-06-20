@@ -7,7 +7,7 @@ bibliography: ["refs.bib", "manual-refs.bib"]
 format: 
   html:
     theme: simplex
-    css: ["extra.css"]
+    css: "extra.css"
     code-fold: true
     code-overflow: wrap
     toc: true

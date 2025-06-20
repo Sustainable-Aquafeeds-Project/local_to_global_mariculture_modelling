@@ -1,3 +1,17 @@
+---
+title: "Extracting salmon farm temperature data"
+author: Tormey Reimer
+date: today
+editor: source
+---
+
+# Introduction
+
+The purpose of this markdown is to:
+
+```{r setup}
+#| code-summary: R setup
+
 library(magrittr)
 library(dplyr)
 library(tidyr)
@@ -18,12 +32,17 @@ library(tictoc)
 library(conflicted)
 conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
 
-# Prep temperature forcings for each farm site
-# production_cycle <- read.csv("data/_general_data/production_cycles/production_cycle.csv") %>% 
-#   filter(species == this_species) %>% 
-#   rename(production_cycle_length = days) %>% 
-#   pull(production_cycle_length)
-production_cycle <- 1100
+source("00_dirs.R")
+
+overwrite <- F
+```
+
+# Farm locations
+
+Get global farm locations and determine whether they're in the southern or northern hemisphere.
+
+``` {r farm-locations}
+#| code-summary: Get all farm locations
 
 farms <- file.path(input_farm_coords_path, "locations_w_species_fao_area_stocking.qs") %>% 
   qread() %>% 
@@ -34,9 +53,14 @@ farms <- file.path(input_farm_coords_path, "locations_w_species_fao_area_stockin
 hemi <- cbind(farms$farm_id, sf::st_coordinates(farms$geometry)) %>% 
   as.data.frame() %>% rename(farm_ID = V1, lon = X, lat = Y) %>% 
   write_parquet(file.path(input_farm_coords_path, "farm_coords.parquet"))
+```
 
-day_number <- seq(1:production_cycle)
+Get daily temperatures for a period of 1100 days (to cover 3 cohorts of 548 days each). Whether a farm is in the southern or northern hemisphere determines the cohorts' start date.
 
+```{r daily-temperatures}
+#| code-summary: Create typical year of SST for all farms
+
+day_number <- seq(1:1100)
 temp_data <- purrr::map_dfc(.x = day_number, .f = function(day_number){
   rast_day_number <- if_else(day_number <= 365, true = day_number, false = day_number-365)
   rast_day_number <- if_else(rast_day_number <= 365, true = rast_day_number, false = rast_day_number-365)
@@ -58,8 +82,13 @@ temp_data <- purrr::map_dfc(.x = day_number, .f = function(day_number){
 farms_w_temp_df <- farms %>%
   left_join(temp_data, by = c("farm_id" = "farm_id")) %>%
   pivot_longer(names_to = "day", values_to = "temp_c", cols = starts_with("day_"))
+```
 
-# Check which farms have missing temp data
+# Missing data
+
+``` {r missing-data}
+#| code-summary: Check which farms have missing temp data
+
 (
   missing_temp_farms <- farms_w_temp_df %>% 
     filter(temp_c %>% is.na()) %>% 
@@ -74,8 +103,11 @@ diff(missing_temp_farms$farm_id)
 farm_list <- farms_w_temp_df %>%
   group_by(farm_id) %>% 
   group_split()
+```
 
-# Loop through and assigned temp of farms missing temp data, to the farm adjacent (the nearest complete index before)
+``` {r missing-data-fix}
+#| code-summary: Loop through and assigned temp of farms missing temp data, to the farm adjacent (the nearest complete index before)
+
 for(i in 1:length(farm_list)){
   message("Checking temp data for ", unique(farm_list[[i]]$farm_id)) 
   if(unique(is.na(farm_list[[i]]$temp_c))){ #if temp data is NA see below
@@ -95,6 +127,10 @@ bind_rows(farm_list) %>%  filter(temp_c %>% is.na()) %>% pull(farm_id) %>% uniqu
 
 # Save the new locations data 
 farms_w_temp_df <- bind_rows(farm_list)
+```
+
+``` {r save}
+#| code-summary: Save data
 
 # With geometry, for plotting
 qsave(x = farms_w_temp_df, 
@@ -103,8 +139,15 @@ qsave(x = farms_w_temp_df,
 # Without geometry, for targets
 sf::st_drop_geometry(farms_w_temp_df) %>%
   write_parquet(file.path(input_farm_sst_path, "farm_SST_extracted.parquet"))
+```
 
-# Get the mean temps for each farm - this is needed to check which annual temps the fish can deal with
+# Omit farms
+
+Farms are omitted if the mean farm temp <= 6$^\circ$C.
+
+```{r omit farms}
+#| code-summary: Get the mean temps for each farm and omit farms that are too cold
+
 mean_farm_temp <- farm_list %>% 
   map_df(.f = function(x){
     data.frame(farm_id = unique(x$farm_id), 
@@ -119,3 +162,4 @@ farms_to_omit <- mean_farm_temp %>%
 
 qsave(x = farms_to_omit, 
       file = file.path(input_farm_coords_path, sprintf("%s_farms_to_omit.qs", this_species)))
+```

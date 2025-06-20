@@ -1,6 +1,17 @@
-# nolint start
+---
+title: "Formulating experimental feeds"
+author: Tormey Reimer
+date: today
+editor: source
+---
 
-# Setup -----------------------------------------------------------------------------------------------------------
+# Introduction
+
+The purpose of this markdown is to:
+
+```{r setup}
+#| code-summary: R setup
+
 library(arrow)
 library(sf)
 library(dplyr)
@@ -25,27 +36,47 @@ here("00_dirs.R") %>% source()
 
 ingred_inputs_file <- file.path(input_feed_profile_path, "all_ingredients.csv")
 feed_input_file <- file.path(input_feed_profile_path, "all_feeds.csv")
-feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
+overwrite <- F
+```
 
-# Ingredients -----------------------------------------------------------------------------------------------------
-# Warning: there is no check here to ensure that protein+lipid+ash+carb = 1 in the incoming data. 
-# You must make sure that the proportions add up to 100% manually.
+# Import ingredients
+
+There is no check or correction here to ensure that protein+lipid+ash+carb = 1 in the incoming data. This was checked manually prior to import. 
+
+``` {r import-ingredients}
+#| code-summary: Ingredient details
+
 ingreds <- ingred_inputs_file %>% 
   read.csv() %>% 
   mutate(ingredient = as.factor(ingredient))
 ingred_nms <- levels(ingreds$ingredient)
+```
 
-# Feeds -----------------------------------------------------------------------------------------------------------
+# Import feeds
+
+There is no check or correction here to ensure that ingredient proportions = 1 in the incoming data. This was checked manually prior to import. 
+
+``` {r import-feeds}
+#| code-summary: Feed compositions
+
 feed_inputs <- feed_input_file %>% 
   read.csv() %>% 
+  pivot_longer(names_to = "feed", values_to = "proportion", cols = !contains(c("ingredient", "proportion"))) %>% 
   mutate(feed = as.factor(feed),
          ingredient = as.factor(ingredient)) %>% 
   merge(ingreds, by = "ingredient", all = T)
+
 feed_types <- levels(feed_inputs$feed)
+```
+
+The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. 
+
+```{r formulate feeds}
+#| code-summary: Format feeds as lists to feed into targets
 
 feed_params <- purrr::map(feed_types, function(ft) {
   df <- feed_inputs %>% 
-    filter(feed == ft) 
+    filter(feed == ft & proportion != 0) 
   list(
     Proteins = df %>% 
       select(ingredient, proportion, contains("protein"), -contains("feed")) %>%
@@ -59,5 +90,9 @@ feed_params <- purrr::map(feed_types, function(ft) {
   )
 }) %>% 
   setNames(feed_types)
+```
 
-qsave(feed_params, feed_params_file)
+```{r save}
+qsave(feed_params, file.path(output_species_data_path, "feed_params.qs"))
+```
+
