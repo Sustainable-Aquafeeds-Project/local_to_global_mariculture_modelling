@@ -1,10 +1,21 @@
 ---
 title: "08_relative_N_inputs"
-format: html
+author: Tormey Reimer
+date: today
 editor: source
 ---
 
+# Introduction
+
+The purpose of this markdown is to:
+
+1. Import and clean up background nitrogen data
+2. Overlay background nitrogen and Atlantic salmon farm locations
+3. Compare annual inputs from the different sources
+
 ```{r setup}
+#| code-summary: R setup
+
 library(tidyr)
 library(dplyr)
 library(magrittr)
@@ -17,6 +28,7 @@ library(ggplot2)
 library(tidyterra)
 library(cowplot)
 library(rnaturalearth)
+library(purrr)
 
 source("00_dirs.R")
 
@@ -25,10 +37,8 @@ overwrite <- F
 
 # Base rasters for resolution
 
-Create a blank raster with enough resolution to get farms in there (100m)
-
 ```{r base-raster}
-base_rast <- rast(res = 0.1/111.32, extent = ext(-180, 180, -90, 90), crs = "EPSG:4326")
+#| code-summary: Create some blank rasters with parameters to be used going forward
 
 inset_boxes <- list(
   CAN1 = c(-132, -122, 47.75, 54.25),
@@ -38,44 +48,106 @@ inset_boxes <- list(
   AUS = c(144, 149.5, -44, -39.75)
 )
 
-inset_rasters <- list(
-  CAN1 = crop(base_rast, ext(inset_boxes[["CAN1"]])),
-  CAN2 = crop(base_rast, ext(inset_boxes[["CAN2"]])),
-  EUR  = crop(base_rast, ext(inset_boxes[["EUR"]])),
-  CHI  = crop(base_rast, ext(inset_boxes[["CHI"]])),
-  AUS  = crop(base_rast, ext(inset_boxes[["AUS"]]))
-)
+base_wgs84 <- rast(res = c(0.008333333, 0.008333333), extent = ext(c(-180, 180, -90, 90)), crs = "EPSG:4326")
+base_molle <- rast(res = c(1000, 1000), extent = ext(c(-18040096, 18040096, -9020048, 9020048)), crs = "ESRI:54009")
+
+wgs84_insets <- inset_boxes %>% 
+  lapply(function(bx) {crop(base_wgs84, ext(bx))}) 
+
+molle_insets <- wgs84_insets %>% 
+  lapply(function(rs) {project(rs, crs(base_molle))}) %>% 
+  lapply(function(rs) {ext(rs)}) %>% 
+  lapply(function(ex) {crop(base_molle, ex)})
 ```
 
 # Raw background nitrogen
 
-Data was downloaded from https://doi.org/10.5063/F1610XPS. Resolution is ~934 x 934 m in the Mollweide projection.
+Data for nutrient runoff from agriculture fertilisers and pesticides was downloaded from @halpern_recent_2019-1 [dataset here: @halpern_recent_2019]. 
 
-```{r raw-back-N}
-back_N_rast <- file.path(input_Ndata_path, "nutrient_pollution_2013_raw.tif") %>% 
-    rast()
-back_N_rast
+```{r raw-back-N-halpern}
+#| code-summary: Import data from @halpern_recent_2019 and crop/reproject for the 5 insets being used
+#| eval: false
+
+halpern_N_rast <- file.path(input_Ndata_path, "halpern_2019", "nutrient_pollution_2013_raw.tif") %>% rast() 
+
+halpern_insets <- molle_insets %>% 
+  lapply(function(ins) {project(halpern_N_rast, ins, method = "cubic")})
+
+
+
+# Change to the Molleweide projection
+tuholske_N_rast <- file.path(input_Ndata_path, "tuholske_2021", "global_effluent_2015_tot_N.tif") %>% rast() 
+tuholske_insets <- molle_insets %>% 
+  lapply(function(ins) {project(tuholske_N_rast, ins, method = "cubic")})
+
+# The halpern data has NA values for land but the tuholske data does not
+tuholske_insets <- map2(tuholske_insets, halpern_insets, function(rast, mask) {
+  mask(rast, mask)
+})
+
+background_N_insets <- map2(halpern_insets, tuholske_insets, function(dat1, dat2) {dat1 + dat2})
+
+map2(names(halpern_insets), background_N_insets, function(nm, rast) {
+  writeRaster(rast, file.path(input_Ndata_path, str_c("background_N_inset_", nm, ".tif")))
+})
 ```
 
-When extracting background N data, it was found that a lot of cells had no data. To try and fix this somewhat, I'm going to reproject the background N onto a slightly coarser grid.
+Data for inputs of human sewage in coastal ecosystems was sourced from @tuholske_global_2021 [dataset here: @tuholske_mapping_2021]. 
+The data is in annual g N.
 
-```{r small-res-change}
-back_N_rast <- back_N_rast %>% 
-  project(rast(res = c(1000, 1000), extent = ext(back_N_rast), crs = crs(back_N_rast)),
-          method  = "average")
-back_N_rast
+```{r raw-back-N-tuholske}
+#| code-summary: Import data from @tuholske_global_2021 and crop/reproject for the 5 insets being used
+#| eval: false
+
+# Change to the Molleweide projection
+tuholske_N_rast <- file.path(input_Ndata_path, "tuholske_2021", "global_effluent_2015_tot_N.tif") %>% rast() 
+tuholske_insets <- molle_insets %>% 
+  lapply(function(ins) {project(tuholske_N_rast, ins, method = "cubic")})
+
+# The halpern data has NA values for land but the tuholske data does not
+tuholske_insets <- map2(tuholske_insets, halpern_insets, function(rast, mask) {
+  mask(rast, mask)
+})
+```
+
+```{r save-back-N}
+#| code-summary: Combine and save background N data
+
+background_N_insets <- map2(
+  halpern_insets, 
+  tuholske_insets, 
+  function(halpern, tuholske) {
+    halpern + tuholske
+  })
+
+map2(names(halpern_insets), background_N_insets, function(nm, rast) {
+  writeRaster(rast, file.path(input_Ndata_path, str_c("background_N_inset_", nm, ".tif")))
+})
+```
+
+
+
+```{r load-background-data}
+#| code-summary: Load previously saved inset rasters
+
+background_N_insets <- lapply(names(inset_boxes), function(nm) {
+  file.path(input_Ndata_path, str_c("background_N_inset_", nm, ".tif")) %>% rast()
+})
 ```
 
 # Load modelled N data
 
 ```{r farm locations}
+#| code-summary: Bring in modelled salmon inputs data
+
 farm_locs <- file.path(output_farm_data_path, "farm_geometry.qs") %>% qs::qread()
 farm_sfs <- st_sf(farm_id = farm_locs$farm_id, geometry = farm_locs$geometry) %>% 
-  st_transform(crs = crs(back_N_rast))
-farm_rast <- farm_sfs %>% 
-  rasterize(back_N_rast, field = "farm_id")
-farm_rast
+  st_transform(crs = crs(base_molle))
+farm_id_insets <- background_N_insets %>% 
+  lapply(function(ins) {rasterize(farm_sfs, ins, field = "farm_id")})
 ```
+
+
 
 # Combine with background N
 
