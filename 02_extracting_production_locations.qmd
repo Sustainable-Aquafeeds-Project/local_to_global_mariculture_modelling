@@ -23,6 +23,47 @@ source(here("00_dirs.R"))
 ```
 
 Isolate production data for Atlantic salmon.
+
+```{r clean-raw-data}
+quantity <- file.path(rawdata_path, "Aquaculture_2025.1.0", "Aquaculture_Quantity.csv") %>% 
+  read.csv() %>% 
+  clean_names() %>% 
+  mutate(value = set_units(value, "t")) %>% 
+  select(-measure)
+
+environment_codes <- file.path(rawdata_path, "Aquaculture_2025.1.0", "CL_FI_PRODENVIRONMENT.csv") %>% 
+  read.csv() %>% 
+  distinct(Code, Name_En)
+
+quantity <- quantity %>% 
+  merge(environment_codes, by.x = "environment_alpha_2_code", by.y = "Code") %>%
+  rename(environment = Name_En) %>% 
+  filter(environment == "Marine") %>% 
+  select(-environment_alpha_2_code)
+
+species_codes <- file.path(rawdata_path, "Aquaculture_2025.1.0", "CL_FI_SPECIES_GROUPS.csv") %>% 
+  read.csv() %>% 
+  filter(str_detect(Scientific_Name, "Salmo")) %>% 
+  filter(Scientific_Name %in% c("Salmoniformes (=Salmonoidei)", "Salmo spp", "Salmo salar", "Salmonidae")) %>% 
+  distinct(X3A_Code, Scientific_Name)
+
+quantity <- quantity %>% 
+  merge(species_codes, by.x = "species_alpha_3_code", by.y = "X3A_Code") %>% 
+  filter(!is.na(Scientific_Name)) %>% 
+  select(-species_alpha_3_code)
+
+status_codes <- file.path(rawdata_path, "Aquaculture_2025.1.0", "CL_FI_SYMBOL_SDMX.csv") %>% 
+  read.csv() %>% 
+  distinct(Symbol, Name_En, Description_En)
+
+quantity <- quantity %>% 
+  merge(status_codes, by.x = "status", by.y = "Symbol") %>% 
+  rename(status_nm = Name_En,
+         status_description = Description_En) %>% 
+  select(-status)
+
+```
+
 ```{r rich-raw-processing}
 #| eval: false
 
