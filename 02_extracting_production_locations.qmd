@@ -17,24 +17,15 @@ library(sf)
 library(qs)
 library(countrycode)
 library(terra)
+library(units)
 
-source(here("00_dir.R"))
-
-species <- c("atlantic_salmon", 
-             "general_salmonid", 
-             "european_seabass", 
-             "gilthead_seabream", 
-             "large_yellow_croaker", 
-             "japanese_seabass",
-             "japanese_amberjack",
-             "general_grouper",
-             "pompano",
-             "milkfish")
+source(here("00_dirs.R"))
 ```
 
-Isolate production data for species of interest
+Isolate production data for Atlantic salmon.
+```{r rich-raw-processing}
+#| eval: false
 
-```{r}
 aquaculture_raw <- read_csv(file.path(rdsi_dir, "raw_data/fao/FAO_fishstat_2020/global_aquaculture_production_1950_2020.csv"))
 
 (aquaculture_prod <- 

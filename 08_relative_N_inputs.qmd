@@ -31,8 +31,15 @@ library(rnaturalearth)
 library(purrr)
 
 source("00_dirs.R")
+feed_pal <- c("past" = "#E41A1C", "reference" = "#377EB8", "future" = "#4DAF4A")  
 
-overwrite <- F
+prettyplot <- function() {
+  theme_classic() +
+    theme(legend.position = "none",
+          text = element_text(family = "serif", size = 12, colour = "black"),
+          axis.title.x = element_text(vjust = 0.5),
+          axis.title.y = element_text(hjust = 0.5))
+}
 ```
 
 # Base rasters for resolution
@@ -62,49 +69,34 @@ molle_insets <- wgs84_insets %>%
 
 # Raw background nitrogen
 
-Data for nutrient runoff from agriculture fertilisers and pesticides was downloaded from @halpern_recent_2019-1 [dataset here: @halpern_recent_2019]. 
+Data for nutrient runoff from agriculture fertilisers and pesticides was downloaded from @halpern_recent_2019-1 [dataset here: @halpern_recent_2019]. The data is in annual tonnes N.
 
 ```{r raw-back-N-halpern}
 #| code-summary: Import data from @halpern_recent_2019 and crop/reproject for the 5 insets being used
 #| eval: false
 
-halpern_N_rast <- file.path(input_Ndata_path, "halpern_2019", "nutrient_pollution_2013_raw.tif") %>% rast() 
+halpern_N_rast <- file.path(input_Ndata_path, "halpern_2019", "nutrient_pollution_2013_raw.tif") %>%
+  rast()
 
 halpern_insets <- molle_insets %>% 
   lapply(function(ins) {project(halpern_N_rast, ins, method = "cubic")})
-
-
-
-# Change to the Molleweide projection
-tuholske_N_rast <- file.path(input_Ndata_path, "tuholske_2021", "global_effluent_2015_tot_N.tif") %>% rast() 
-tuholske_insets <- molle_insets %>% 
-  lapply(function(ins) {project(tuholske_N_rast, ins, method = "cubic")})
-
-# The halpern data has NA values for land but the tuholske data does not
-tuholske_insets <- map2(tuholske_insets, halpern_insets, function(rast, mask) {
-  mask(rast, mask)
-})
-
-background_N_insets <- map2(halpern_insets, tuholske_insets, function(dat1, dat2) {dat1 + dat2})
-
-map2(names(halpern_insets), background_N_insets, function(nm, rast) {
-  writeRaster(rast, file.path(input_Ndata_path, str_c("background_N_inset_", nm, ".tif")))
-})
 ```
 
-Data for inputs of human sewage in coastal ecosystems was sourced from @tuholske_global_2021 [dataset here: @tuholske_mapping_2021]. 
-The data is in annual g N.
+Data for inputs of human sewage in coastal ecosystems was sourced from @tuholske_global_2021 [dataset here: @tuholske_mapping_2021]. The data is in annual g N.
 
 ```{r raw-back-N-tuholske}
 #| code-summary: Import data from @tuholske_global_2021 and crop/reproject for the 5 insets being used
 #| eval: false
 
-# Change to the Molleweide projection
-tuholske_N_rast <- file.path(input_Ndata_path, "tuholske_2021", "global_effluent_2015_tot_N.tif") %>% rast() 
+tuholske_N_rast <- file.path(input_Ndata_path, "tuholske_2021", "global_effluent_2015_tot_N.tif") %>%
+  rast() 
+tuholske_N_rast <- tuholske_N_rast * 10^-6 # Change from g to t
+
+# Change to the Molleweide projection with insets
 tuholske_insets <- molle_insets %>% 
   lapply(function(ins) {project(tuholske_N_rast, ins, method = "cubic")})
 
-# The halpern data has NA values for land but the tuholske data does not
+# The halpern data has NA values for land but the tuholske data does not, so mask
 tuholske_insets <- map2(tuholske_insets, halpern_insets, function(rast, mask) {
   mask(rast, mask)
 })
@@ -112,6 +104,7 @@ tuholske_insets <- map2(tuholske_insets, halpern_insets, function(rast, mask) {
 
 ```{r save-back-N}
 #| code-summary: Combine and save background N data
+#| eval: false
 
 background_N_insets <- map2(
   halpern_insets, 
@@ -121,11 +114,13 @@ background_N_insets <- map2(
   })
 
 map2(names(halpern_insets), background_N_insets, function(nm, rast) {
-  writeRaster(rast, file.path(input_Ndata_path, str_c("background_N_inset_", nm, ".tif")))
+  writeRaster(rast, 
+              file.path(input_Ndata_path, str_c("background_N_inset_", nm, ".tif")), 
+              overwrite = T)
 })
 ```
 
-
+The code above was only run once, background N rasters can now be loaded.
 
 ```{r load-background-data}
 #| code-summary: Load previously saved inset rasters
@@ -135,7 +130,7 @@ background_N_insets <- lapply(names(inset_boxes), function(nm) {
 })
 ```
 
-# Load modelled N data
+# Combine modelled N data with background N
 
 ```{r farm locations}
 #| code-summary: Bring in modelled salmon inputs data
@@ -147,138 +142,106 @@ farm_id_insets <- background_N_insets %>%
   lapply(function(ins) {rasterize(farm_sfs, ins, field = "farm_id")})
 ```
 
+```{r matching cells}
+#| code-summary: Get background nitrogen data for farm cells
 
-
-# Combine with background N
-
-```{r}
-# 2. Extract 3x3 neighborhood data for each farm point
-# Get cell numbers for each farm point
-farm_cells <- cellFromXY(back_N_rast, st_coordinates(farm_sfs))
-
-# Function to get 5x5 neighborhood cell numbers
-get_neighborhood_cells <- function(raster, center_cells) {
-  # Get raster dimensions
-  nrows <- nrow(raster)
-  ncols <- ncol(raster)
+farm_cells <- map(background_N_insets, function(back_N_rast) {
+  # Get cell numbers for each farm point
+  farm_cells <- cellFromXY(back_N_rast, st_coordinates(farm_sfs))
+  farm_cells <- farm_locs %>% 
+    mutate(cell = farm_cells) %>% 
+    filter(!is.na(cell))
   
-  # Convert cell numbers to row/col indices
-  rows <- rowFromCell(raster, center_cells)
-  cols <- colFromCell(raster, center_cells)
+  # Extract nutrient values and combine with cell_ids
+  farm_cells$back_N <- terra::extract(back_N_rast$nutrient_pollution_2013_raw,
+                                      farm_cells$cell)$nutrient_pollution_2013_raw
   
-  # Create all 25 neighbor offsets (including center) for 5x5 grid
-  offsets <- expand.grid(row_offset = -2:2, col_offset = -2:2)
-  
-  # Initialize list to store results
-  all_neighbors <- vector("list", length(center_cells))
-  
-  for(i in seq_along(center_cells)) {
-    # Calculate neighbor row/col positions
-    neighbor_rows <- rows[i] + offsets$row_offset
-    neighbor_cols <- cols[i] + offsets$col_offset
-    
-    # Check bounds and filter valid cells
-    valid_cells <- neighbor_rows >= 1 & neighbor_rows <= nrows & 
-                   neighbor_cols >= 1 & neighbor_cols <= ncols
-    
-    # Convert back to cell numbers
-    neighbor_cells <- cellFromRowCol(raster, 
-                                   neighbor_rows[valid_cells], 
-                                   neighbor_cols[valid_cells])
-    
-    # Create position labels for 5x5 grid
-    row_names <- c("T2", "T1", "Crow", "B1", "B2")
-    col_names <- c("L2", "L1", "Ccol", "R1", "R2")
-    
-    position_grid <- outer(row_names, col_names, paste, sep = "_")
-    position_labels <- as.vector(position_grid)
-    valid_positions <- position_labels[valid_cells]
-    
-    all_neighbors[[i]] <- data.frame(
-      farm_id = farm_sfs$farm_id[i],
-      cell_id = neighbor_cells,  # for overlap detection
-      position = valid_positions,
-      stringsAsFactors = FALSE
-    )
+  # Fill gaps from original data with 8 neighbours
+  farm_cells_gaps <- farm_cells %>% filter(is.na(back_N))
+  for (i in 1:nrow(farm_cells_gaps)) {
+    adj_cells <- adjacent(back_N_rast$nutrient_pollution_2013_raw, 
+                          cells = farm_cells_gaps$cell[i], directions = 8)
+    adj_cells_N <- back_N_rast$nutrient_pollution_2013_raw[adj_cells[1,]] %>% 
+      pull(nutrient_pollution_2013_raw) %>% 
+      mean(na.rm = T)
+    farm_cells_gaps$back_N[i] <- adj_cells_N
   }
-  return(do.call(rbind, all_neighbors))
-}
+  farm_cells <- farm_cells %>% 
+    filter(!is.na(back_N)) %>% 
+    rbind(farm_cells_gaps)
 
-# Get all neighborhood cells
-neighborhood_data <- get_neighborhood_cells(back_N_rast, farm_cells) %>% 
-  mutate(
-    category = case_when(position == "Crow_Ccol" ~ "farm_direct",
-                         position %in% c("T1_L1", "T1_Ccol", "T1_R1", "B1_L1", "B1_Ccol", "B1_R1", "Crow_L1", "Crow_R1") ~ "adjacent_1",
-                         T ~ "adjacent_2"),
-    category = factor(category, levels = c("farm_direct", "adjacent_1", "adjacent_2")),
-    position = factor(position, levels = c(
-      "T2_L2",   "T2_L1",   "T2_Ccol",   "T2_R1",   "T2_R2", 
-      "T1_L2",   "T1_L1",   "T1_Ccol",   "T1_R1",   "T1_R2", 
-      "Crow_L2", "Crow_L1", "Crow_Ccol", "Crow_R1", "Crow_R2", 
-      "B1_L2",   "B1_L1",   "B1_Ccol",   "B1_R1",   "B1_R2", 
-      "B2_L2",   "B2_L1",   "B2_Ccol",   "B2_R1",   "B2_R2"
-    )))
-
-# Extract nutrient values and combine with cell_ids
-nutrient_values <- terra::extract(back_N_rast$nutrient_pollution_2013_raw, neighborhood_data$cell_id)
-neighborhood_data <- cbind(neighborhood_data, nutrient_values) %>% 
-  rename(np = nutrient_pollution_2013_raw)
-
-# Fill gaps from original data with 8 neighbours
-neighborhood_data_gaps <- neighborhood_data %>% filter(is.na(np))
-for (i in 1:nrow(neighborhood_data_gaps)) {
-  adj_cells <- adjacent(back_N_rast$nutrient_pollution_2013_raw, cells = neighborhood_data_gaps$cell_id[i], directions = 8)
-  neighborhood_data_gaps$np[i] <- back_N_rast$nutrient_pollution_2013_raw[adj_cells[1,]] %>% 
-    pull(nutrient_pollution_2013_raw) %>% 
-    mean(na.rm = T)
-}
-neighborhood_data <- neighborhood_data %>% 
-  filter(!is.na(np)) %>% 
-  rbind(neighborhood_data_gaps)
-neighborhood_data %>% filter(is.na(np)) %>% nrow() # 3221 still blank
-neighborhood_data %>% filter(is.na(np) & position == "Crow_Ccol") %>% nrow() # 87 of those are direct farm cells
-
-# Fill gaps from original data with 16 neighbours
-neighborhood_data_gaps <- neighborhood_data %>% filter(is.na(np))
-for (i in 1:nrow(neighborhood_data_gaps)) {
-  adj_cells <- adjacent(back_N_rast$nutrient_pollution_2013_raw, cells = neighborhood_data_gaps$cell_id[i], directions = 16)
-  neighborhood_data_gaps$np[i] <- back_N_rast$nutrient_pollution_2013_raw[adj_cells[1,]] %>% 
-    pull(nutrient_pollution_2013_raw) %>% 
-    mean(na.rm = T)
-}
-neighborhood_data <- neighborhood_data %>% 
-  filter(!is.na(np)) %>% 
-  rbind(neighborhood_data_gaps)
-neighborhood_data %>% filter(is.na(np)) %>% nrow() # 4489 still blank
-neighborhood_data %>% filter(is.na(np) & position == "Crow_Ccol") %>% nrow() # 149 of those are direct farm cells
+  # Fill gaps from original data with 16 neighbours
+  farm_cells_gaps <- farm_cells %>% filter(is.na(back_N))
+  if (nrow(farm_cells_gaps) != 0) {
+      for (i in 1:nrow(farm_cells_gaps)) {
+      adj_cells <- adjacent(back_N_rast$nutrient_pollution_2013_raw, 
+                            cells = farm_cells_gaps$cell[i], directions = 16)
+      adj_cells_N <- back_N_rast$nutrient_pollution_2013_raw[adj_cells[1,]] %>% 
+        pull(nutrient_pollution_2013_raw) %>% 
+        mean(na.rm = T)
+      farm_cells_gaps$back_N[i] <- adj_cells_N
+    }
+    farm_cells <- farm_cells %>% 
+      filter(!is.na(back_N)) %>% 
+      rbind(farm_cells_gaps)
+  }
+  
+  default_val <- exp(median(log(farm_cells$back_N), na.rm = T))
+  farm_cells$back_N[is.na(farm_cells$back_N)] <- default_val
+  farm_cells$back_N[farm_cells$back_N < 0] <- default_val
+  farm_cells
+}) %>% 
+  bind_rows()
 ```
 
-```{r summary}
-# Summary statistics
-summary_stats <- neighborhood_data %>%
-  group_by(farm_id, category) %>%
-  reframe(
-    mean = mean(np, na.rm = T),
-    min = min(np, na.rm = T),
-    max = max(np, na.rm = T),
-    cells = n()
-  )
+```{r combine with N input from farms}
 
-# Maybe use adjacent farms to fill gaps?
+N_input <- output_cohorts_data_path %>% list.files(full.names = T) %>% 
+  str_subset("allfarms") %>% 
+  str_subset("P_excr") %>% 
+  qs::qread() %>% 
+  mutate(mean = mean * 6.25) %>% 
+  group_by(farm_ID, feed) %>% 
+  reframe(mean = sum(mean) * 10^-6) %>% 
+  pivot_wider(names_from = feed, values_from = mean)
 
-ggplot(neighborhood_data, aes(x = category, y = log(np), fill = position)) +
-  geom_boxplot()
+N_comp <- merge(farm_cells, N_input, by.y = "farm_ID", by.x = "farm_id", all = T) %>% 
+  select(-cell) %>% 
+  mutate(reference = reference/back_N,
+         past = past/back_N,
+         future = future/back_N) %>% 
+  pivot_longer(names_to = "feed", names_transform = list(feed = as.factor),
+               values_to = "ratio", cols = c("reference", "past", "future")) %>% 
+  mutate(feed = factor(feed, levels = c("reference", "past", "future")))
 ```
 
-# Plot mean nutrient pollution
+# Analyse
 
-```{r}
-farm_N <- summary_stats %>% 
-  filter(category == "farm_direct")
+```{r summary-plots}
 
-farm_N_sfs <- st_sf(farm_N = farm_N$mean, geometry = farm_locs$geometry) %>% 
-  st_transform(crs = crs(back_N_rast))
+N_comp %>%
+  group_by(country, farm_id, feed) %>% 
+  reframe(mean = mean(ratio, na.rm = T)) %>% 
+  pivot_wider(names_from = feed, values_from = mean) %>% 
+  mutate(past = (past-reference)/reference,
+         future = (future-reference)/reference) %>% 
+  select(-reference) %>% 
+  pivot_longer(names_to = "feed", values_to = "mean_ratio", cols = c(past, future)) %>% 
+  ggplot(aes(x = country, y = mean_ratio, fill = feed)) +
+  geom_boxplot() +
+  prettyplot() +
+  scale_y_continuous(breaks = seq(0,1,0.2), labels = seq(0,100,20), limits = c(0,0.6)) +
+  scale_fill_manual(values = feed_pal) +
+  labs(y = "Mean change in N input ratio", x = "Country")
 
-plot(farm_N_sfs)
+N_comp %>% 
+  filter(log(ratio) < 20) %>%
+  ggplot(aes(x = country, y = log(ratio), fill = feed)) +
+  geom_boxplot() +
+  prettyplot() +
+  # scale_y_continuous(breaks = seq(0,1,0.2), labels = seq(0,100,20), limits = c(0,0.6)) +
+  scale_fill_manual(values = feed_pal) +
+  labs(y = "Mean change in N input ratio", x = "Country")
 ```
+
 

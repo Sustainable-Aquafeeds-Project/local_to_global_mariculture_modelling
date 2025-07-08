@@ -39,11 +39,8 @@ find_read <- function(path, pattern){
   }
 }
 
-# Parameters definition
+# Parameters definitions
 # species_params['alpha']         [-] Feeding catabolism coefficient
-# species_params['betaprot']      [-] Assimilation coefficient for protein - SUPERCEEDED by digestibility coefficient
-# species_params['betalip']       [-] Assimilation coefficient for lipid - SUPERCEEDED by digestibility coefficient
-# species_params['betacarb']      [-] Assimilation coefficient for carbohydrates - SUPERCEEDED by digestibility coefficient
 # species_params['epsprot']       [J/gprot] Energy content of protein
 # species_params['epslip']        [J/glip] Energy content of lipid
 # species_params['epscarb']       [J/gcarb] Energy content of carbohydrate

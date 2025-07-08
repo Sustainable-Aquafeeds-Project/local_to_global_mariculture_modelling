@@ -7,7 +7,15 @@ editor: source
 
 # Introduction
 
-The purpose of this markdown is to:
+The purpose of this markdown is to extract daily temperature timeseries from SST data to drive fish growth in the correct places. The steps in this markdown are:
+
+1. Pull farm locations data (previously determined from FAO stocking locations)
+2. Record whether the farm is in the southern or north hemisphere (determines cohort stocking date)
+3. Pull SST data from .tif file and construct "typical" temperature year for each farm location
+4. Gapfill missing temperature data using closest farm in the same FAO stocking area
+5. Save temperature data both with and without geometry information
+6. Determine which farms have a mean temperature <=6 C (will be omitted)
+
 
 ```{r setup}
 #| code-summary: R setup

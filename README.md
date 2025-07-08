@@ -1,3 +1,13 @@
-# local_to_global_mariculture_modelling
+# Local to global nutrient input modelling
 
-Testing...
+This repository holds all the code for the publication <link>. The goal of this project was to examine the changes in nitrogen inputs...
+
+Intermediate and final datasets are available here at <link>.
+
+## Folder/file descriptions
+
+Folder/file name |  Description    
+-----------------|--------------------------------------------
+_quarto.yml      | 
+renv             | project package library
+

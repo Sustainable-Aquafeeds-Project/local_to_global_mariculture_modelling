@@ -17,6 +17,7 @@ library(units)
 library(qs)
 library(here)
 library(progressr)
+library(targets)
 conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
 here("00_model_functions.R") %>% source()
@@ -40,10 +41,11 @@ message(sprintf("Configuration:\n- Species: %s\n- Overwrite existing: %s\n- Outp
 # Main farm growth ------------------------------------------------------------------------------------------------
 Sys.setenv(TAR_PROJECT = "project_farmruns")
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
-targets::tar_make(seconds_meta_append = 90)
+# targets::tar_outdated()
+targets::tar_make(names = c("tar_farmrun_past", "tar_farmrun_future"), shortcut = T, seconds_meta_append = 90)
 
-tar_farm_IDs <- targets::tar_read(tar_farm_IDs)
-stat_names <- targets::tar_read(stat_names)
+targets::tar_load(tar_farm_IDs)
+targets::tar_load(stat_names)
 farmrun_reference_files <- file.path(output_growth_data_path, sprintf("farmrun_reference_%s.qs", fixnum(tar_farm_IDs,4)))
 farmrun_past_files <- file.path(output_growth_data_path, sprintf("farmrun_past_%s.qs", fixnum(tar_farm_IDs,4)))
 farmrun_future_files <- file.path(output_growth_data_path, sprintf("farmrun_future_%s.qs", fixnum(tar_farm_IDs,4)))
@@ -51,24 +53,30 @@ farmrun_comparisons_files <- file.path(output_cohorts_data_path, sprintf("farmru
 
 # Save the intermediate farm growth data
 for (f in seq_along(tar_farm_IDs)) {
-  targets::tar_read(tar_farmrun_reference, branches = f) %>%
+  targets::tar_load(tar_farmrun_reference, branches = f) 
+  tar_farmrun_reference %>%
     setNames(stat_names) %>%
     lapply(function(x) {colnames(x) <- c("t", "mean", "sd"); x}) %>%
     lapply(function(x) {cbind(x, farm_ID = tar_farm_IDs[f])})  %>%
     qs::qsave(farmrun_reference_files[f])
-  targets::tar_read(tar_farmrun_past, branches = f) %>%
+  
+  targets::tar_load(tar_farmrun_past, branches = f) 
+  tar_farmrun_past %>%
     setNames(stat_names) %>%
     lapply(function(x) {colnames(x) <- c("t", "mean", "sd"); x}) %>%
     lapply(function(x) {cbind(x, farm_ID = tar_farm_IDs[f])})  %>%
     qs::qsave(farmrun_past_files[f])
-  targets::tar_read(tar_farmrun_future, branches = f) %>%
+  
+  targets::tar_load(tar_farmrun_future, branches = f) 
+  tar_farmrun_future %>%
     setNames(stat_names) %>%
     lapply(function(x) {colnames(x) <- c("t", "mean", "sd"); x}) %>%
     lapply(function(x) {cbind(x, farm_ID = tar_farm_IDs[f])})  %>%
     qs::qsave(farmrun_future_files[f])
   
   # Save the final cohort feed comparison data
-  targets::tar_read(tar_farmrun_comparisons, branches = f) %>% 
+  targets::tar_load(tar_farmrun_comparisons, branches = f) 
+  tar_farmrun_comparisons %>% 
     setNames(stat_names) %>% 
     qs::qsave(farmrun_comparisons_files[f])
 }
