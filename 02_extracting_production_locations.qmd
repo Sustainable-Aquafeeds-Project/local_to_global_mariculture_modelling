@@ -18,19 +18,22 @@ library(qs)
 library(countrycode)
 library(terra)
 library(units)
+library(readr)
 
 source(here("00_dirs.R"))
 ```
 
-Isolate production data for Atlantic salmon.
+Clean aquaculture production data from the FAO and isolate production data for Atlantic salmon.
 
 ```{r clean-raw-data}
+# Get aquaculture quantity in tonnes live weight
 quantity <- file.path(rawdata_path, "Aquaculture_2025.1.0", "Aquaculture_Quantity.csv") %>% 
   read.csv() %>% 
   clean_names() %>% 
   mutate(value = set_units(value, "t")) %>% 
   select(-measure)
 
+# Apply environment codes and filter by "marine"
 environment_codes <- file.path(rawdata_path, "Aquaculture_2025.1.0", "CL_FI_PRODENVIRONMENT.csv") %>% 
   read.csv() %>% 
   distinct(Code, Name_En)
@@ -41,6 +44,7 @@ quantity <- quantity %>%
   filter(environment == "Marine") %>% 
   select(-environment_alpha_2_code)
 
+# Apply species codes and filter by relevant species groups
 species_codes <- file.path(rawdata_path, "Aquaculture_2025.1.0", "CL_FI_SPECIES_GROUPS.csv") %>% 
   read.csv() %>% 
   filter(str_detect(Scientific_Name, "Salmo")) %>% 
@@ -52,6 +56,7 @@ quantity <- quantity %>%
   filter(!is.na(Scientific_Name)) %>% 
   select(-species_alpha_3_code)
 
+# Apply status codes and filter by relevant species groups
 status_codes <- file.path(rawdata_path, "Aquaculture_2025.1.0", "CL_FI_SYMBOL_SDMX.csv") %>% 
   read.csv() %>% 
   distinct(Symbol, Name_En, Description_En)
@@ -61,7 +66,6 @@ quantity <- quantity %>%
   rename(status_nm = Name_En,
          status_description = Description_En) %>% 
   select(-status)
-
 ```
 
 ```{r rich-raw-processing}
@@ -69,8 +73,7 @@ quantity <- quantity %>%
 
 aquaculture_raw <- read_csv(file.path(rdsi_dir, "raw_data/fao/FAO_fishstat_2020/global_aquaculture_production_1950_2020.csv"))
 
-(aquaculture_prod <- 
-  aquaculture_raw %>% 
+(aquaculture_prod <- aquaculture_raw %>% 
   clean_names() %>% 
   select(c(1:7, starts_with("x"))) %>% 
   pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) %>% 
@@ -101,8 +104,7 @@ aquaculture_raw <- read_csv(file.path(rdsi_dir, "raw_data/fao/FAO_fishstat_2020/
            prop = production/sum(production))
 )
 
-spp_names <- 
-  aquaculture_prod %>% 
+spp_names <- aquaculture_prod %>% 
   filter(asfis_species_name_2 %in% c("Atlantic salmon", 
                                      "Rainbow trout", 
                                      "European seabass", 
@@ -119,8 +121,7 @@ spp_names <-
   
 
 
-(mariculture_spp_prod <- 
-    aquaculture_raw %>% 
+(mariculture_spp_prod <- aquaculture_raw %>% 
     clean_names() %>% 
     select(c(1:7, starts_with("x"))) %>% 
     pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) %>% 
@@ -162,11 +163,7 @@ spp_names <-
   filter(prop_production>0) %>% 
     mutate(farm_name = case_when(model_name %in% c("atlantic_salmon", "general_salmonid") ~ "Salmonidae fish",
                                  TRUE ~ "General marine fish"))
-    ) 
-        
-
-
-
+    )
 ```
 
 Pull in farm locations, add FAO Major fishing regions
@@ -182,7 +179,6 @@ FAO_shp <- read_sf(file.path(rdsi_dir, "raw_data/fao/FAO_AREAS_CWP_NOCOASTLINE")
 
 #test function
 #this_farm <- farms_sf[[1]]
-
 
 # define cores for parallel process
 

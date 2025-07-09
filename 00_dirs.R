@@ -9,6 +9,7 @@ this_species <- "atlantic_salmon"
 output_path <- here() %>% file.path("outputs")
 gendata_path <- here() %>% file.path("data", "_general_data")
 rawdata_path <- here() %>% file.path("data", "raw")
+rdsi_dir <- "/mnt/rdsi"
 species_path <- here() %>% file.path("data", this_species)
 species_fig_path <- file.path(species_path, "figures")
 
