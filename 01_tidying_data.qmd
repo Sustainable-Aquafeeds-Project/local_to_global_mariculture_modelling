@@ -151,6 +151,9 @@ qsave(x = full_vuln_df, file = here("data/_general_data/species_layers/vulnerabi
 Pull in spp distribution data from Aquamaps
 
 ```{r}
+
+
+
 aquamaps_0.5d <- data.table::fread(file.path(rdsi_data_dir, "aquamaps/aquamaps_0.6_depth_prepped.csv")) 
 
 #all cells have an id. These id's can be used to isolate only the cells of relevance for the salmon farming locations.

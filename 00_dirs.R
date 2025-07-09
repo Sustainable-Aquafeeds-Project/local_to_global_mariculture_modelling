@@ -8,6 +8,7 @@ this_species <- "atlantic_salmon"
 # Directory structure
 output_path <- here() %>% file.path("outputs")
 gendata_path <- here() %>% file.path("data", "_general_data")
+rawdata_path <- here() %>% file.path("data", "raw")
 species_path <- here() %>% file.path("data", this_species)
 species_fig_path <- file.path(species_path, "figures")
 

@@ -18,7 +18,8 @@ library(readxl)
 library(units)
 library(qs)
 library(here)
-conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+library(targets)
+conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
 # Configuration ---------------------------------------------------------------------------------------------------
 # Set up parallel processing
@@ -37,14 +38,8 @@ pop_params_file <- file.path(output_species_data_path, "pop_params.qs")
 feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
 farm_harvest_file <- file.path(output_farm_data_path, "farm_harvest_size.qs")
 
-# Print configuration summary
-message(sprintf("Configuration:\n- Species: %s\n- Overwrite existing: %s\n- Output path: %s",
-               this_species,
-               ifelse(overwrite, "yes", "no"),
-               output_path))
-
 # Farm coordinates ------------------------------------------------------------------------------------------------
-farm_coords <- if (!file.exists(farm_coords_file) | overwrite) {
+farm_coords <- if (!file.exists(farm_coords_file)) {
   times_N <- c("t_start" = 121, "t_end" = 121+547, "dt" = 1)
   times_S <- c("t_start" = 274, "t_end" = 274+547, "dt" = 1)
   
@@ -62,7 +57,7 @@ farm_coords <- if (!file.exists(farm_coords_file) | overwrite) {
 }
 
 # Also save geometry for later
-if (!file.exists(farm_geometry_file) | overwrite) {
+if (!file.exists(farm_geometry_file)) {
   file.path(input_farm_coords_path, "atlantic_salmon_locations_w_temps.qs") %>% 
     qread() %>% 
     dplyr::filter(day == "day_1") %>% 
@@ -71,7 +66,7 @@ if (!file.exists(farm_geometry_file) | overwrite) {
 }
 
 # Farm data -------------------------------------------------------------------------------------------------------
-farm_ts_data <- if (!file.exists(farm_ts_data_file) | overwrite) {
+farm_ts_data <- if (!file.exists(farm_ts_data_file)) {
   farms_to_omit <- qread(sprintf(file.path(input_farm_coords_path, "%s_farms_to_omit.qs"), this_species))
   farm_SST_data <- read_parquet(file.path(input_farm_sst_path, "farm_SST_extracted.parquet"))
   farm_IDs <- farm_SST_data %>%
@@ -89,7 +84,7 @@ farm_ts_data <- if (!file.exists(farm_ts_data_file) | overwrite) {
 }
 
 # Species parameters ----------------------------------------------------------------------------------------------
-species_params <- if (!file.exists(species_params_file) | overwrite) {
+species_params <- if (!file.exists(species_params_file)) {
   df <- readxl::read_excel(path = species_params_excel["file"], sheet = species_params_excel["sheet"])
   vc <- df$Value
   names(vc) <- df$Quantity
@@ -101,7 +96,7 @@ species_params <- if (!file.exists(species_params_file) | overwrite) {
 }
 
 # Population parameters -------------------------------------------------------------------------------------------
-pop_params <- if (!file.exists(pop_params_file) | overwrite) {
+pop_params <- if (!file.exists(pop_params_file)) {
   df <- readxl::read_excel(path = pop_params_excel["file"])
   vc <- df$Value
   names(vc) <- df$Quantity
@@ -118,7 +113,7 @@ feed_params <- feed_params_file %>% qread()
 reference_feed <- feed_params[["reference"]]
 
 # Farm harvest size -----------------------------------------------------------------------------------------------
-farm_harvest_size <- if (!file.exists(farm_harvest_file) | overwrite) {
+farm_harvest_size <- if (!file.exists(farm_harvest_file)) {
   farm_IDs <- farm_ts_data %>% distinct(farm_ID) %>% pull(farm_ID)
   hs <- purrr::map(farm_IDs, function(farm_id) {
     farm_times <- c(
@@ -153,7 +148,7 @@ farm_harvest_size <- if (!file.exists(farm_harvest_file) | overwrite) {
 }
 
 # Sensitivities ---------------------------------------------------------------------------------------------------
-sens_all_params <- if (!file.exists(sens_params_file) | overwrite) {
+sens_all_params <- if (!file.exists(sens_params_file)) {
   vc <- c(species_params, pop_params)
   omit_names <- c('betaprot', 'betalip', 'betacarb', 'fcr', 'CS', 'nruns')
   nms <- names(vc)[!names(vc) %in% omit_names]
@@ -169,8 +164,8 @@ factors <- c(0.9, 1, 1.1)
 
 Sys.setenv(TAR_PROJECT = "project_sensitivities")
 rm(list = grep("tar_", ls(), value = TRUE), envir = .GlobalEnv)
-tar_validate()
-tar_outdated(callr_function = NULL)
+targets::tar_validate()
+targets::tar_outdated(callr_function = NULL)
 targets::tar_make(
   # names = "tar_sens_results_spec",
   callr_function = NULL
@@ -186,19 +181,18 @@ sens_measures <- levels(sens_results$measure)
 sens_results_files <- file.path(output_sens_data_path, paste0("sens_results_", sens_measures, ".qs"))
 sens_results_figfiles <- file.path(output_sens_data_path, paste0("sens_plot_", sens_measures, ".qs"))
 for (sm in seq_along(sens_measures)) {
-  file_exists_skip(sens_results_files[sm], paste("sensitivity files", sm, "of", length(sens_results_files)), function() {
-    sens_results %>% 
-      filter(measure == sens_measures[sm])
-  })
-  file_exists_skip(sens_results_figfiles[sm], paste("sensitivity plots", sm, "of", length(sens_results_figfiles)), function() {
-    sens_results %>% 
-      filter(measure == sens_measures[sm]) %>% 
-      ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens-sd_sens, ymax = mean_sens+sd_sens)) +
-      geom_col(fill = "salmon", alpha = 0.65, colour = "black") +
-      geom_errorbar(width = 0.5) +
-      coord_flip() +
-      theme_classic()
-  })
+  sens_results %>% 
+    filter(measure == sens_measures[sm]) %>% 
+    qsave(sens_results_files[sm])
+  
+  p <- sens_results %>% 
+    filter(measure == sens_measures[sm]) %>% 
+    ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens-sd_sens, ymax = mean_sens+sd_sens)) +
+    geom_col(fill = "salmon", alpha = 0.65, colour = "black") +
+    geom_errorbar(width = 0.5) +
+    coord_flip() +
+    theme_classic()
+  qsave(p, sens_results_figfiles[sm])
 }
 
 # Finish up -------------------------------------------------------------------------------------------------------
