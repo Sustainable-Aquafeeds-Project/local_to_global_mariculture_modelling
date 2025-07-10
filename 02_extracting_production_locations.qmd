@@ -95,7 +95,7 @@ quantity <- quantity %>%
     ISO3_Code = as.factor(ISO3_Code)
   ) %>% 
   filter(
-    Scientific_Name %in% c("Salmoniformes (=Salmonoidei)", "Salmo spp", "Salmo salar", "Salmonidae") &
+    # Scientific_Name %in% c("Salmoniformes (=Salmonoidei)", "Salmo spp", "Salmo salar", "Salmonidae") &
     environment == "Marine" & 
     status_nm != "Not significant (<0.5)"
     )
