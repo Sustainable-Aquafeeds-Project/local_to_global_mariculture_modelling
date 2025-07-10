@@ -8,6 +8,7 @@ project:
     - 03_assessing_species_potential.qmd
     - 04_extracting_temperatures.qmd
     - 05_formulating_feeds.qmd
+    - 06_run_atlantic_salmon_model.qmd
     - 07_species_layers.qmd
     - 08_relative_N_inputs.qmd
 

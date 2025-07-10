@@ -121,11 +121,11 @@ app_feed <- function(provided, ingested, prop, macro, digestibility) {
   assimilated <- ingested_amount * digestibility
   
   # Return only necessary values in a numeric vector
-  c(provided = sum(provided_amount),
-    ingested = sum(ingested_amount),
-    uneaten = sum(provided_amount - ingested_amount),
-    assimilated = sum(assimilated),
-    excreted = sum(ingested_amount - assimilated))
+  c(provided = sumna(provided_amount),
+    ingested = sumna(ingested_amount),
+    uneaten = sumna(provided_amount - ingested_amount),
+    assimilated = sumna(assimilated),
+    excreted = sumna(ingested_amount - assimilated))
 }
 
 fish_growth <- function(pop_params, species_params, water_temp, feed_params, times, init_weight, ingmax) {

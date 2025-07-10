@@ -1,29 +1,27 @@
 # nolint start
 
-# Setup -----------------------------------------------------------------------------------------------------------
-suppressPackageStartupMessages({
-  library(magrittr)
-  library(dplyr)
-  library(tidyr)
-  library(stringr)
-  library(terra)
-  library(qs)
-  library(here)
-  library(arrow)
-  library(units)
-  library(ggplot2)
-  library(sf)
-  library(units)
-  library(rnaturalearth)
-  library(rnaturalearthdata)
-  library(conflicted)
-  library(furrr)
-  library(future)
-  conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
-})
+# Setup ------------------------------------------------------------------------------------------------
+library(magrittr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(terra)
+library(qs)
+library(here)
+library(arrow)
+library(units)
+library(ggplot2)
+library(sf)
+library(units)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(conflicted)
+library(furrr)
+library(future)
+conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
 
 # This script aims to take the model outputs from the targets pipeline and answer specific questions.
-# Paths & globals -------------------------------------------------------------------------------------------------
+# Paths & globals --------------------------------------------------------------------------------------
 source("00_model_functions.R")
 source("00_dirs.R")
 
@@ -45,8 +43,8 @@ install_unit(symbol = "g_fish")
 install_unit(symbol = "kg_fish", def = "1000 g_fish")
 install_unit(symbol = "t_fish", def = "1000 kg_fish")
 
-# Different feeds -------------------------------------------------------------------------------------------------
-## Question 1 -----------------------------------------------------------------------------------------------------
+# Different feeds --------------------------------------------------------------------------------------
+## Question 1 ------------------------------------------------------------------------------------------
 # How does the change in feed affect daily and overall excretion and uneaten feed waste (P, L, C, total)?
 
 coho_biom <- aggregate_comparison_files %>% 
@@ -86,7 +84,7 @@ all_inputs <- all_inputs %>%
 
 qs::qsave(all_inputs, file.path(data_analysis_path, "all_waste_inputs.qs"))
 
-### Total mass lost -----------------------------------------------------------------------------------------------
+### Total mass lost ------------------------------------------------------------------------------------
 total_inputs <- all_inputs %>% 
   filter(category == "total") %>% 
   group_by(farm_ID, feed, measure) %>% 
@@ -103,7 +101,7 @@ qs::qsave(total_inputs, file.path(data_analysis_path, "sumtotal_waste_inputs.qs"
 #   pivot_wider(names_from = measure, values_from = protein_lost) %>% 
 #   mutate(from_faeces = excr/(excr + uneat))
 
-### Total protein lost --------------------------------------------------------------------------------------------
+### Total protein lost ---------------------------------------------------------------------------------
 total_P_inputs <- all_inputs %>% 
   filter(category == "P") %>% 
   group_by(farm_ID, feed, measure) %>% 
@@ -120,7 +118,7 @@ qs::qsave(total_P_inputs, file.path(data_analysis_path, "sumtotal_waste_P_inputs
 #   pivot_wider(names_from = measure, values_from = protein_lost) %>% 
 #   mutate(from_faeces = excr/(excr + uneat))
 
-## Question 2 -----------------------------------------------------------------------------------------------------
+## Question 2 ------------------------------------------------------------------------------------------
 # How does the change in feed affect daily and overall N inputs (total, % from faeces)?
 N_inputs <- all_inputs %>% 
   filter(category == "P") %>% 
@@ -144,7 +142,7 @@ qs::qsave(total_N_inputs, file.path(data_analysis_path, "sumtotal_N_inputs.qs"))
 #   mutate(from_faeces = excr/(excr + uneat))
 
 
-## Question 3 -----------------------------------------------------------------------------------------------------
+## Question 3 ------------------------------------------------------------------------------------------
 # Does total_excr (g/gfish/day) change over time for any farm, and does the feed make a difference in that?
 
 total_excr <- purrr::map_dfr(cohort_comp_fnms, function(fnm) {
@@ -172,42 +170,3 @@ over_time %>%
 
 # The answer is barely
 rm(total_excr, over_time)
-
-
-# Biomass produced ------------------------------------------------------------------------------------------------
-# How accurately is the model producing the correct biomass production levels?
-coho_biom <- aggregate_comparison_files %>% 
-  str_subset("biomass_stat") %>% 
-  qs::qread() %>% 
-  filter(feed == "reference") %>% 
-  group_by(farm_ID) %>% 
-  slice_max(t) %>% 
-  mutate(mean = mean %>% set_units("g") %>% set_units("t") %>% drop_units()) %>% 
-  merge(farm_info, by.x = "farm_ID", by.y = "farm_id")
-
-farm_info <- file.path(input_farm_coords_path, "atlantic_salmon_locations_w_temps.qs") %>% 
-  qread() %>% 
-  filter(day == "day_1") %>% 
-  mutate(country = as.factor(country),
-         day = str_split_i(day, "_", 2) %>% as.integer()) %>% 
-  dplyr::select(-c(model_name, F_CODE, data_year, data_source, details, data_type_2, data_type, species_group, 
-                   harvest_n, stocking_n, harvest_size_t, daily_mort_rate, day))
-hist(farm_info$tonnes_per_farm)
-
-
-
-qsave(coho_biom, file.path(data_analysis_path, "biomass_produced_comparison.qs"))
-
-ggplot(coho_biom, aes(x = tonnes_per_farm, y = mean, colour = country)) +
-  geom_point() +
-  geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-  theme_classic() +
-  # scale_x_continuous(limits = c(0,1700)) +
-  # scale_y_continuous(limits = c(0,1700)) +
-  labs(y = "Modelled biomass produced (t)", x = "Observed biomass produced (t)")
-
-ggsave(file.path(data_analysis_path, "biomass_produced_comparison_plot.png"))
-
-
-
-
