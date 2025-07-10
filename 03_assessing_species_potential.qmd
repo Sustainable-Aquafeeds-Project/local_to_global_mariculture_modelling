@@ -14,7 +14,7 @@ library(janitor)
 library(countrycode)
 library(rnaturalearth)
 
-source("src/dir.R")
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
 ```
 
 Pull in FAO data for aquaculture production.

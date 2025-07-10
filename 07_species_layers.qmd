@@ -25,9 +25,7 @@ library(aquamapsdata) # https://raquamaps.github.io/aquamapsdata/articles/intro.
 library(worrms)
 library(grid)
 
-source("00_dirs.R")
-
-overwrite <- F
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
 ```
 
 # Base rasters for resolution

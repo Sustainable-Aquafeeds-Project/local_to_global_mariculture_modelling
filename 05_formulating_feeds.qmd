@@ -31,12 +31,10 @@ library(qs)
 library(here)
 conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
-here("00_model_functions.R") %>% source()
-here("00_dirs.R") %>% source()
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
 
 ingred_inputs_file <- file.path(input_feed_profile_path, "all_ingredients.csv")
 feed_input_file <- file.path(input_feed_profile_path, "all_feeds.csv")
-overwrite <- F
 ```
 
 # Import ingredients

@@ -40,9 +40,7 @@ library(tictoc)
 library(conflicted)
 conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
 
-source("00_dirs.R")
-
-overwrite <- F
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
 ```
 
 # Farm locations

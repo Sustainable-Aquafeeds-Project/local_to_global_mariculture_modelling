@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Richard Cottrell">
-<meta name="dcterms.date" content="2025-07-08">
+<meta name="dcterms.date" content="2025-07-10">
 
 <title>Extracting production locations for each species to obtain environmental forcings</title>
 <style>
@@ -82,7 +82,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#set-up" id="toc-set-up" class="nav-link active" data-scroll-target="#set-up"><span class="header-section-number">1</span> Set up</a></li>
+  <li><a href="#set-up" id="toc-set-up" class="nav-link active" data-scroll-target="#set-up"><span class="header-section-number">0.1</span> Set up</a></li>
+  <li><a href="#get-production-data" id="toc-get-production-data" class="nav-link" data-scroll-target="#get-production-data"><span class="header-section-number">1</span> Get production data</a></li>
+  <li><a href="#match-farm-locations-to-fao-regions" id="toc-match-farm-locations-to-fao-regions" class="nav-link" data-scroll-target="#match-farm-locations-to-fao-regions"><span class="header-section-number">2</span> Match farm locations to FAO regions</a></li>
+  <li><a href="#from-rich" id="toc-from-rich" class="nav-link" data-scroll-target="#from-rich"><span class="header-section-number">3</span> From Rich</a></li>
   </ul>
 <div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://data.nasa.gov/"><i class="bi bi-link-45deg"></i>NASA Open Data</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="data-import.py"><i class="bi bi-file-code"></i>Data Import Code</a></li></ul></div></nav>
 </div>
@@ -109,7 +112,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">8 July 2025</p>
+      <p class="date">10 July 2025</p>
     </div>
   </div>
   
@@ -121,8 +124,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="set-up" class="level2" data-number="1">
-<h2 data-number="1" class="anchored" data-anchor-id="set-up"><span class="header-section-number">1</span> Set up</h2>
+<section id="set-up" class="level2" data-number="0.1">
+<h2 data-number="0.1" class="anchored" data-anchor-id="set-up"><span class="header-section-number">0.1</span> Set up</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -136,34 +139,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(countrycode)</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(units)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"00_dirs.R"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"00_dirs.R"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>Isolate production data for Atlantic salmon.</p>
+</section>
+<section id="get-production-data" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Get production data</h1>
+<p>Clean aquaculture production data from the FAO and isolate data for Atlantic salmon.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"Aquaculture_Quantity.csv"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">value =</span> <span class="fu">set_units</span>(value, <span class="st">"t"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>measure)</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>environment_codes <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"CL_FI_PRODENVIRONMENT.csv"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(Code, Name_En)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> quantity <span class="sc">%&gt;%</span> </span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(environment_codes, <span class="at">by.x =</span> <span class="st">"environment_alpha_2_code"</span>, <span class="at">by.y =</span> <span class="st">"Code"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">environment =</span> Name_En) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(environment <span class="sc">==</span> <span class="st">"Marine"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>environment_alpha_2_code)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>species_codes <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"CL_FI_SPECIES_GROUPS.csv"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">str_detect</span>(Scientific_Name, <span class="st">"Salmo"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Scientific_Name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Salmoniformes (=Salmonoidei)"</span>, <span class="st">"Salmo spp"</span>, <span class="st">"Salmo salar"</span>, <span class="st">"Salmonidae"</span>)) <span class="sc">%&gt;%</span> </span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get aquaculture quantity in tonnes live weight</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"Aquaculture_Quantity.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">value =</span> <span class="fu">set_units</span>(value, <span class="st">"t"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>measure)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply environment codes and filter by "marine"</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>environment_codes <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"CL_FI_PRODENVIRONMENT.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(Code, Name_En)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> quantity <span class="sc">%&gt;%</span> </span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(environment_codes, <span class="at">by.x =</span> <span class="st">"environment_alpha_2_code"</span>, <span class="at">by.y =</span> <span class="st">"Code"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">environment =</span> Name_En) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>environment_alpha_2_code)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply species codes</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>species_codes <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"CL_FI_SPECIES_GROUPS.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(X3A_Code, Scientific_Name)</span>
 <span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> quantity <span class="sc">%&gt;%</span> </span>
@@ -171,119 +179,73 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Scientific_Name)) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>species_alpha_3_code)</span>
 <span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>status_codes <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"CL_FI_SYMBOL_SDMX.csv"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(Symbol, Name_En, Description_En)</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> quantity <span class="sc">%&gt;%</span> </span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(status_codes, <span class="at">by.x =</span> <span class="st">"status"</span>, <span class="at">by.y =</span> <span class="st">"Symbol"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">status_nm =</span> Name_En,</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>         <span class="at">status_description =</span> Description_En) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>status)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply status codes</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>status_codes <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"CL_FI_SYMBOL_SDMX.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(Symbol, Name_En, Description_En)</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> quantity <span class="sc">%&gt;%</span> </span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(status_codes, <span class="at">by.x =</span> <span class="st">"status"</span>, <span class="at">by.y =</span> <span class="st">"Symbol"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">status_nm =</span> Name_En,</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>         <span class="at">status_description =</span> Description_En) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>status)</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply country and area codes</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>country_codes <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"CL_FI_COUNTRY_GROUPS.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(UN_Code, Identifier, Name_En, ISO3_Code)</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>area_codes <span class="ot">&lt;-</span> <span class="fu">file.path</span>(rawdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"CL_FI_WATERAREA_GROUPS.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Code, Name_En)</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> quantity <span class="sc">%&gt;%</span> </span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(country_codes, <span class="at">by.x =</span> <span class="st">"country_un_code"</span>, <span class="at">by.y =</span> <span class="st">"UN_Code"</span>, <span class="at">all.x =</span> T, <span class="at">all.y =</span> F) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(area_codes, <span class="at">by.x =</span> <span class="st">"area_code"</span>, <span class="at">by.y =</span> <span class="st">"Code"</span>, <span class="at">all.x =</span> T, <span class="at">all.y =</span> F) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">country =</span> Name_En.x, </span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">fao_fishing_area =</span> Name_En.y,</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">country_id =</span> Identifier</span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> quantity <span class="sc">%&gt;%</span> </span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">environment =</span> <span class="fu">as.factor</span>(environment),</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">Scientific_Name =</span> <span class="fu">as.factor</span>(Scientific_Name),</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>    <span class="at">status_nm =</span> <span class="fu">as.factor</span>(status_nm),</span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>    <span class="at">status_description =</span> <span class="fu">as.factor</span>(status_description),</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>    <span class="at">country =</span> <span class="fu">as.factor</span>(country),</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>    <span class="at">fao_fishing_area =</span> <span class="fu">as.factor</span>(fao_fishing_area),</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">ISO3_Code =</span> <span class="fu">as.factor</span>(ISO3_Code)</span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Scientific_Name %in% c("Salmoniformes (=Salmonoidei)", "Salmo spp", "Salmo salar", "Salmonidae") &amp;</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>    environment <span class="sc">==</span> <span class="st">"Marine"</span> <span class="sc">&amp;</span> </span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>    status_nm <span class="sc">!=</span> <span class="st">"Not significant (&lt;0.5)"</span></span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(quantity, <span class="fu">file.path</span>(species_path, <span class="st">"production"</span>, <span class="st">"aquaculture_quantity.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+<p>Average production over years 2019:2023.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>aquaculture_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(rdsi_dir, <span class="st">"raw_data/fao/FAO_fishstat_2020/global_aquaculture_production_1950_2020.csv"</span>))</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>(aquaculture_prod <span class="ot">&lt;-</span> </span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  aquaculture_raw <span class="sc">%&gt;%</span> </span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>, <span class="fu">starts_with</span>(<span class="st">"x"</span>))) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"production"</span>, <span class="at">cols=</span> <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">gsub</span>(<span class="at">pattern=</span><span class="st">"x"</span>, <span class="at">replacement =</span> <span class="st">""</span>, year)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2015</span><span class="sc">:</span><span class="dv">2020</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(asfis_species_name_2, asfis_species_name_3, environment_name, year) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">production =</span> <span class="fu">sum</span>(production)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>     <span class="fu">filter</span>(environment_name<span class="sc">==</span><span class="st">"Marine"</span> <span class="sc">&amp;</span> </span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>           <span class="sc">!</span>asfis_species_name_3 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clams, cockles, arkshells"</span>, </span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Abalones, winkles, conchs"</span>,</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Mussels"</span>, </span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Oysters"</span>,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Shrimps, prawns"</span>,</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Crabs, sea-spiders"</span>,</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"Freshwater molluscs"</span>,</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Squids, cuttlefishes, octopuses"</span>,</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Pearls, mother-of-pearl, shells"</span>,</span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Miscellaneous aquatic plants"</span>,</span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Scallops, pectens"</span>),</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"seaweeds"</span> , asfis_species_name_3),</span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"molluscs|cucumber|invertebrates"</span>, asfis_species_name_2)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Marine fishes nei"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>     <span class="fu">group_by</span>(asfis_species_name_2) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>     <span class="fu">summarise</span>(<span class="at">production =</span> <span class="fu">mean</span>(production)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>production) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cum_prop =</span> <span class="fu">cumsum</span>(production)<span class="sc">/</span><span class="fu">sum</span>(production),</span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>           <span class="at">prop =</span> production<span class="sc">/</span><span class="fu">sum</span>(production))</span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>spp_names <span class="ot">&lt;-</span> </span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>  aquaculture_prod <span class="sc">%&gt;%</span> </span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Atlantic salmon"</span>, </span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Rainbow trout"</span>, </span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"European seabass"</span>, </span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Large yellow croaker"</span>,</span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Gilthead seabream"</span>,</span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Coho(=Silver) salmon"</span>,</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Japanese seabass"</span>, </span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Japanese amberjack"</span>, </span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Amberjacks nei"</span>,</span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Pompano"</span>, </span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Milkfish"</span>) <span class="sc">|</span> </span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>           <span class="fu">grepl</span>(<span class="at">pattern =</span> <span class="st">"rouper"</span>, asfis_species_name_2) <span class="sc">&amp;</span> production <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(asfis_species_name_2)</span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>(mariculture_spp_prod <span class="ot">&lt;-</span> </span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>    aquaculture_raw <span class="sc">%&gt;%</span> </span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>    <span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>, <span class="fu">starts_with</span>(<span class="st">"x"</span>))) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"production"</span>, <span class="at">cols=</span> <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">gsub</span>(<span class="at">pattern=</span><span class="st">"x"</span>, <span class="at">replacement =</span> <span class="st">""</span>, year)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2017</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"Inland waters"</span>, fao_major_fishing_area_name)  <span class="sc">&amp;</span> </span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>             <span class="sc">!</span>asfis_species_name_3 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clams, cockles, arkshells"</span>, </span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Abalones, winkles, conchs"</span>,</span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Mussels"</span>, </span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Oysters"</span>,</span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Shrimps, prawns"</span>,</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Crabs, sea-spiders"</span>,</span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Freshwater molluscs"</span>,</span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Squids, cuttlefishes, octopuses"</span>,</span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Pearls, mother-of-pearl, shells"</span>,</span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Miscellaneous aquatic plants"</span>,</span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Scallops, pectens"</span>),</span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>           <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"seaweeds"</span> , asfis_species_name_3),</span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>           <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"molluscs|cucumber|invertebrates"</span>, asfis_species_name_2)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">production =</span> <span class="fu">sum</span>(production)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">asfis_species_name_2 =</span> <span class="fu">case_when</span>(asfis_species_name_2 <span class="sc">==</span> <span class="st">"Marine fishes nei"</span> <span class="sc">&amp;</span> country_name <span class="sc">==</span> <span class="st">"Viet Nam"</span> <span class="sc">~</span> <span class="st">"Groupers nei"</span>,</span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>                                            <span class="cn">TRUE</span> <span class="sc">~</span> asfis_species_name_2)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">iso3c =</span> <span class="fu">countrycode</span>(<span class="at">sourcevar =</span> country_name, <span class="at">origin =</span> <span class="st">"country.name"</span>, <span class="at">destination =</span> <span class="st">"iso3c"</span>, <span class="at">warn =</span><span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(iso3c, country_name, year) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nest</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">national_production =</span> <span class="fu">map</span>(data, <span class="sc">~</span>(<span class="fu">sum</span>(.<span class="sc">$</span>production)))) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(data, national_production)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(asfis_species_name_2 <span class="sc">%in%</span> spp_names) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">prop_production =</span> production<span class="sc">/</span>national_production) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Marine fishes nei"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">model_name =</span> <span class="fu">case_when</span>(<span class="fu">grepl</span>(<span class="st">"rouper"</span>, asfis_species_name_2) <span class="sc">~</span> <span class="st">"general_grouper"</span>, </span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>                                asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Coho(=Silver) salmon"</span>, <span class="st">"Rainbow trout"</span>) <span class="sc">~</span> <span class="st">"general_salmonid"</span>,</span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>                                asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Amberjacks nei"</span>) <span class="sc">~</span> <span class="st">"japanese_amberjack"</span>,</span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a>                                <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">gsub</span>(<span class="at">pattern =</span> <span class="st">" "</span>, <span class="at">replacement =</span> <span class="st">"_"</span>, <span class="fu">tolower</span>(asfis_species_name_2)))) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(model_name, <span class="at">.before =</span> asfis_species_name_2) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(prop_production<span class="sc">&gt;</span><span class="dv">0</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-94"><a href="#cb3-94" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">farm_name =</span> <span class="fu">case_when</span>(model_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"atlantic_salmon"</span>, <span class="st">"general_salmonid"</span>) <span class="sc">~</span> <span class="st">"Salmonidae fish"</span>,</span>
-<span id="cb3-95"><a href="#cb3-95" aria-hidden="true" tabindex="-1"></a>                                 <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"General marine fish"</span>))</span>
-<span id="cb3-96"><a href="#cb3-96" aria-hidden="true" tabindex="-1"></a>    ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>production <span class="ot">&lt;-</span> quantity <span class="sc">%&gt;%</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">between</span>(period, <span class="dv">2017</span>, <span class="dv">2023</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country, Scientific_Name, environment, ISO3_Code, fao_fishing_area, period) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">production =</span> <span class="fu">mean</span>(value))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(prod, <span class="fu">file.path</span>(species_path, <span class="st">"production"</span>, <span class="st">"aquaculture_production.qs"</span>))</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(production, <span class="fu">aes</span>(<span class="at">x =</span> country, <span class="at">y =</span> production)) <span class="sc">+</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>Pull in farm locations, add FAO Major fishing regions</p>
+</section>
+<section id="match-farm-locations-to-fao-regions" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Match farm locations to FAO regions</h1>
+<p>Pull in farm locations, add FAO Major fishing regions.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -298,115 +260,130 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co">#test function</span></span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co">#this_farm &lt;- farms_sf[[1]]</span></span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># define cores for parallel process</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>cores <span class="ot">&lt;-</span> parallel<span class="sc">::</span><span class="fu">detectCores</span>()<span class="sc">-</span><span class="dv">2</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>future<span class="sc">::</span><span class="fu">plan</span>(<span class="at">strategy =</span> <span class="st">"multisession"</span>, <span class="at">workers =</span> cores)</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Intersect farm points with FAO fishing code polygons</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>farm_fao_intersect <span class="ot">&lt;-</span> furrr<span class="sc">::</span><span class="fu">future_map</span>(<span class="at">.x =</span> farms_sf, <span class="at">.f =</span> \(this_farm){ <span class="co"># initiate parallel map function</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    this_farm_fao_code <span class="ot">&lt;-</span> <span class="fu">st_intersection</span>(this_farm, FAO_shp)</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(this_farm_fao_code)</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span> <span class="fu">bind_rows</span>() <span class="co">#combine to data frame</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> farm_fao_intersect, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/_general_data/farm_locations/locations_w_fishing_areas.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># define cores for parallel process</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>cores <span class="ot">&lt;-</span> parallel<span class="sc">::</span><span class="fu">detectCores</span>()<span class="sc">-</span><span class="dv">2</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>future<span class="sc">::</span><span class="fu">plan</span>(<span class="at">strategy =</span> <span class="st">"multisession"</span>, <span class="at">workers =</span> cores)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Intersect farm points with FAO fishing code polygons</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>farm_fao_intersect <span class="ot">&lt;-</span> furrr<span class="sc">::</span><span class="fu">future_map</span>(<span class="at">.x =</span> farms_sf, <span class="at">.f =</span> \(this_farm){ <span class="co"># initiate parallel map function</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    this_farm_fao_code <span class="ot">&lt;-</span> <span class="fu">st_intersection</span>(this_farm, FAO_shp)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(this_farm_fao_code)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span> <span class="fu">bind_rows</span>() <span class="co">#combine to data frame</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> farm_fao_intersect, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/_general_data/farm_locations/locations_w_fishing_areas.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Check that farm locations for each country sit in the correct FAO fishing area - flag those where there is a misalignment</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># filter country level production for all species in non-inland waters where production is greater than 0 tonnes.</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>mariculture_prod_all <span class="ot">&lt;-</span> </span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    aquaculture_raw <span class="sc">%&gt;%</span> </span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>, <span class="fu">starts_with</span>(<span class="st">"x"</span>))) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"production"</span>, <span class="at">cols=</span> <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">gsub</span>(<span class="at">pattern=</span><span class="st">"x"</span>, <span class="at">replacement =</span> <span class="st">""</span>, year)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2017</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"Inland waters"</span>, fao_major_fishing_area_name)  <span class="sc">&amp;</span> </span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>             <span class="sc">!</span>asfis_species_name_3 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clams, cockles, arkshells"</span>, </span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Abalones, winkles, conchs"</span>,</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Mussels"</span>, </span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Oysters"</span>,</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Shrimps, prawns"</span>,</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Crabs, sea-spiders"</span>,</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Freshwater molluscs"</span>,</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Squids, cuttlefishes, octopuses"</span>,</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Pearls, mother-of-pearl, shells"</span>,</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Miscellaneous aquatic plants"</span>,</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Scallops, pectens"</span>),</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>           <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"seaweeds"</span> , asfis_species_name_3),</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>           <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"molluscs|cucumber|invertebrates"</span>, asfis_species_name_2)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">production =</span> <span class="fu">sum</span>(production)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">iso3c =</span> <span class="fu">countrycode</span>(<span class="at">sourcevar =</span> country_name, <span class="at">origin =</span> <span class="st">"country.name"</span>, <span class="at">destination =</span> <span class="st">"iso3c"</span>, <span class="at">warn =</span><span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(iso3c, country_name, year) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nest</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">national_production =</span> <span class="fu">map</span>(data, <span class="sc">~</span>(<span class="fu">sum</span>(.<span class="sc">$</span>production)))) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(data, national_production)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(production<span class="sc">&gt;</span><span class="dv">0</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Marine fishes nei"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">model_name =</span> <span class="fu">case_when</span>(<span class="fu">grepl</span>(<span class="st">"rouper"</span>, asfis_species_name_2) <span class="sc">~</span> <span class="st">"general_grouper"</span>, </span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>                                asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Coho(=Silver) salmon"</span>, <span class="st">"Rainbow trout"</span>) <span class="sc">~</span> <span class="st">"general_salmonid"</span>,</span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>                                <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">gsub</span>(<span class="at">pattern =</span> <span class="st">" "</span>, <span class="at">replacement =</span> <span class="st">"_"</span>, <span class="fu">tolower</span>(asfis_species_name_2)))) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(model_name, <span class="at">.before =</span> asfis_species_name_2) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">farm_name =</span> <span class="fu">case_when</span>(model_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"atlantic_salmon"</span>, <span class="st">"general_salmonid"</span>) <span class="sc">~</span> <span class="st">"Salmonidae fish"</span>,</span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>                                 <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"General marine fish"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a> <span class="fu">filter</span>(asfis_species_name_2 <span class="sc">%in%</span> spp_names) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prop_production =</span> production<span class="sc">/</span>national_production)</span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="co">#Check that farm locations in mapped data are in the same FAO fishing regions as the production data</span></span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>farm_fao_intersect <span class="ot">&lt;-</span> <span class="fu">qread</span>(<span class="fu">here</span>(<span class="st">"data/_general_data/farm_locations/locations_w_fishing_areas.qs"</span>))</span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>farm_list <span class="ot">&lt;-</span> </span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>  farm_fao_intersect <span class="sc">%&gt;%</span> </span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iso3c, country, species_group) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_split</span>()</span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="co">#Test function</span></span>
-<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>this_country_region <span class="ot">&lt;-</span> farm_list[[<span class="dv">4</span>]]</span>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mariculture_prod_all <span class="ot">&lt;-</span> production <span class="sc">%&gt;%</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ISO3_Code, country, period) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">national_production =</span> <span class="fu">map</span>(data, <span class="sc">~</span>(<span class="fu">sum</span>(.<span class="sc">$</span>production)))) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(data, national_production)) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">drop_units</span>(production) <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">model_name =</span> <span class="fu">case_when</span>(</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Epinephelus|Mycteroperca|Serranidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"grouper"</span>, </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Oncorhynchus|Salmonidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_salmonid"</span>, </span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Salmo salar"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"atlantic_salmon"</span>, </span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Mytilus|Crassostrea|Ostreidae|Magallana"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mussels_oysters"</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Sparus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"bream"</span>,       </span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Dicentrarchus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"bass"</span>,       </span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Ulva|Saccharina|Eucheuma"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_seaweed"</span>,       </span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Acipenseridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"sturgeon"</span>,</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Ariidae|Bagridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"catfish"</span>,</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Astacidae|Cambaridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"crayfish"</span>,</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Atherinidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"silversides"</span>,</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Bothidae|Pleuronectidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"flounder"</span>,</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Carangidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"jacks"</span>,</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Cardiidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"cockles"</span>,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Characidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"tetras"</span>,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Cyprinidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"minnows"</span>,</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Eleotridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"sleepers"</span>,</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Ex Unionidae|Mytilidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mussels"</span>,</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Gerreidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mojarras"</span>,</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Gobiidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"gobies"</span>,</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Lutjanidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"snappers"</span>,</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Monacanthidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"filefish"</span>,</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Mugilidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mullets"</span>,</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Octopodidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"octopus"</span>,</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Palaemonidae|Penaeus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"shrimp"</span>,</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Palinuridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"lobsters"</span>,</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Pectinidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"scallops"</span>,</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Portunidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"crabs"</span>,</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Sciaenidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"drums"</span>,</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Scombridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mackerels"</span>,</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Scorpaenidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"rockfish"</span>,</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Serranidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"groupers"</span>,</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Soleidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"soles"</span>,</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Sparidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"porgies"</span>,</span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Veneridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"clams"</span>,</span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(model_name, <span class="at">.before =</span> Scientific_Name) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">farm_name =</span> <span class="fu">case_when</span>(</span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>      model_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"atlantic_salmon"</span>, <span class="st">"general_salmonid"</span>) <span class="sc">~</span> <span class="st">"Salmonidae fish"</span>,</span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"General marine fish"</span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>      <span class="at">Scientific_Name =</span> <span class="fu">droplevels</span>(Scientific_Name)</span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a>  <span class="co"># filter(is.na(model_name)) %&gt;% </span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prop_production =</span> <span class="fu">drop_units</span>(production<span class="sc">/</span>national_production)) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(prop_production)</span>
 <span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a>(fao_area_code_check <span class="ot">&lt;-</span> </span>
-<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_df</span>(farm_list, \(this_country_region){</span>
-<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>    farm_country_name <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>country <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
-<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a>    farm_iso3c <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>iso3c <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
-<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a>    farm_fao_code <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>F_CODE <span class="sc">%&gt;%</span> <span class="fu">unique</span>() <span class="sc">%&gt;%</span> <span class="fu">sort</span>()</span>
-<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>    farm_spp_grp <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>species_group <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
-<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>    prod_data <span class="ot">&lt;-</span> </span>
-<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a>      mariculture_prod_all <span class="sc">%&gt;%</span> </span>
-<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(iso3c <span class="sc">==</span> farm_iso3c <span class="sc">&amp;</span> </span>
-<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a>               fao_major_fishing_area_code <span class="sc">%in%</span> farm_fao_code <span class="sc">&amp;</span> </span>
-<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>               country_name <span class="sc">==</span> farm_country_name <span class="sc">&amp;</span> </span>
-<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a>               farm_name <span class="sc">==</span> farm_spp_grp)</span>
-<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>    prod_spp_group <span class="ot">&lt;-</span> prod_data<span class="sc">$</span>farm_name <span class="sc">%&gt;%</span> <span class="fu">unique</span>() </span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(mariculture_prod_all, <span class="st">"mariculture_production_all.csv"</span>)</span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that farm locations in mapped data are in the same FAO fishing regions as the production data</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a>farm_fao_intersect <span class="ot">&lt;-</span> <span class="fu">qread</span>(<span class="fu">here</span>(<span class="st">"data/_general_data/farm_locations/locations_w_fishing_areas.qs"</span>))</span>
+<span id="cb5-64"><a href="#cb5-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-65"><a href="#cb5-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-66"><a href="#cb5-66" aria-hidden="true" tabindex="-1"></a>farm_list <span class="ot">&lt;-</span> </span>
+<span id="cb5-67"><a href="#cb5-67" aria-hidden="true" tabindex="-1"></a>  farm_fao_intersect <span class="sc">%&gt;%</span> </span>
+<span id="cb5-68"><a href="#cb5-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iso3c, country, species_group) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-69"><a href="#cb5-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_split</span>()</span>
+<span id="cb5-70"><a href="#cb5-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-71"><a href="#cb5-71" aria-hidden="true" tabindex="-1"></a><span class="co">#Test function</span></span>
+<span id="cb5-72"><a href="#cb5-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-73"><a href="#cb5-73" aria-hidden="true" tabindex="-1"></a>this_country_region <span class="ot">&lt;-</span> farm_list[[<span class="dv">4</span>]]</span>
+<span id="cb5-74"><a href="#cb5-74" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-75"><a href="#cb5-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-76"><a href="#cb5-76" aria-hidden="true" tabindex="-1"></a>(fao_area_code_check <span class="ot">&lt;-</span> </span>
+<span id="cb5-77"><a href="#cb5-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_df</span>(farm_list, \(this_country_region){</span>
 <span id="cb5-78"><a href="#cb5-78" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>    prod_fao_code <span class="ot">&lt;-</span> prod_data<span class="sc">$</span>fao_major_fishing_area_code <span class="sc">%&gt;%</span> <span class="fu">unique</span>() <span class="sc">%&gt;%</span> <span class="fu">sort</span>()</span>
-<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(</span>
-<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a>      <span class="fu">tibble</span>(<span class="at">iso3c =</span> farm_iso3c, </span>
-<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a>             <span class="at">countryname =</span> farm_country_name, </span>
-<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a>             <span class="at">farm_spp_group =</span> farm_spp_grp, </span>
-<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a>             <span class="at">mapped_fishing_areas =</span> <span class="fu">paste</span>(farm_fao_code, <span class="at">collapse =</span> <span class="st">' '</span>), </span>
-<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>             <span class="at">production_fishing_areas =</span> <span class="fu">paste</span>(prod_fao_code, <span class="at">collapse =</span> <span class="st">' '</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a>             <span class="fu">mutate</span>(<span class="at">same_fishing_area =</span> mapped_fishing_areas <span class="sc">==</span> production_fishing_areas))</span>
-<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>production_fishing_areas <span class="sc">==</span> <span class="st">""</span>)</span>
-<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-79"><a href="#cb5-79" aria-hidden="true" tabindex="-1"></a>    farm_country_name <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>country <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb5-80"><a href="#cb5-80" aria-hidden="true" tabindex="-1"></a>    farm_iso3c <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>iso3c <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb5-81"><a href="#cb5-81" aria-hidden="true" tabindex="-1"></a>    farm_fao_code <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>F_CODE <span class="sc">%&gt;%</span> <span class="fu">unique</span>() <span class="sc">%&gt;%</span> <span class="fu">sort</span>()</span>
+<span id="cb5-82"><a href="#cb5-82" aria-hidden="true" tabindex="-1"></a>    farm_spp_grp <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>species_group <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb5-83"><a href="#cb5-83" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-84"><a href="#cb5-84" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-85"><a href="#cb5-85" aria-hidden="true" tabindex="-1"></a>    prod_data <span class="ot">&lt;-</span> </span>
+<span id="cb5-86"><a href="#cb5-86" aria-hidden="true" tabindex="-1"></a>      mariculture_prod_all <span class="sc">%&gt;%</span> </span>
+<span id="cb5-87"><a href="#cb5-87" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(iso3c <span class="sc">==</span> farm_iso3c <span class="sc">&amp;</span> </span>
+<span id="cb5-88"><a href="#cb5-88" aria-hidden="true" tabindex="-1"></a>               fao_major_fishing_area_code <span class="sc">%in%</span> farm_fao_code <span class="sc">&amp;</span> </span>
+<span id="cb5-89"><a href="#cb5-89" aria-hidden="true" tabindex="-1"></a>               country_name <span class="sc">==</span> farm_country_name <span class="sc">&amp;</span> </span>
+<span id="cb5-90"><a href="#cb5-90" aria-hidden="true" tabindex="-1"></a>               farm_name <span class="sc">==</span> farm_spp_grp)</span>
+<span id="cb5-91"><a href="#cb5-91" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-92"><a href="#cb5-92" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-93"><a href="#cb5-93" aria-hidden="true" tabindex="-1"></a>    prod_spp_group <span class="ot">&lt;-</span> prod_data<span class="sc">$</span>farm_name <span class="sc">%&gt;%</span> <span class="fu">unique</span>() </span>
+<span id="cb5-94"><a href="#cb5-94" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-95"><a href="#cb5-95" aria-hidden="true" tabindex="-1"></a>    prod_fao_code <span class="ot">&lt;-</span> prod_data<span class="sc">$</span>fao_major_fishing_area_code <span class="sc">%&gt;%</span> <span class="fu">unique</span>() <span class="sc">%&gt;%</span> <span class="fu">sort</span>()</span>
+<span id="cb5-96"><a href="#cb5-96" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-97"><a href="#cb5-97" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(</span>
+<span id="cb5-98"><a href="#cb5-98" aria-hidden="true" tabindex="-1"></a>      <span class="fu">tibble</span>(<span class="at">iso3c =</span> farm_iso3c, </span>
+<span id="cb5-99"><a href="#cb5-99" aria-hidden="true" tabindex="-1"></a>             <span class="at">countryname =</span> farm_country_name, </span>
+<span id="cb5-100"><a href="#cb5-100" aria-hidden="true" tabindex="-1"></a>             <span class="at">farm_spp_group =</span> farm_spp_grp, </span>
+<span id="cb5-101"><a href="#cb5-101" aria-hidden="true" tabindex="-1"></a>             <span class="at">mapped_fishing_areas =</span> <span class="fu">paste</span>(farm_fao_code, <span class="at">collapse =</span> <span class="st">' '</span>), </span>
+<span id="cb5-102"><a href="#cb5-102" aria-hidden="true" tabindex="-1"></a>             <span class="at">production_fishing_areas =</span> <span class="fu">paste</span>(prod_fao_code, <span class="at">collapse =</span> <span class="st">' '</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-103"><a href="#cb5-103" aria-hidden="true" tabindex="-1"></a>             <span class="fu">mutate</span>(<span class="at">same_fishing_area =</span> mapped_fishing_areas <span class="sc">==</span> production_fishing_areas))</span>
+<span id="cb5-104"><a href="#cb5-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-105"><a href="#cb5-105" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>production_fishing_areas <span class="sc">==</span> <span class="st">""</span>)</span>
+<span id="cb5-106"><a href="#cb5-106" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Assign species to individual farms</p>
@@ -491,6 +468,200 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> farms_w_stocking, <span class="at">file =</span>  <span class="st">"data/_general_data/farm_locations/locations_w_species_fao_area_stocking.qs"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="from-rich" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> From Rich</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>aquaculture_raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(rdsi_dir, <span class="st">"raw_data/fao/FAO_fishstat_2020/global_aquaculture_production_1950_2020.csv"</span>))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>(aquaculture_prod <span class="ot">&lt;-</span> aquaculture_raw <span class="sc">%&gt;%</span> </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>, <span class="fu">starts_with</span>(<span class="st">"x"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"production"</span>, <span class="at">cols=</span> <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">gsub</span>(<span class="at">pattern=</span><span class="st">"x"</span>, <span class="at">replacement =</span> <span class="st">""</span>, year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2015</span><span class="sc">:</span><span class="dv">2020</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(asfis_species_name_2, asfis_species_name_3, environment_name, year) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">production =</span> <span class="fu">sum</span>(production)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>     <span class="fu">filter</span>(environment_name<span class="sc">==</span><span class="st">"Marine"</span> <span class="sc">&amp;</span> </span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>           <span class="sc">!</span>asfis_species_name_3 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clams, cockles, arkshells"</span>, </span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Abalones, winkles, conchs"</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Mussels"</span>, </span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Oysters"</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Shrimps, prawns"</span>,</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Crabs, sea-spiders"</span>,</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"Freshwater molluscs"</span>,</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Squids, cuttlefishes, octopuses"</span>,</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Pearls, mother-of-pearl, shells"</span>,</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Miscellaneous aquatic plants"</span>,</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Scallops, pectens"</span>),</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"seaweeds"</span> , asfis_species_name_3),</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>         <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"molluscs|cucumber|invertebrates"</span>, asfis_species_name_2)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Marine fishes nei"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>     <span class="fu">group_by</span>(asfis_species_name_2) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>     <span class="fu">summarise</span>(<span class="at">production =</span> <span class="fu">mean</span>(production)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>production) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cum_prop =</span> <span class="fu">cumsum</span>(production)<span class="sc">/</span><span class="fu">sum</span>(production),</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>           <span class="at">prop =</span> production<span class="sc">/</span><span class="fu">sum</span>(production))</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>spp_names <span class="ot">&lt;-</span> aquaculture_prod <span class="sc">%&gt;%</span> </span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Atlantic salmon"</span>, </span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Rainbow trout"</span>, </span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"European seabass"</span>, </span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Large yellow croaker"</span>,</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Gilthead seabream"</span>,</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Coho(=Silver) salmon"</span>,</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Japanese seabass"</span>, </span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Japanese amberjack"</span>, </span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Amberjacks nei"</span>,</span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Pompano"</span>, </span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"Milkfish"</span>) <span class="sc">|</span> </span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>           <span class="fu">grepl</span>(<span class="at">pattern =</span> <span class="st">"rouper"</span>, asfis_species_name_2) <span class="sc">&amp;</span> production <span class="sc">&gt;</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(asfis_species_name_2)</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a>(mariculture_spp_prod <span class="ot">&lt;-</span> aquaculture_raw <span class="sc">%&gt;%</span> </span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a>    <span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>, <span class="fu">starts_with</span>(<span class="st">"x"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"production"</span>, <span class="at">cols=</span> <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">gsub</span>(<span class="at">pattern=</span><span class="st">"x"</span>, <span class="at">replacement =</span> <span class="st">""</span>, year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2017</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"Inland waters"</span>, fao_major_fishing_area_name)  <span class="sc">&amp;</span> </span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a>             <span class="sc">!</span>asfis_species_name_3 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clams, cockles, arkshells"</span>, </span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Abalones, winkles, conchs"</span>,</span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Mussels"</span>, </span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Oysters"</span>,</span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Shrimps, prawns"</span>,</span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Crabs, sea-spiders"</span>,</span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Freshwater molluscs"</span>,</span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Squids, cuttlefishes, octopuses"</span>,</span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Pearls, mother-of-pearl, shells"</span>,</span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Miscellaneous aquatic plants"</span>,</span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a>                                          <span class="st">"Scallops, pectens"</span>),</span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>           <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"seaweeds"</span> , asfis_species_name_3),</span>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a>           <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"molluscs|cucumber|invertebrates"</span>, asfis_species_name_2)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">production =</span> <span class="fu">sum</span>(production)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">asfis_species_name_2 =</span> <span class="fu">case_when</span>(asfis_species_name_2 <span class="sc">==</span> <span class="st">"Marine fishes nei"</span> <span class="sc">&amp;</span> country_name <span class="sc">==</span> <span class="st">"Viet Nam"</span> <span class="sc">~</span> <span class="st">"Groupers nei"</span>,</span>
+<span id="cb8-75"><a href="#cb8-75" aria-hidden="true" tabindex="-1"></a>                                            <span class="cn">TRUE</span> <span class="sc">~</span> asfis_species_name_2)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-76"><a href="#cb8-76" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">iso3c =</span> <span class="fu">countrycode</span>(<span class="at">sourcevar =</span> country_name, <span class="at">origin =</span> <span class="st">"country.name"</span>, <span class="at">destination =</span> <span class="st">"iso3c"</span>, <span class="at">warn =</span><span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-77"><a href="#cb8-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(iso3c, country_name, year) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-78"><a href="#cb8-78" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nest</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb8-79"><a href="#cb8-79" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">national_production =</span> <span class="fu">map</span>(data, <span class="sc">~</span>(<span class="fu">sum</span>(.<span class="sc">$</span>production)))) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-80"><a href="#cb8-80" aria-hidden="true" tabindex="-1"></a>    <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(data, national_production)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-81"><a href="#cb8-81" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb8-82"><a href="#cb8-82" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(asfis_species_name_2 <span class="sc">%in%</span> spp_names) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-83"><a href="#cb8-83" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">prop_production =</span> production<span class="sc">/</span>national_production) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-84"><a href="#cb8-84" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span>asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Marine fishes nei"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-85"><a href="#cb8-85" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">model_name =</span> <span class="fu">case_when</span>(<span class="fu">grepl</span>(<span class="st">"rouper"</span>, asfis_species_name_2) <span class="sc">~</span> <span class="st">"general_grouper"</span>, </span>
+<span id="cb8-86"><a href="#cb8-86" aria-hidden="true" tabindex="-1"></a>                                asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Coho(=Silver) salmon"</span>, <span class="st">"Rainbow trout"</span>) <span class="sc">~</span> <span class="st">"general_salmonid"</span>,</span>
+<span id="cb8-87"><a href="#cb8-87" aria-hidden="true" tabindex="-1"></a>                                asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Amberjacks nei"</span>) <span class="sc">~</span> <span class="st">"japanese_amberjack"</span>,</span>
+<span id="cb8-88"><a href="#cb8-88" aria-hidden="true" tabindex="-1"></a>                                <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">gsub</span>(<span class="at">pattern =</span> <span class="st">" "</span>, <span class="at">replacement =</span> <span class="st">"_"</span>, <span class="fu">tolower</span>(asfis_species_name_2)))) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-89"><a href="#cb8-89" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(model_name, <span class="at">.before =</span> asfis_species_name_2) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-90"><a href="#cb8-90" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(prop_production<span class="sc">&gt;</span><span class="dv">0</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb8-91"><a href="#cb8-91" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">farm_name =</span> <span class="fu">case_when</span>(model_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"atlantic_salmon"</span>, <span class="st">"general_salmonid"</span>) <span class="sc">~</span> <span class="st">"Salmonidae fish"</span>,</span>
+<span id="cb8-92"><a href="#cb8-92" aria-hidden="true" tabindex="-1"></a>                                 <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"General marine fish"</span>))</span>
+<span id="cb8-93"><a href="#cb8-93" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># filter country level production for all species in non-inland waters where production is greater than 0 tonnes.</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>mariculture_prod_all <span class="ot">&lt;-</span> aquaculture_raw <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">clean_names</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>, <span class="fu">starts_with</span>(<span class="st">"x"</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"year"</span>, <span class="at">values_to =</span> <span class="st">"production"</span>, <span class="at">cols=</span> <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">7</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">year =</span> <span class="fu">gsub</span>(<span class="at">pattern=</span><span class="st">"x"</span>, <span class="at">replacement =</span> <span class="st">""</span>, year)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(year <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">2017</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"Inland waters"</span>, fao_major_fishing_area_name)  <span class="sc">&amp;</span> </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>            <span class="sc">!</span>asfis_species_name_3 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Clams, cockles, arkshells"</span>, </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Abalones, winkles, conchs"</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Mussels"</span>, </span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Oysters"</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Shrimps, prawns"</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Crabs, sea-spiders"</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Freshwater molluscs"</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Squids, cuttlefishes, octopuses"</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Pearls, mother-of-pearl, shells"</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Miscellaneous aquatic plants"</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">"Scallops, pectens"</span>),</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>          <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"seaweeds"</span> , asfis_species_name_3),</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>          <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">"molluscs|cucumber|invertebrates"</span>, asfis_species_name_2)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">production =</span> <span class="fu">sum</span>(production)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">iso3c =</span> <span class="fu">countrycode</span>(<span class="at">sourcevar =</span> country_name, <span class="at">origin =</span> <span class="st">"country.name"</span>, <span class="at">destination =</span> <span class="st">"iso3c"</span>, <span class="at">warn =</span><span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iso3c, country_name, year) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">national_production =</span> <span class="fu">map</span>(data, <span class="sc">~</span>(<span class="fu">sum</span>(.<span class="sc">$</span>production)))) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(data, national_production)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(production<span class="sc">&gt;</span><span class="dv">0</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Marine fishes nei"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">model_name =</span> <span class="fu">case_when</span>(<span class="fu">grepl</span>(<span class="st">"rouper"</span>, asfis_species_name_2) <span class="sc">~</span> <span class="st">"general_grouper"</span>, </span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>                              asfis_species_name_2 <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Coho(=Silver) salmon"</span>, <span class="st">"Rainbow trout"</span>) <span class="sc">~</span> <span class="st">"general_salmonid"</span>,</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>                              <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">gsub</span>(<span class="at">pattern =</span> <span class="st">" "</span>, <span class="at">replacement =</span> <span class="st">"_"</span>, <span class="fu">tolower</span>(asfis_species_name_2)))) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(model_name, <span class="at">.before =</span> asfis_species_name_2) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">farm_name =</span> <span class="fu">case_when</span>(model_name <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"atlantic_salmon"</span>, <span class="st">"general_salmonid"</span>) <span class="sc">~</span> <span class="st">"Salmonidae fish"</span>,</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>                                <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"General marine fish"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(asfis_species_name_2 <span class="sc">%in%</span> spp_names) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prop_production =</span> production<span class="sc">/</span>national_production)</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that farm locations in mapped data are in the same FAO fishing regions as the production data</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>farm_fao_intersect <span class="ot">&lt;-</span> <span class="fu">qread</span>(<span class="fu">here</span>(<span class="st">"data/_general_data/farm_locations/locations_w_fishing_areas.qs"</span>))</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>farm_list <span class="ot">&lt;-</span> </span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>  farm_fao_intersect <span class="sc">%&gt;%</span> </span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(iso3c, country, species_group) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_split</span>()</span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a><span class="co">#Test function</span></span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>this_country_region <span class="ot">&lt;-</span> farm_list[[<span class="dv">4</span>]]</span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>(fao_area_code_check <span class="ot">&lt;-</span> </span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_df</span>(farm_list, \(this_country_region){</span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>    farm_country_name <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>country <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>    farm_iso3c <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>iso3c <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>    farm_fao_code <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>F_CODE <span class="sc">%&gt;%</span> <span class="fu">unique</span>() <span class="sc">%&gt;%</span> <span class="fu">sort</span>()</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>    farm_spp_grp <span class="ot">&lt;-</span> this_country_region<span class="sc">$</span>species_group <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a>    prod_data <span class="ot">&lt;-</span> </span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>      mariculture_prod_all <span class="sc">%&gt;%</span> </span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(iso3c <span class="sc">==</span> farm_iso3c <span class="sc">&amp;</span> </span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a>               fao_major_fishing_area_code <span class="sc">%in%</span> farm_fao_code <span class="sc">&amp;</span> </span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a>               country_name <span class="sc">==</span> farm_country_name <span class="sc">&amp;</span> </span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a>               farm_name <span class="sc">==</span> farm_spp_grp)</span>
+<span id="cb9-73"><a href="#cb9-73" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-74"><a href="#cb9-74" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-75"><a href="#cb9-75" aria-hidden="true" tabindex="-1"></a>    prod_spp_group <span class="ot">&lt;-</span> prod_data<span class="sc">$</span>farm_name <span class="sc">%&gt;%</span> <span class="fu">unique</span>() </span>
+<span id="cb9-76"><a href="#cb9-76" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-77"><a href="#cb9-77" aria-hidden="true" tabindex="-1"></a>    prod_fao_code <span class="ot">&lt;-</span> prod_data<span class="sc">$</span>fao_major_fishing_area_code <span class="sc">%&gt;%</span> <span class="fu">unique</span>() <span class="sc">%&gt;%</span> <span class="fu">sort</span>()</span>
+<span id="cb9-78"><a href="#cb9-78" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb9-79"><a href="#cb9-79" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(</span>
+<span id="cb9-80"><a href="#cb9-80" aria-hidden="true" tabindex="-1"></a>      <span class="fu">tibble</span>(<span class="at">iso3c =</span> farm_iso3c, </span>
+<span id="cb9-81"><a href="#cb9-81" aria-hidden="true" tabindex="-1"></a>             <span class="at">countryname =</span> farm_country_name, </span>
+<span id="cb9-82"><a href="#cb9-82" aria-hidden="true" tabindex="-1"></a>             <span class="at">farm_spp_group =</span> farm_spp_grp, </span>
+<span id="cb9-83"><a href="#cb9-83" aria-hidden="true" tabindex="-1"></a>             <span class="at">mapped_fishing_areas =</span> <span class="fu">paste</span>(farm_fao_code, <span class="at">collapse =</span> <span class="st">' '</span>), </span>
+<span id="cb9-84"><a href="#cb9-84" aria-hidden="true" tabindex="-1"></a>             <span class="at">production_fishing_areas =</span> <span class="fu">paste</span>(prod_fao_code, <span class="at">collapse =</span> <span class="st">' '</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-85"><a href="#cb9-85" aria-hidden="true" tabindex="-1"></a>             <span class="fu">mutate</span>(<span class="at">same_fishing_area =</span> mapped_fishing_areas <span class="sc">==</span> production_fishing_areas))</span>
+<span id="cb9-86"><a href="#cb9-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-87"><a href="#cb9-87" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>production_fishing_areas <span class="sc">==</span> <span class="st">""</span>)</span>
+<span id="cb9-88"><a href="#cb9-88" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>

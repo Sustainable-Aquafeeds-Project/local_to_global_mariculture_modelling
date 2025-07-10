@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Richard Cottrell">
-<meta name="dcterms.date" content="2025-07-08">
+<meta name="dcterms.date" content="2025-07-10">
 
 <title>Tidying data</title>
 <style>
@@ -109,7 +109,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">8 July 2025</p>
+      <p class="date">10 July 2025</p>
     </div>
   </div>
   
@@ -138,20 +138,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Specify species of interest</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>species <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"atlantic_salmon"</span>,</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"general_salmonid"</span>,</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"european_seabass"</span>,</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"gilthead_seabream"</span>,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"large_yellow_croaker"</span>,</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"japanese_seabass"</span>,</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"japanese_amberjack"</span>,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"general_grouper"</span>,</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"pompano"</span>,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"milkfish"</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="fu">here</span>(<span class="st">"src/spatial_templates.R"</span>) <span class="sc">%&gt;%</span> <span class="fu">source</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>species <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"atlantic_salmon"</span>, <span class="st">"general_salmonid"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">here</span>(<span class="st">"src/spatial_templates.R"</span>) <span class="sc">%&gt;%</span> <span class="fu">source</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="mariculture-locations" class="level1" data-number="1">
@@ -174,76 +163,54 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>nasa_dir <span class="ot">&lt;-</span> <span class="st">"/mnt/rdsi/raw_data/NASA/GHRSST_L4_MUR_0.25_SST/"</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#rename the NASA files </span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co">#SST_files &lt;- list.files(file.path(rdsi_dir, "raw_data/NASA/GHRSST_L4_MUR_0.25_SST"), full.names = FALSE, pattern = ".nc")</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># map(SST_files, \(this_file){</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   file.rename(from = file.path(nasa_dir, this_file), to = file.path(nasa_dir, sub('^(.{4})(.*)$', '\\1_\\2',  this_file)))</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># })</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#SST_files &lt;- list.files(file.path(rdsi_dir, "raw_data/NASA/GHRSST_L4_MUR_0.25_SST"), full.names = FALSE, pattern = ".nc")</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># map(SST_files, \(this_file){</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co">#   file.rename(from = file.path(nasa_dir, this_file), to = file.path(nasa_dir, sub('^(.{4})(.*)$', '\\1_\\2',  this_file)))</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># })</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>SST_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">file.path</span>(rdsi_dir, <span class="st">"raw_data/NASA/GHRSST_L4_MUR_0.25_SST"</span>), <span class="at">full.names =</span> <span class="cn">TRUE</span>, <span class="at">pattern =</span> <span class="st">".nc"</span>)</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>SST_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">file.path</span>(rdsi_dir, <span class="st">"raw_data/NASA/GHRSST_L4_MUR_0.25_SST"</span>), <span class="at">full.names =</span> <span class="cn">TRUE</span>, <span class="at">pattern =</span> <span class="st">".nc"</span>)</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># this_file &lt;- SST_files[[1]]</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># this_year=2013</span></span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># this_file &lt;- SST_files[[1]]</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># this_year=2013</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co">#initialise lists for each year</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>years <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2010</span><span class="sc">:</span><span class="dv">2019</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>year_lists <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="at">mode =</span><span class="st">"list"</span>, <span class="at">length =</span> <span class="fu">length</span>(years))</span>
 <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co">#initialise lists for each year</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>years <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2010</span><span class="sc">:</span><span class="dv">2019</span>)</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>year_lists <span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="at">mode =</span><span class="st">"list"</span>, <span class="at">length =</span> <span class="fu">length</span>(years))</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Add annual files to a list of files for each year</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(y <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(years)){</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  this_year <span class="ot">&lt;-</span> years[y]</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  this_years_files <span class="ot">&lt;-</span> SST_files[<span class="fu">grep</span>(<span class="fu">paste0</span>(this_year, <span class="st">"_"</span>), SST_files)]</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  this_years_files <span class="ot">&lt;-</span> this_years_files[<span class="sc">!</span><span class="fu">grepl</span>(<span class="fu">paste0</span>(this_year, <span class="st">"_0229"</span>), this_years_files)]</span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  year_lists[[y]] <span class="ot">&lt;-</span> this_years_files</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the daily files for each year and rasterize in a stack</span></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>days <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">365</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Add annual files to a list of files for each year</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(y <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(years)){</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  this_year <span class="ot">&lt;-</span> years[y]</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  this_years_files <span class="ot">&lt;-</span> SST_files[<span class="fu">grep</span>(<span class="fu">paste0</span>(this_year, <span class="st">"_"</span>), SST_files)]</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  this_years_files <span class="ot">&lt;-</span> this_years_files[<span class="sc">!</span><span class="fu">grepl</span>(<span class="fu">paste0</span>(this_year, <span class="st">"_0229"</span>), this_years_files)]</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  year_lists[[y]] <span class="ot">&lt;-</span> this_years_files</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the daily files for each year and rasterize in a stack</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>days <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">365</span>)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>this_day <span class="ot">&lt;-</span> days[<span class="dv">1</span>]</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>rast_list <span class="ot">=</span> <span class="fu">vector</span>(<span class="at">mode =</span> <span class="st">"list"</span>, <span class="at">length =</span> <span class="fu">length</span>(days))</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(days, \(this_day){</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  this_days_file_list <span class="ot">&lt;-</span> <span class="fu">sapply</span>(year_lists, <span class="st">"[["</span>, this_day)</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"SST layer for Day "</span>, this_day)</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  this_day_stack <span class="ot">&lt;-</span> <span class="fu">rast</span>(this_days_file_list, <span class="at">subds =</span> <span class="st">"analysed_sst"</span>)</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>  this_day_mean_rast <span class="ot">&lt;-</span> <span class="fu">app</span>(this_day_stack, <span class="st">"mean"</span>, <span class="at">na.rm=</span><span class="cn">TRUE</span>)<span class="sc">-</span><span class="fl">273.15</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">writeRaster</span>(this_day_mean_rast, <span class="at">filename =</span> <span class="fu">sprintf</span>(<span class="fu">here</span>(<span class="st">"data/_general_data/SST/SST_rasters/sst_nasa_mur_L4_0.25_mean2010-2019_day_%s.tif"</span>), this_day))</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co"># now gapfill the saved rasters</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>raw_SST_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="st">"data/_general_data/SST/SST_rasters/"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>this_day <span class="ot">&lt;-</span> days[<span class="dv">1</span>]</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>rast_list <span class="ot">=</span> <span class="fu">vector</span>(<span class="at">mode =</span> <span class="st">"list"</span>, <span class="at">length =</span> <span class="fu">length</span>(days))</span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(days, \(this_day){</span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>  this_days_file_list <span class="ot">&lt;-</span> <span class="fu">sapply</span>(year_lists, <span class="st">"[["</span>, this_day)</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"SST layer for Day "</span>, this_day)</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>  this_day_stack <span class="ot">&lt;-</span> <span class="fu">rast</span>(this_days_file_list, <span class="at">subds =</span> <span class="st">"analysed_sst"</span>)</span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>  this_day_mean_rast <span class="ot">&lt;-</span> <span class="fu">app</span>(this_day_stack, <span class="st">"mean"</span>, <span class="at">na.rm=</span><span class="cn">TRUE</span>)<span class="sc">-</span><span class="fl">273.15</span></span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">writeRaster</span>(this_day_mean_rast, <span class="at">filename =</span> <span class="fu">sprintf</span>(<span class="fu">here</span>(<span class="st">"data/_general_data/SST/SST_rasters/sst_nasa_mur_L4_0.25_mean2010-2019_day_%s.tif"</span>), this_day))</span>
-<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>})</span>
-<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a><span class="co"># now gapfill the saved rasters</span></span>
-<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a>raw_SST_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="st">"data/_general_data/SST/SST_rasters/"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a><span class="co">#test function</span></span>
-<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a><span class="co">#this_file &lt;- raw_SST_files[[1]]</span></span>
-<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(<span class="at">.x =</span> raw_SST_files, <span class="at">.f =</span> \(this_file){</span>
-<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>  saveName <span class="ot">&lt;-</span>  <span class="fu">basename</span>(this_file)</span>
-<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Gapfilling "</span>, saveName)</span>
-<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>  this_rast <span class="ot">&lt;-</span> <span class="fu">rast</span>(this_file)</span>
-<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>  this_gf_rast <span class="ot">&lt;-</span> <span class="fu">focal</span>(this_rast, <span class="at">w=</span><span class="dv">7</span>, <span class="at">fun =</span> <span class="st">"mean"</span>, <span class="at">na.policy =</span> <span class="st">"only"</span>)</span>
-<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">writeRaster</span>(this_gf_rast, <span class="at">filename =</span> <span class="fu">sprintf</span>(<span class="st">"data/_general_data/SST/SST_gf_rasters/%s"</span>, saveName))</span>
-<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co">#test function</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co">#this_file &lt;- raw_SST_files[[1]]</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span>(<span class="at">.x =</span> raw_SST_files, <span class="at">.f =</span> \(this_file){</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>  saveName <span class="ot">&lt;-</span>  <span class="fu">basename</span>(this_file)</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Gapfilling "</span>, saveName)</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>  this_rast <span class="ot">&lt;-</span> <span class="fu">rast</span>(this_file)</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>  this_gf_rast <span class="ot">&lt;-</span> <span class="fu">focal</span>(this_rast, <span class="at">w=</span><span class="dv">7</span>, <span class="at">fun =</span> <span class="st">"mean"</span>, <span class="at">na.policy =</span> <span class="st">"only"</span>)</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">writeRaster</span>(this_gf_rast, <span class="at">filename =</span> <span class="fu">sprintf</span>(<span class="st">"data/_general_data/SST/SST_gf_rasters/%s"</span>, saveName))</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Pull in spp vulnerability to eutrophication data - save to salmon folder</p>
@@ -253,20 +220,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>vuln_scores <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(rdsi_data_dir, <span class="st">"marine_spp_vulnerabilities/butt_spp_vuln_framework-publication/_output/vuln_gapfilled_score.csv"</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(vuln_gf_id, eutrophication_nutrient_pollution)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>vuln_sd <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(rdsi_data_dir, <span class="st">"marine_spp_vulnerabilities/butt_spp_vuln_framework-publication/_output/vuln_gapfilled_sd.csv"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(vuln_gf_id, eutrophication_nutrient_pollution) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">sd=</span>eutrophication_nutrient_pollution)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>vuln_sd <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(rdsi_data_dir, <span class="st">"marine_spp_vulnerabilities/butt_spp_vuln_framework-publication/_output/vuln_gapfilled_sd.csv"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(vuln_gf_id, eutrophication_nutrient_pollution) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">sd=</span>eutrophication_nutrient_pollution)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>vuln_tx <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(rdsi_data_dir, <span class="st">"marine_spp_vulnerabilities/butt_spp_vuln_framework-publication/_output/vuln_gapfilled_tx.csv"</span>))</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>vuln_tx <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(rdsi_data_dir, <span class="st">"marine_spp_vulnerabilities/butt_spp_vuln_framework-publication/_output/vuln_gapfilled_tx.csv"</span>))</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>full_vuln_df <span class="ot">&lt;-</span> </span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  vuln_scores <span class="sc">%&gt;%</span> </span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(vuln_sd) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(vuln_tx)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> full_vuln_df, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/_general_data/species_layers/vulnerabilities/marine_spp_vulnerabilities_eutrophication.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>full_vuln_df <span class="ot">&lt;-</span> </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  vuln_scores <span class="sc">%&gt;%</span> </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(vuln_sd) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(vuln_tx)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> full_vuln_df, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/_general_data/species_layers/vulnerabilities/marine_spp_vulnerabilities_eutrophication.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>Pull in spp distribution data from Aquamaps</p>
@@ -278,9 +242,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#all cells have an id. These id's can be used to isolate only the cells of relevance for the salmon farming locations.</span></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">filter</span>(aquamaps_0<span class="fl">.5</span>d, <span class="fu">is.na</span>(cell_id))</span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#save to project</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> aquamaps_0<span class="fl">.5</span>d, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/_general_data/species_layers/distribution/aquamaps_0.5d.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#save to project</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> aquamaps_0<span class="fl">.5</span>d, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/_general_data/species_layers/distribution/aquamaps_0.5d.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>

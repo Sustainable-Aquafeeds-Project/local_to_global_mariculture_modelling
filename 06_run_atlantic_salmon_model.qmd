@@ -31,6 +31,8 @@ library(qs)
 library(here)
 library(targets)
 conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
 ```
 
 ```{r filenames}

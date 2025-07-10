@@ -21,7 +21,7 @@ library(units)
 library(readr)
 library(ggplot2)
 
-source(here("00_dirs.R"))
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
 ```
 
 # Get production data
@@ -106,14 +106,14 @@ qsave(quantity, file.path(species_path, "production", "aquaculture_quantity.qs")
 Average production over years 2019:2023.
 
 ```{r aquaculture-production}
-prod <- quantity %>% 
-  filter(between(period, 2019, 2023)) %>% 
-  group_by(country, Scientific_Name, environment, ISO3_Code, fao_fishing_area) %>% 
+production <- quantity %>% 
+  filter(between(period, 2017, 2023)) %>% 
+  group_by(country, Scientific_Name, environment, ISO3_Code, fao_fishing_area, period) %>% 
   reframe(production = mean(value))
 
 qsave(prod, file.path(species_path, "production", "aquaculture_production.qs"))
 
-ggplot(prod, aes(x = country, y = production)) +
+ggplot(production, aes(x = country, y = production)) +
   geom_point() +
   coord_flip()
 ```
@@ -151,47 +151,65 @@ qsave(x = farm_fao_intersect, file = here("data/_general_data/farm_locations/loc
 Check that farm locations for each country sit in the correct FAO fishing area - flag those where there is a misalignment
 
 ```{r fix-misalignment}
-# filter country level production for all species in non-inland waters where production is greater than 0 tonnes.
-mariculture_prod_all <- aquaculture_raw %>% 
-  clean_names() %>% 
-  select(c(1:7, starts_with("x"))) %>% 
-  pivot_longer(names_to = "year", values_to = "production", cols= -c(1:7)) %>% 
-  mutate(year = gsub(pattern="x", replacement = "", year)) %>% 
-  filter(year %in% c(2017)) %>% 
-  filter(!grepl("Inland waters", fao_major_fishing_area_name)  & 
-            !asfis_species_name_3 %in% c("Clams, cockles, arkshells", 
-                                        "Abalones, winkles, conchs",
-                                        "Mussels", 
-                                        "Oysters",
-                                        "Shrimps, prawns",
-                                        "Crabs, sea-spiders",
-                                        "Freshwater molluscs",
-                                        "Squids, cuttlefishes, octopuses",
-                                        "Pearls, mother-of-pearl, shells",
-                                        "Miscellaneous aquatic plants",
-                                        "Scallops, pectens"),
-          !grepl("seaweeds" , asfis_species_name_3),
-          !grepl("molluscs|cucumber|invertebrates", asfis_species_name_2)) %>% 
-  group_by(country_name, asfis_species_name_2, asfis_species_name_3, fao_major_fishing_area_name, fao_major_fishing_area_code, year) %>% 
-  summarise(production = sum(production)) %>% 
-  ungroup() %>% 
-  mutate(iso3c = countrycode(sourcevar = country_name, origin = "country.name", destination = "iso3c", warn =TRUE)) %>% 
-  group_by(iso3c, country_name, year) %>% 
+mariculture_prod_all <- production %>% 
+  group_by(ISO3_Code, country, period) %>% 
   nest() %>% 
   mutate(national_production = map(data, ~(sum(.$production)))) %>% 
   unnest(cols = c(data, national_production)) %>% 
   ungroup() %>% 
-  filter(production>0) %>% 
-  filter(!asfis_species_name_2 %in% c("Marine fishes nei")) %>% 
-  mutate(model_name = case_when(grepl("rouper", asfis_species_name_2) ~ "general_grouper", 
-                              asfis_species_name_2 %in% c("Coho(=Silver) salmon", "Rainbow trout") ~ "general_salmonid",
-                              TRUE ~ gsub(pattern = " ", replacement = "_", tolower(asfis_species_name_2)))) %>% 
-  relocate(model_name, .before = asfis_species_name_2) %>% 
-  mutate(farm_name = case_when(model_name %in% c("atlantic_salmon", "general_salmonid") ~ "Salmonidae fish",
-                                TRUE ~ "General marine fish")) %>% 
-  filter(asfis_species_name_2 %in% spp_names) %>% 
-  mutate(prop_production = production/national_production)
+  filter(drop_units(production) > 0) %>% 
+  mutate(
+    model_name = case_when(
+      grepl("Epinephelus|Mycteroperca|Serranidae", Scientific_Name) ~ "grouper", 
+      grepl("Oncorhynchus|Salmonidae", Scientific_Name) ~ "general_salmonid", 
+      grepl("Salmo salar", Scientific_Name) ~ "atlantic_salmon", 
+      grepl("Mytilus|Crassostrea|Ostreidae|Magallana", Scientific_Name) ~ "mussels_oysters",
+      grepl("Sparus", Scientific_Name) ~ "bream",       
+      grepl("Dicentrarchus", Scientific_Name) ~ "bass",       
+      grepl("Ulva|Saccharina|Eucheuma", Scientific_Name) ~ "general_seaweed",       
+      grepl("Acipenseridae", Scientific_Name) ~ "sturgeon",
+      grepl("Ariidae|Bagridae", Scientific_Name) ~ "catfish",
+      grepl("Astacidae|Cambaridae", Scientific_Name) ~ "crayfish",
+      grepl("Atherinidae", Scientific_Name) ~ "silversides",
+      grepl("Bothidae|Pleuronectidae", Scientific_Name) ~ "flounder",
+      grepl("Carangidae", Scientific_Name) ~ "jacks",
+      grepl("Cardiidae", Scientific_Name) ~ "cockles",
+      grepl("Characidae", Scientific_Name) ~ "tetras",
+      grepl("Cyprinidae", Scientific_Name) ~ "minnows",
+      grepl("Eleotridae", Scientific_Name) ~ "sleepers",
+      grepl("Ex Unionidae|Mytilidae", Scientific_Name) ~ "mussels",
+      grepl("Gerreidae", Scientific_Name) ~ "mojarras",
+      grepl("Gobiidae", Scientific_Name) ~ "gobies",
+      grepl("Lutjanidae", Scientific_Name) ~ "snappers",
+      grepl("Monacanthidae", Scientific_Name) ~ "filefish",
+      grepl("Mugilidae", Scientific_Name) ~ "mullets",
+      grepl("Octopodidae", Scientific_Name) ~ "octopus",
+      grepl("Palaemonidae|Penaeus", Scientific_Name) ~ "shrimp",
+      grepl("Palinuridae", Scientific_Name) ~ "lobsters",
+      grepl("Pectinidae", Scientific_Name) ~ "scallops",
+      grepl("Portunidae", Scientific_Name) ~ "crabs",
+      grepl("Sciaenidae", Scientific_Name) ~ "drums",
+      grepl("Scombridae", Scientific_Name) ~ "mackerels",
+      grepl("Scorpaenidae", Scientific_Name) ~ "rockfish",
+      grepl("Serranidae", Scientific_Name) ~ "groupers",
+      grepl("Soleidae", Scientific_Name) ~ "soles",
+      grepl("Sparidae", Scientific_Name) ~ "porgies",
+      grepl("Veneridae", Scientific_Name) ~ "clams",
+      TRUE ~ NA
+  )) %>% 
+  relocate(model_name, .before = Scientific_Name) %>% 
+  mutate(
+    farm_name = case_when(
+      model_name %in% c("atlantic_salmon", "general_salmonid") ~ "Salmonidae fish",
+      TRUE ~ "General marine fish"
+      ),
+      Scientific_Name = droplevels(Scientific_Name)
+    ) %>% 
+  # filter(is.na(model_name)) %>% 
+  mutate(prop_production = drop_units(production/national_production)) %>% 
+  arrange(prop_production)
 
+write.csv(mariculture_prod_all, "mariculture_production_all.csv")
 
 # Check that farm locations in mapped data are in the same FAO fishing regions as the production data
 
@@ -429,7 +447,7 @@ spp_names <- aquaculture_prod %>%
     )
 ```
 
-```{r fix-misalignment}
+```{r fix-misalignment-orig}
 # filter country level production for all species in non-inland waters where production is greater than 0 tonnes.
 mariculture_prod_all <- aquaculture_raw %>% 
   clean_names() %>% 

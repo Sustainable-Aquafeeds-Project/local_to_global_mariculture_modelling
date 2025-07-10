@@ -3,6 +3,7 @@ project:
   type: default
   output-dir: docs
   render:
+    - index.qmd
     - 01_tidying_data.qmd
     - 02_extracting_production_locations.qmd
     - 03_assessing_species_potential.qmd

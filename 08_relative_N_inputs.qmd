@@ -30,7 +30,7 @@ library(cowplot)
 library(rnaturalearth)
 library(purrr)
 
-source("00_dirs.R")
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
 feed_pal <- c("past" = "#E41A1C", "reference" = "#377EB8", "future" = "#4DAF4A")  
 
 prettyplot <- function() {

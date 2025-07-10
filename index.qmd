@@ -1,0 +1,110 @@
+---
+title: "Local to Global Mariculture Modelling"
+subtitle: "Project Documentation"
+author: "Dr Tormey Reimer"
+date: today
+execute:
+  eval: true
+  echo: false
+  warning: false
+  message: false
+  cache: true
+  freeze: auto
+knitr: 
+  opts_chunk:
+    fig.align: center
+    fig.width: 8.5
+---
+
+# Table of Contents
+
+This project contains a comprehensive analysis of mariculture modelling from local to global scales. Below you'll find links to all the main documentation pages:
+
+| Page | Description |
+|---------|:-------------------------------------------------|
+| **[Data Tidying](01_tidying_data.html)** | Initial data cleaning and preparation procedures |
+| **[Extracting Production Locations](02_extracting_production_locations.html)** | Identification and processing of mariculture production site locations |
+| **[Assessing Species Potential](03_assessing_species_potential.html)** | Evaluation of species suitability for different locations |
+| **[Extracting Temperatures](04_extracting_temperatures.html)** | Temperature data extraction and processing for model inputs |
+| **[Formulating Feeds](05_formulating_feeds.html)** | Feed composition analysis and formulation procedures |
+| **[Running Atlantic Salmon Model](06_run_atlantic_salmon_model.html)** | Atlantic salmon growth model implementation and execution |
+| **[Species Layers](07_species_layers.html)** | Spatial analysis of species distribution layers |
+| **[Relative N Inputs](08_relative_N_inputs.html)** | Analysis of nitrogen input patterns and their relative impacts |
+
+# Data analysis
+
+```{r setup}
+#| include: false
+#| eval: true
+#| cache: false
+#| message: false
+
+library(magrittr)
+library(units)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(ggh4x)
+library(here)
+library(ggpubr)
+library(cowplot)
+library(patchwork)
+library(qs)
+library(arrow)
+library(targets)
+library(sf)
+library(terra)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(rnaturalearthhires)
+library(dtplyr)
+library(furrr)
+library(purrr)
+library(future)
+library(readxl)
+library(conflicted)
+library(lubridate)
+library(RColorBrewer)
+conflicts_prefer(dplyr::select(), dplyr::filter(), dplyr::intersect(), .quiet = T)
+# This markdown uses TinyTex - install with tinytex::install_tinytex()
+
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+
+packages <- c("magrittr", "dplyr", "tidyr", "stringr", "ggplot2", "arrow", "targets", "sf", "terra", "rnaturalearth", "furrr", "future", "units", "lubridate", "worrms", "aquamapsdata") %>% sort()
+```
+
+```{r global-variables}
+#| include: false
+
+remove_unit("g_fish")
+remove_unit("kg_fish")
+remove_unit("t_fish")
+install_unit("g_fish")
+install_unit("kg_fish", "1000 g_fish")
+install_unit("t_fish", "1000 kg_fish")
+
+# Filenames
+farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
+species_params_file <- file.path(output_species_data_path, "species_params.qs")
+pop_params_file <- file.path(output_species_data_path, "pop_params.qs")
+feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
+sens_params_file <- file.path(output_species_data_path, "sens_params.qs")
+sens_results_files <- file.path(output_sens_data_path) %>% 
+    list.files(full.names = T) %>% 
+    str_subset("results")
+
+species_params <- qread(species_params_file)
+pop_params <- qread(pop_params_file)
+  
+feed_pal <- c("past" = "#E41A1C", "reference" = "#377EB8", "future" = "#4DAF4A")  
+cohort_pal <- c("1" = "#E41A1C", "2" = "#377EB8", "3" = "#4DAF4A", "all" = "black")
+macro_pal <- c(
+  "protein" = "darkred", "P" = "darkred", 
+  "carbohydrates" = "steelblue", "C" = "steelblue", 
+  "lipids" = "darkgoldenrod1", "L" = "darkgoldenrod1"
+)
+```
+
+
+

@@ -1,0 +1,15 @@
+{
+  "hash": "c75761f226dfd3082afbf315d1fcb9c2",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Local to Global Mariculture Modelling\"\nsubtitle: \"Project Documentation\"\nauthor: \"Dr Tormey Reimer\"\ndate: today\nexecute:\n  eval: true\n  echo: false\n  warning: false\n  message: false\n  cache: true\n  freeze: auto\nknitr: \n  opts_chunk:\n    fig.align: center\n    fig.width: 8.5\n---\n\n\n\n# Table of Contents\n\nThis project contains a comprehensive analysis of mariculture modelling from local to global scales. Below you'll find links to all the main documentation pages:\n\n---\n\n1. **[Data Tidying](01_tidying_data.html)**\n   Initial data cleaning and preparation procedures\n\n2. **[Extracting Production Locations](02_extracting_production_locations.html)**  \n   Identification and processing of mariculture production site locations\n\n3. **[Assessing Species Potential](03_assessing_species_potential.html)**  \n   Evaluation of species suitability for different locations\n\n4. **[Extracting Temperatures](04_extracting_temperatures.html)**  \n   Temperature data extraction and processing for model inputs\n\n5. **[Formulating Feeds](05_formulating_feeds.html)**  \n   Feed composition analysis and formulation procedures\n\n6. **[Running Atlantic Salmon Model](06_run_atlantic_salmon_model.html)**  \n   Atlantic salmon growth model implementation and execution\n\n7. **[Species Layers](07_species_layers.html)**  \n   Spatial analysis of species distribution layers\n\n8. **[Relative N Inputs](08_relative_N_inputs.html)**  \n   Analysis of nitrogen input patterns and their relative impacts\n\n---\n\n# Data analysis\n\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
