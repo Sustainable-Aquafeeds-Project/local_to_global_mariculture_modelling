@@ -4,11 +4,11 @@ library(crew)
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "tibble", "qs"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 15),
+  controller = crew_controller_local(workers = 10),
   workspace_on_error = TRUE
 )
 
-tar_source(files = c("00_model_functions.R", "00_dirs.R"))
+tar_source(files = list.files("src", pattern = "\\.R$", full.names = TRUE))
 
 list(
 # Get previously saved data ---------------------------------------------------------------------------------------
@@ -44,6 +44,39 @@ list(
     qs::qread(feed_params_file)[[feed_names]],
     pattern = feed_names
   ),
+  tar_target(
+    reference_feed,
+    qs::qread(feed_params_file)[["aas_2022"]]
+  ),
+
+  tar_target(
+    test_reference_feed,
+    command = {
+      fi <- sample(farm_IDs, 1)
+      farm_temp <- farm_ts_data %>%
+        filter(farm_ID == fi)
+      fg <- fish_growth(
+        pop_params = all_params,
+        species_params = all_params,
+        water_temp = farm_temp$temp_c,
+        feed_params = reference_feed,
+        times = c(t_start = min(farm_temp$day), t_end = max(farm_temp$day), dt = 1),
+        init_weight = all_params["meanW"],
+        ingmax = all_params["meanImax"]
+      )
+      fg %>%
+        as.data.frame() %>%
+        filter(!is.na(weight)) %>% 
+        slice_tail(n = 1) %>%
+        select(weight) %>%
+        mutate(
+          farm_ID = fi,
+          weight = weight %>% 
+            units::set_units("g") %>% 
+            units::drop_units()
+        )
+    }
+  ),
 
   tar_target(all_params, c(qs::qread(species_params_file), qs::qread(pop_params_file))),
 
@@ -57,7 +90,7 @@ list(
         pop_params = all_params,
         species_params = all_params,
         water_temp = farm_temp$temp_c,
-        feed_params = feed_params[["plant_dominant"]],
+        feed_params = reference_feed,
         times = c(t_start = min(farm_temp$day), t_end = max(farm_temp$day), dt = 1),
         init_weight = all_params["meanW"],
         ingmax = all_params["meanImax"]
@@ -80,10 +113,11 @@ list(
 # Prepare parameters ----------------------------------------------------------------------------------------------
   tar_target(
     stat_names,
-    c("weight_stat", "dw_stat", "water_temp_stat", "T_response_stat", "P_excr_stat", "L_excr_stat", "C_excr_stat", 
-      "P_uneat_stat", "L_uneat_stat", "C_uneat_stat", "food_prov_stat", "food_enc_stat", "rel_feeding_stat", 
-      "ing_pot_stat", "ing_act_stat", "E_assim_stat", "E_somat_stat", "anab_stat","catab_stat", "O2_stat", 
-      "NH4_stat", "total_excr_stat", "total_uneat_stat", "metab_stat","biomass_stat"),
+    c("weight_stat", "dw_stat", "water_temp_stat", "T_response_stat", "P_excr_stat", 
+    "L_excr_stat", "C_excr_stat", "P_uneat_stat", "L_uneat_stat", "C_uneat_stat", 
+    "food_prov_stat", "food_enc_stat", "rel_feeding_stat", "ing_pot_stat", "ing_act_stat", 
+    "E_assim_stat", "E_somat_stat", "anab_stat","catab_stat", "O2_stat", 
+    "NH4_stat", "total_excr_stat", "total_uneat_stat", "metab_stat", "biomass_stat"),
   ),
 
   tar_target(
@@ -170,6 +204,7 @@ list(
         mutate(sd = sd/mean)
       cohort_2 <- farm_to_cohort(cohort_1, time_offset = 365)
       cohort_3 <- farm_to_cohort(cohort_1, time_offset = 730)
+      cohort_1 <- farm_to_cohort(cohort_1, time_offset = 0)
       lims <- unique(cohort_2$t)
 
       rbind(cohort_1, cohort_2, cohort_3) %>% 

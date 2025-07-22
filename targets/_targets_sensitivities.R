@@ -9,10 +9,7 @@ tar_option_set(
   workspace_on_error = TRUE
 )
 
-tar_source(c(
-  "00_dirs.R",
-  "00_model_functions.R"
-))
+tar_source(files = list.files("src", pattern = "\\.R$", full.names = TRUE))
 
 list(
   # Load previously saved data --------------------------------------------------------------------------------
@@ -45,7 +42,7 @@ list(
   ),
   tar_target(
     reference_feed,
-    qs::qread(feed_params_file)[["plant_dominant"]]
+    qs::qread(feed_params_file)[["aas_2022"]]
   ),
 
   # Get names of params to be adjusted

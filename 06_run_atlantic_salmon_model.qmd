@@ -1,14 +1,15 @@
 ---
-title: "Individual Mariculture Modeling Analysis"
+title: "Run aquaculture model for Atlantic salmon"
 format: html
 editor: source
 ---
 
 # Introduction
 
-This document runs individual mariculture modeling analyses for Atlantic salmon farms. It processes farm location data, species parameters, and conducts sensitivity analyses to understand the impact of various parameters on fish and farm growth measures.
+This document runs the aquaculture model for Atlantic salmon farms. It processes farm location data, species parameters, and conducts sensitivity analyses to understand the impact of various parameters on fish and farm growth measures.
 
-```{r setup}
+```{r}
+#| label: setup
 #| warning: false
 #| message: false
 
@@ -18,6 +19,7 @@ library(dplyr)
 library(tidyr)
 library(terra)
 library(magrittr)
+library(purrr)
 library(furrr)
 library(future)
 library(tictoc)
@@ -35,7 +37,9 @@ conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
 ```
 
-```{r filenames}
+```{r}
+#| label: filenames
+
 # Set up parallel processing
 # plan(multisession, workers = parallelly::availableCores()-1)
 
@@ -59,7 +63,9 @@ Much of the actual analysis is run through targets pipelines. Therefore, we need
 
 Load and process farm coordinate data with appropriate timing parameters for Northern and Southern hemisphere farms.
 
-```{r farm-coordinates}
+```{r}
+#| label: farm-coordinates
+
 times_N <- c("t_start" = 121, "t_end" = 121+547, "dt" = 1)
 times_S <- c("t_start" = 274, "t_end" = 274+547, "dt" = 1)
 
@@ -84,7 +90,9 @@ file.path(input_farm_coords_path, "atlantic_salmon_locations_w_temps.qs") %>%
 
 Process Sea Surface Temperature (SST) data for each farm location.
 
-```{r farm-ts-data}
+```{r}
+#| label: farm-ts-data
+
 farms_to_omit <- qread(sprintf(file.path(input_farm_coords_path, "%s_farms_to_omit.qs"), this_species))
 farm_SST_data <- read_parquet(file.path(input_farm_sst_path, "farm_SST_extracted.parquet"))
 farm_IDs <- farm_SST_data %>%
@@ -104,7 +112,9 @@ qsave(farm_ts_data, farm_ts_data_file)
 
 Load species-specific parameters from Excel file.
 
-```{r species-parameters}
+```{r}
+#| label: species-parameters
+
 species_params <- readxl::read_excel(
   path = species_params_excel["file"], 
   sheet = species_params_excel["sheet"]
@@ -117,7 +127,9 @@ qsave(species_params, species_params_file)
 
 Load population-specific parameters.
 
-```{r population-parameters}
+```{r}
+#| label: population-parameters
+
 pop_params <- readxl::read_excel(path = pop_params_excel["file"])
 vals <- pop_params$Value
 names(vals) <- pop_params$Quantity
@@ -129,33 +141,42 @@ qsave(pop_params, pop_params_file)
 
 Calculations of expected harvest sizes for each farm (using default feed and no Monte-Carlo variation) are done in the targets pipeline.
 
-```{r farm-harvest-size}
+```{r}
+#| label: farm-harvest-size
+
 Sys.setenv(TAR_PROJECT = "project_farmruns")
 
+# Check that the feed will actually work
+targets::tar_make(test_reference_feed)
+targets::tar_load(test_reference_feed)
+
+# Get harvest sizes for all farms
 targets::tar_make(harvest_size)
 targets::tar_load(harvest_size)
-qsave(harvest_size, farm_harvest_file)
-
-mean(harvest_size$weight)
-min(harvest_size$weight)
-max(harvest_size$weight)
 
 ggplot(harvest_size, aes(x = weight)) +
   geom_histogram(fill = "salmon", alpha = 0.75, colour = "black")
+
+qsave(harvest_size, farm_harvest_file)
 ```
 
 # Sensitivity analysis
 
 Run the sensitivity runs using the targets pipeline. 
-Note that this can take a long time (hours), as the species parameters (19) are run for each farm (2721) and factor (3) and the population parameters (6) are run for a smaller number of farms (271) and factor with a simulated population of 500 fish.
+Note that this can take a long time. 
+The species parameters (19) are run for a single fish in each farm (2721) and factor (3), which takes ~30 minutes.
+The population parameters (6) are run for a smaller number of farms (271) and each factor (3) with a simulated population of 500 fish, which takes ~30 hours.
 
-```{r sensitivity-run}
+```{r}
+#| label: sensitivity-run
+
 Sys.setenv(TAR_PROJECT = "project_sensitivities")
 
 targets::tar_validate()
-targets::tar_visnetwork(targets_only = T)
-targets::tar_outdated()
+# targets::tar_visnetwork(targets_only = T)
+# targets::tar_outdated()
 targets::tar_make(
+  names = "sens_results_spec",
   seconds_meta_append = 120
   )
 ```
@@ -164,7 +185,9 @@ targets::tar_make(
 
 Combine and visualise sensitivity analysis results.
 
-```{r sensitivity-results}
+```{r}
+#| label: sensitivity-results
+
 targets::tar_load(sens_results_spec)
 targets::tar_load(sens_results_pop)
 
@@ -197,16 +220,25 @@ for (sm in seq_along(sens_measures)) {
 
 # Run farms
 
-```{r run-farms-pipeline}
+Note that this also takes a long time - each branch of farmrun takes ~4.5 minutes, and a maximum of ~12 workers can run at a time. The total therefore takes ~17 hours.
+
+```{r}
+#| label: run-farms-pipeline
+
 Sys.setenv(TAR_PROJECT = "project_farmruns")
 
 targets::tar_validate()
-targets::tar_visnetwork(targets_only = T)
-targets::tar_outdated()
-targets::tar_make(seconds_meta_append = 90)
+# targets::tar_visnetwork(targets_only = T)
+# targets::tar_outdated()
+targets::tar_make(farm_results, seconds_meta_append = 90)
+meta <- targets::tar_meta() %>% 
+  filter(grepl("farm_run", name))
+meta$seconds %>% mean()/60
 ```
 
-```{r farm-run-results}
+```{r}
+#| label: farm-run-results
+
 targets::tar_load(cohort_results)
 ```
 

@@ -11,6 +11,7 @@ library(terra)
 library(rnaturalearth)
 library(rnaturalearthdata)
 library(rnaturalearthhires)
+library(purrr)
 
 # Define areas -------------------------------------------------
 # For drawing area boxes on the big map

@@ -31,10 +31,10 @@ library(qs)
 library(here)
 conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
-here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% purrr::walk(source)
 
 ingred_inputs_file <- file.path(input_feed_profile_path, "all_ingredients.csv")
-feed_input_file <- file.path(input_feed_profile_path, "all_feeds.csv")
+feed_input_file <- file.path(input_feed_profile_path, "all_feeds.xlsx")
 ```
 
 # Import ingredients
@@ -58,8 +58,8 @@ There is no check or correction here to ensure that ingredient proportions = 1 i
 #| code-summary: Feed compositions
 
 feed_inputs <- feed_input_file %>% 
-  read.csv() %>% 
-  pivot_longer(names_to = "feed", values_to = "proportion", cols = !contains(c("ingredient", "proportion"))) %>% 
+  read_excel(sheet = "testing") %>% 
+  pivot_longer(names_to = "feed", values_to = "proportion", cols = !contains(c("ingredient", "category"))) %>% 
   mutate(feed = as.factor(feed),
          ingredient = as.factor(ingredient)) %>% 
   merge(ingreds, by = "ingredient", all = T)
