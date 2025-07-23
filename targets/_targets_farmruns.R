@@ -37,7 +37,11 @@ list(
   ),
   tar_target(
     feed_names,
-    qs::qread(feed_params_file) %>% names()
+    command = {
+      qs::qread(feed_params_file) %>% names()
+      # c("plant_dominant", "marine_dominant")
+    }
+    
   ),
   tar_target(
     feed_params,
@@ -46,7 +50,7 @@ list(
   ),
   tar_target(
     reference_feed,
-    qs::qread(feed_params_file)[["aas_2022"]]
+    qs::qread(feed_params_file)[["plant_dominant"]]
   ),
 
   tar_target(

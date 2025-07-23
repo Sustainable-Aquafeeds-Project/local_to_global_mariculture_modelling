@@ -149,9 +149,10 @@ Sys.setenv(TAR_PROJECT = "project_farmruns")
 # Check that the feed will actually work
 targets::tar_make(test_reference_feed)
 targets::tar_load(test_reference_feed)
+test_reference_feed # should be ~1430 g
 
 # Get harvest sizes for all farms
-targets::tar_make(harvest_size)
+targets::tar_make(names = c("harvest_size", "feed_params"))
 targets::tar_load(harvest_size)
 
 ggplot(harvest_size, aes(x = weight)) +

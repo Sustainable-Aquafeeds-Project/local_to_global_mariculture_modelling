@@ -52,19 +52,32 @@ ingred_nms <- levels(ingreds$ingredient)
 
 # Import feeds
 
-There is no check or correction here to ensure that ingredient proportions = 1 in the incoming data. This was checked manually prior to import. 
-
 ``` {r import-feeds}
 #| code-summary: Feed compositions
 
 feed_inputs <- feed_input_file %>% 
-  read_excel(sheet = "testing") %>% 
+  read_excel(sheet = "all_feeds") %>% 
   pivot_longer(names_to = "feed", values_to = "proportion", cols = !contains(c("ingredient", "category"))) %>% 
   mutate(feed = as.factor(feed),
          ingredient = as.factor(ingredient)) %>% 
   merge(ingreds, by = "ingredient", all = T)
 
 feed_types <- levels(feed_inputs$feed)
+```
+
+Check that ingredient proportions sum to 1.
+
+```{r check-proportions}
+#| code-summary: Composition proportions
+
+feed_inputs <- feed_inputs %>% 
+  filter(!is.na(proportion) & proportion != 0) %>% 
+  group_by(feed) %>% 
+  mutate(
+    sum = sum(proportion),
+    proportion = proportion/sum
+  ) %>% 
+    ungroup()
 ```
 
 The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. 
@@ -74,7 +87,7 @@ The following chunk allows as many ingredients and feeds to be added to the inco
 
 feed_params <- purrr::map(feed_types, function(ft) {
   df <- feed_inputs %>% 
-    filter(feed == ft & proportion != 0) 
+    filter(feed == ft) 
   list(
     Proteins = df %>% 
       select(ingredient, proportion, contains("protein"), -contains("feed")) %>%
