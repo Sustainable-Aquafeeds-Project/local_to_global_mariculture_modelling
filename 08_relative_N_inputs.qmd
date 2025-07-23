@@ -196,7 +196,8 @@ farm_cells <- map(background_N_insets, function(back_N_rast) {
 
 ```{r combine with N input from farms}
 
-N_input <- output_cohorts_data_path %>% list.files(full.names = T) %>% 
+N_input <- per_biomass_cohort_path %>% 
+  list.files(full.names = T) %>% 
   str_subset("allfarms") %>% 
   str_subset("P_excr") %>% 
   qs::qread() %>% 

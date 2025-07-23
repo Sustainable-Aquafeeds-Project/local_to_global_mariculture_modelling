@@ -25,11 +25,11 @@ conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
 source("00_model_functions.R")
 source("00_dirs.R")
 
-cohort_comp_fnms <- output_cohorts_data_path %>% 
+cohort_comp_fnms <- per_biomass_cohort_path %>% 
   list.files(full.names = T) %>% 
   str_subset("farmrun_comparisons")
 
-aggregate_comparison_files <- output_cohorts_data_path %>% 
+aggregate_comparison_files <- per_biomass_cohort_path %>% 
   list.files(full.names = T) %>% 
   str_subset("allfarms_comparisons")
 

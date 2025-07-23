@@ -85,17 +85,11 @@ install_unit("kg_fish", "1000 g_fish")
 install_unit("t_fish", "1000 kg_fish")
 
 # Filenames
-farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
-species_params_file <- file.path(output_species_data_path, "species_params.qs")
-pop_params_file <- file.path(output_species_data_path, "pop_params.qs")
-feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
-sens_params_file <- file.path(output_species_data_path, "sens_params.qs")
-sens_results_files <- file.path(output_sens_data_path) %>% 
-    list.files(full.names = T) %>% 
-    str_subset("results")
+# species_params_excel <- c(file = file.path(input_species_param_path, "Species.xlsx"), sheet = "Atlantic salmon")
+# pop_params_excel <- c(file = file.path(input_species_param_path, "Population.xlsx"))
 
-species_params <- qread(species_params_file)
-pop_params <- qread(pop_params_file)
+species_params <- find_read(output_species_data_path, "species_params")
+pop_params <- find_read(output_species_data_path, "pop_params")
   
 feed_pal <- c("past" = "#E41A1C", "reference" = "#377EB8", "future" = "#4DAF4A")  
 cohort_pal <- c("1" = "#E41A1C", "2" = "#377EB8", "3" = "#4DAF4A", "all" = "black")
@@ -103,6 +97,15 @@ macro_pal <- c(
   "protein" = "darkred", "P" = "darkred", 
   "carbohydrates" = "steelblue", "C" = "steelblue", 
   "lipids" = "darkgoldenrod1", "L" = "darkgoldenrod1"
+
+# Model functioning
+
+## Population and biomass
+
+```{r raw biomass and weight data}
+weight_cohort <- find_read(output_model_cohort_path, "weight_stat_all_farms")
+biomass_cohort <- find_read(output_model_cohort_path, "biomass_stat_all_farms")
+```
 )
 ```
 
