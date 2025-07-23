@@ -1,3 +1,8 @@
+library(devtools)
+library(qs)
+library(arrow)
+library(stringr)
+
 make_label <- function(lab){lab %>% str_remove_all("_stat") %>% str_replace_all("_", " ") %>% str_to_title()}
 fixnum <- function(n, digits = 4) {
   vapply(n, function(x) {

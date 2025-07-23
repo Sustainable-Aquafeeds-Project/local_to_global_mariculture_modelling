@@ -293,10 +293,8 @@ uni_farm_growth <- function(pop_params, species_params, feed_params, water_temp,
   return(out_list)
 }
 
-farm_to_cohort <- function(matrix, time_offset = 0) {
-  matrix %>% 
-    as.data.frame() %>% 
-    rename(t = V1, mean = V2, sd = V3) %>%
+farm_to_cohort <- function(df, time_offset = 0) {
+  df %>% 
     mutate(t = t + time_offset)
 }
 

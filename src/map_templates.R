@@ -1,3 +1,4 @@
+library(devtools)
 library(qs)
 library(dplyr)
 library(magrittr)

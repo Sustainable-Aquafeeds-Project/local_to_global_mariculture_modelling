@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Tormey Reimer">
-<meta name="dcterms.date" content="2025-07-10">
+<meta name="dcterms.date" content="2025-07-23">
 
 <title>08_relative_N_inputs</title>
 <style>
@@ -108,7 +108,7 @@ div.csl-indent {
   <li><a href="#combine-modelled-n-data-with-background-n" id="toc-combine-modelled-n-data-with-background-n" class="nav-link" data-scroll-target="#combine-modelled-n-data-with-background-n"><span class="header-section-number">4</span> Combine modelled N data with background N</a></li>
   <li><a href="#analyse" id="toc-analyse" class="nav-link" data-scroll-target="#analyse"><span class="header-section-number">5</span> Analyse</a></li>
   </ul>
-<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://data.nasa.gov/"><i class="bi bi-link-45deg"></i>NASA Open Data</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="data-import.py"><i class="bi bi-file-code"></i>Data Import Code</a></li></ul></div></nav>
+<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="index.qmd"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
@@ -133,7 +133,7 @@ div.csl-indent {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">10 July 2025</p>
+      <p class="date">23 July 2025</p>
     </div>
   </div>
   
@@ -154,8 +154,6 @@ div.csl-indent {
 <li>Compare annual inputs from the different sources</li>
 </ol>
 <div class="cell">
-<details class="code-fold">
-<summary>R setup</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magrittr)</span>
@@ -170,7 +168,7 @@ div.csl-indent {
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rnaturalearth)</span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"00_dirs.R"</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">here</span>(<span class="st">"src"</span>) <span class="sc">%&gt;%</span> <span class="fu">list.files</span>(<span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> <span class="fu">walk</span>(source)</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>feed_pal <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"past"</span> <span class="ot">=</span> <span class="st">"#E41A1C"</span>, <span class="st">"reference"</span> <span class="ot">=</span> <span class="st">"#377EB8"</span>, <span class="st">"future"</span> <span class="ot">=</span> <span class="st">"#4DAF4A"</span>)  </span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>prettyplot <span class="ot">&lt;-</span> <span class="cf">function</span>() {</span>
@@ -180,14 +178,11 @@ div.csl-indent {
 <span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.title.x =</span> <span class="fu">element_text</span>(<span class="at">vjust =</span> <span class="fl">0.5</span>),</span>
 <span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>          <span class="at">axis.title.y =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>))</span>
 <span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 <section id="base-rasters-for-resolution" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Base rasters for resolution</h1>
 <div class="cell">
-<details class="code-fold">
-<summary>Create some blank rasters with parameters to be used going forward</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>inset_boxes <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">CAN1 =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">132</span>, <span class="sc">-</span><span class="dv">122</span>, <span class="fl">47.75</span>, <span class="fl">54.25</span>),</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">CAN2 =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">70</span>, <span class="sc">-</span><span class="dv">54</span>, <span class="dv">43</span>, <span class="fl">48.5</span>),</span>
@@ -206,26 +201,20 @@ div.csl-indent {
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="cf">function</span>(rs) {<span class="fu">project</span>(rs, <span class="fu">crs</span>(base_molle))}) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="cf">function</span>(rs) {<span class="fu">ext</span>(rs)}) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="cf">function</span>(ex) {<span class="fu">crop</span>(base_molle, ex)})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 <section id="raw-background-nitrogen" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Raw background nitrogen</h1>
 <p>Data for nutrient runoff from agriculture fertilisers and pesticides was downloaded from <span class="citation" data-cites="halpern_recent_2019-1 halpern_recent_2019">Halpern, Frazier, Afflerbach, et al. (<a href="#ref-halpern_recent_2019-1" role="doc-biblioref">2019</a>; dataset here: <a href="#ref-halpern_recent_2019" role="doc-biblioref">Halpern, Frazier, Afflerback, et al. 2019</a>)</span>. The data is in annual tonnes N.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Import data from <span class="citation" data-cites="halpern_recent_2019">Halpern, Frazier, Afflerback, et al. (<a href="#ref-halpern_recent_2019" role="doc-biblioref">2019</a>)</span> and crop/reproject for the 5 insets being used</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>halpern_N_rast <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_Ndata_path, <span class="st">"halpern_2019"</span>, <span class="st">"nutrient_pollution_2013_raw.tif"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rast</span>()</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>halpern_insets <span class="ot">&lt;-</span> molle_insets <span class="sc">%&gt;%</span> </span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="cf">function</span>(ins) {<span class="fu">project</span>(halpern_N_rast, ins, <span class="at">method =</span> <span class="st">"cubic"</span>)})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <p>Data for inputs of human sewage in coastal ecosystems was sourced from <span class="citation" data-cites="tuholske_global_2021 tuholske_mapping_2021">Tuholske (<a href="#ref-tuholske_global_2021" role="doc-biblioref">2021</a>; dataset here: <a href="#ref-tuholske_mapping_2021" role="doc-biblioref">Tuholske et al. 2021</a>)</span>. The data is in annual g N.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Import data from <span class="citation" data-cites="tuholske_global_2021">Tuholske (<a href="#ref-tuholske_global_2021" role="doc-biblioref">2021</a>)</span> and crop/reproject for the 5 insets being used</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>tuholske_N_rast <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_Ndata_path, <span class="st">"tuholske_2021"</span>, <span class="st">"global_effluent_2015_tot_N.tif"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rast</span>() </span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>tuholske_N_rast <span class="ot">&lt;-</span> tuholske_N_rast <span class="sc">*</span> <span class="dv">10</span><span class="sc">^-</span><span class="dv">6</span> <span class="co"># Change from g to t</span></span>
@@ -238,11 +227,8 @@ div.csl-indent {
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>tuholske_insets <span class="ot">&lt;-</span> <span class="fu">map2</span>(tuholske_insets, halpern_insets, <span class="cf">function</span>(rast, mask) {</span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mask</span>(rast, mask)</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <div class="cell">
-<details class="code-fold">
-<summary>Combine and save background N data</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>background_N_insets <span class="ot">&lt;-</span> <span class="fu">map2</span>(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  halpern_insets, </span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  tuholske_insets, </span>
@@ -255,33 +241,24 @@ div.csl-indent {
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">file.path</span>(input_Ndata_path, <span class="fu">str_c</span>(<span class="st">"background_N_inset_"</span>, nm, <span class="st">".tif"</span>)), </span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>              <span class="at">overwrite =</span> T)</span>
 <span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <p>The code above was only run once, background N rasters can now be loaded.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Load previously saved inset rasters</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>background_N_insets <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">names</span>(inset_boxes), <span class="cf">function</span>(nm) {</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">file.path</span>(input_Ndata_path, <span class="fu">str_c</span>(<span class="st">"background_N_inset_"</span>, nm, <span class="st">".tif"</span>)) <span class="sc">%&gt;%</span> <span class="fu">rast</span>()</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 <section id="combine-modelled-n-data-with-background-n" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Combine modelled N data with background N</h1>
 <div class="cell">
-<details class="code-fold">
-<summary>Bring in modelled salmon inputs data</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>farm_locs <span class="ot">&lt;-</span> <span class="fu">file.path</span>(output_farm_data_path, <span class="st">"farm_geometry.qs"</span>) <span class="sc">%&gt;%</span> qs<span class="sc">::</span><span class="fu">qread</span>()</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>farm_sfs <span class="ot">&lt;-</span> <span class="fu">st_sf</span>(<span class="at">farm_id =</span> farm_locs<span class="sc">$</span>farm_id, <span class="at">geometry =</span> farm_locs<span class="sc">$</span>geometry) <span class="sc">%&gt;%</span> </span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(<span class="at">crs =</span> <span class="fu">crs</span>(base_molle))</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>farm_id_insets <span class="ot">&lt;-</span> background_N_insets <span class="sc">%&gt;%</span> </span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="cf">function</span>(ins) {<span class="fu">rasterize</span>(farm_sfs, ins, <span class="at">field =</span> <span class="st">"farm_id"</span>)})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <div class="cell">
-<details class="code-fold">
-<summary>Get background nitrogen data for farm cells</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>farm_cells <span class="ot">&lt;-</span> <span class="fu">map</span>(background_N_insets, <span class="cf">function</span>(back_N_rast) {</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get cell numbers for each farm point</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  farm_cells <span class="ot">&lt;-</span> <span class="fu">cellFromXY</span>(back_N_rast, <span class="fu">st_coordinates</span>(farm_sfs))</span>
@@ -329,36 +306,31 @@ div.csl-indent {
 <span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>  farm_cells</span>
 <span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span> </span>
 <span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>N_input <span class="ot">&lt;-</span> output_cohorts_data_path <span class="sc">%&gt;%</span> <span class="fu">list.files</span>(<span class="at">full.names =</span> T) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"allfarms"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"P_excr"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  qs<span class="sc">::</span><span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mean =</span> mean <span class="sc">*</span> <span class="fl">6.25</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(farm_ID, feed) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">mean =</span> <span class="fu">sum</span>(mean) <span class="sc">*</span> <span class="dv">10</span><span class="sc">^-</span><span class="dv">6</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> mean)</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>N_comp <span class="ot">&lt;-</span> <span class="fu">merge</span>(farm_cells, N_input, <span class="at">by.y =</span> <span class="st">"farm_ID"</span>, <span class="at">by.x =</span> <span class="st">"farm_id"</span>, <span class="at">all =</span> T) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>cell) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">reference =</span> reference<span class="sc">/</span>back_N,</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">past =</span> past<span class="sc">/</span>back_N,</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">future =</span> future<span class="sc">/</span>back_N) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"feed"</span>, <span class="at">names_transform =</span> <span class="fu">list</span>(<span class="at">feed =</span> as.factor),</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"ratio"</span>, <span class="at">cols =</span> <span class="fu">c</span>(<span class="st">"reference"</span>, <span class="st">"past"</span>, <span class="st">"future"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"reference"</span>, <span class="st">"past"</span>, <span class="st">"future"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>N_input <span class="ot">&lt;-</span> per_biomass_cohort_path <span class="sc">%&gt;%</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list.files</span>(<span class="at">full.names =</span> T) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"allfarms"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"P_excr"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  qs<span class="sc">::</span><span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mean =</span> mean <span class="sc">*</span> <span class="fl">6.25</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(farm_ID, feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">mean =</span> <span class="fu">sum</span>(mean) <span class="sc">*</span> <span class="dv">10</span><span class="sc">^-</span><span class="dv">6</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> mean)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>N_comp <span class="ot">&lt;-</span> <span class="fu">merge</span>(farm_cells, N_input, <span class="at">by.y =</span> <span class="st">"farm_ID"</span>, <span class="at">by.x =</span> <span class="st">"farm_id"</span>, <span class="at">all =</span> T) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>cell) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">reference =</span> reference<span class="sc">/</span>back_N,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">past =</span> past<span class="sc">/</span>back_N,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>         <span class="at">future =</span> future<span class="sc">/</span>back_N) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"feed"</span>, <span class="at">names_transform =</span> <span class="fu">list</span>(<span class="at">feed =</span> as.factor),</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"ratio"</span>, <span class="at">cols =</span> <span class="fu">c</span>(<span class="st">"reference"</span>, <span class="st">"past"</span>, <span class="st">"future"</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"reference"</span>, <span class="st">"past"</span>, <span class="st">"future"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="analyse" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Analyse</h1>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>N_comp <span class="sc">%&gt;%</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country, farm_id, feed) <span class="sc">%&gt;%</span> </span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">mean =</span> <span class="fu">mean</span>(ratio, <span class="at">na.rm =</span> T)) <span class="sc">%&gt;%</span> </span>
@@ -382,7 +354,6 @@ div.csl-indent {
 <span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># scale_y_continuous(breaks = seq(0,1,0.2), labels = seq(0,100,20), limits = c(0,0.6)) +</span></span>
 <span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> feed_pal) <span class="sc">+</span></span>
 <span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">"Mean change in N input ratio"</span>, <span class="at">x =</span> <span class="st">"Country"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 
 </section>

@@ -111,7 +111,7 @@ div.csl-indent {
   </ul></li>
   <li><a href="#calculate-overlapping-area" id="toc-calculate-overlapping-area" class="nav-link" data-scroll-target="#calculate-overlapping-area"><span class="header-section-number">4</span> Calculate overlapping area</a></li>
   </ul>
-<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://data.nasa.gov/"><i class="bi bi-link-45deg"></i>NASA Open Data</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="data-import.py"><i class="bi bi-file-code"></i>Data Import Code</a></li></ul></div></nav>
+<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="index.qmd"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
@@ -140,8 +140,6 @@ div.csl-indent {
 <h1 data-number="1"><span class="header-section-number">1</span> Base rasters for resolution</h1>
 <p>Create a blank raster with enough resolution to get farms in there (100m)</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>base_rast <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="at">res =</span> <span class="fl">0.1</span><span class="sc">/</span><span class="fl">111.32</span>, <span class="at">extent =</span> <span class="fu">ext</span>(<span class="sc">-</span><span class="dv">180</span>, <span class="dv">180</span>, <span class="sc">-</span><span class="dv">90</span>, <span class="dv">90</span>), <span class="at">crs =</span> <span class="st">"EPSG:4326"</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>inset_boxes <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
@@ -159,15 +157,12 @@ div.csl-indent {
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">CHI  =</span> <span class="fu">crop</span>(base_rast, <span class="fu">ext</span>(inset_boxes[[<span class="st">"CHI"</span>]])),</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">AUS  =</span> <span class="fu">crop</span>(base_rast, <span class="fu">ext</span>(inset_boxes[[<span class="st">"AUS"</span>]]))</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 <section id="farm-circles" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Farm circles</h1>
 <p>Give each farm a basic “circle of influence” - currently set at 2km. Possibility to reduce this/create a dispersion pattern later.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>farm_circles_file <span class="ot">&lt;-</span> <span class="fu">file.path</span>(output_farm_data_path, <span class="st">"farm_circles_2km.tif"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>farm_circles_rast <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(farm_circles_file) <span class="sc">|</span> overwrite) {</span>
@@ -189,12 +184,9 @@ div.csl-indent {
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rast</span>(farm_circles_file)</span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <p>Also save the individual areas of farm clusters so later species-overlaying is a bit faster.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fa_list <span class="ot">&lt;-</span> <span class="fu">file.path</span>(output_farm_data_path, <span class="fu">sprintf</span>(<span class="st">"farm_circles_2km_inset_%s.tif"</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>))</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>) {</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(fa_list[i]) <span class="sc">|</span> overwrite) {</span>
@@ -224,15 +216,12 @@ div.csl-indent {
 <span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fa_ggplot</span>(fa_rast_1000m),</span>
 <span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol =</span> <span class="dv">2</span></span>
 <span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 <section id="species-vulnerabilities" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Species vulnerabilities</h1>
 <p>Using trait-based vulnerability data downloaded from <span class="citation" data-cites="ohara_code_2021 butt_trait-based_2022">O’Hara (<a href="#ref-ohara_code_2021" role="doc-biblioref">2021</a>; <a href="#ref-butt_trait-based_2022" role="doc-biblioref">Butt et al. 2022</a>)</span>.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>vulnerabilities <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_spec_layers_path, <span class="st">"spp_gp_vuln_w_distribution.csv"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">spp_gp =</span> <span class="fu">str_to_sentence</span>(spp_gp)) <span class="sc">%&gt;%</span> </span>
@@ -245,20 +234,14 @@ div.csl-indent {
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(vulnerabilities, <span class="fu">aes</span>(<span class="at">x =</span> taxon, <span class="at">y =</span> vuln, <span class="at">fill =</span> taxon)) <span class="sc">+</span></span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <section id="species-ranges" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="species-ranges"><span class="header-section-number">3.1</span> Species ranges</h2>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># download_db(force = FALSE) # This step downloads the Aquamaps database, ~ 2GB. Only need to do this once</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">default_db</span>(<span class="st">"sqlite"</span>) <span class="co"># Need this step in order to set up to query database</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>vuln_am_keys <span class="ot">&lt;-</span> <span class="fu">split</span>(vulnerabilities, vulnerabilities<span class="sc">$</span>spp_gp) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="cf">function</span>(vdf) {</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    keys <span class="ot">&lt;-</span> <span class="fu">am_search_fuzzy</span>(vdf<span class="sc">$</span>spp_gp) <span class="sc">%&gt;%</span> </span>
@@ -284,20 +267,16 @@ div.csl-indent {
 <span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(match_level) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Keep only one key (aquamaps dataset) per species, but there may be multiple vulnerabilities</span></span>
 <span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(key, <span class="at">.keep_all =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <section id="get-species-rasters" class="level3" data-number="3.1.1">
 <h3 data-number="3.1.1" class="anchored" data-anchor-id="get-species-rasters"><span class="header-section-number">3.1.1</span> Get species rasters</h3>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>all_keys <span class="ot">&lt;-</span> vuln_am_keys<span class="sc">$</span>key</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(all_keys)) {</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  ras <span class="ot">&lt;-</span> <span class="fu">am_raster</span>(<span class="at">key =</span> all_keys[i]) <span class="sc">%&gt;%</span> <span class="fu">rast</span>()</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(ras) <span class="ot">&lt;-</span> <span class="st">"probability"</span></span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">writeRaster</span>(ras, <span class="fu">file.path</span>(input_aquamaps_path, <span class="fu">str_c</span>(all_keys[i], <span class="st">".tif"</span>)), <span class="at">overwrite =</span> T)</span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <p>Convert to Gall projection for equal area?</p>
 </section>
@@ -306,8 +285,6 @@ div.csl-indent {
 <section id="calculate-overlapping-area" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Calculate overlapping area</h1>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>vuln_am_keys <span class="ot">&lt;-</span> vuln_am_keys <span class="sc">%&gt;%</span> </span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">total_species_area =</span> <span class="cn">NA</span>,</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">farm_overlap_area =</span> <span class="cn">NA</span>,</span>
@@ -320,13 +297,10 @@ div.csl-indent {
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rast</span>(fnm) <span class="sc">%&gt;%</span> <span class="fu">aggregate</span>(<span class="at">fact =</span> <span class="dv">10</span>, <span class="at">fun =</span> <span class="st">"modal"</span>) <span class="co"># use 1km resolution for speed</span></span>
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  })</span>
 <span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>fa_exts <span class="ot">&lt;-</span> <span class="fu">lapply</span>(fa_rasts, ext) <span class="sc">%&gt;%</span> <span class="fu">unlist</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <p>Get the total overlap between the farm buffer circles (1km radius) and the species range (presence/absence). The data from aquamaps gives a probability of species presence (0-1) but that is not incorporated here (yet).</p>
 <p>I tried to do this in parallel but <code>terra</code> has issues with parallel processing - couldn’t get it to work. But it only takes ~25 minutes (with all the speed measures taken above).</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (sp <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(vuln_am_keys)) {</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  species_range_raster <span class="ot">&lt;-</span> <span class="fu">rast</span>(vuln_am_keys<span class="sc">$</span>file_nm[sp])</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -375,7 +349,6 @@ div.csl-indent {
 <span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>overlap_percent)</span>
 <span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(vuln_am_keys, <span class="fu">file.path</span>(impacts_path, <span class="st">"vulnerability_areaoverlap_nonzero.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <p>In this very crude and liberal estimation, the maximum exposure of any species to farm nutrient inputs was ~1.9%.</p>
 <pre class="{roverlap-plot}"><code>xbreaks &lt;- c(min(vuln_am_keys$overlap_percent/100), max(vuln_am_keys$overlap_percent/100)) %&gt;% log()

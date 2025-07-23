@@ -17,7 +17,7 @@ format:
   html:
     theme: cosmo
     css: "extra.css"
-    code-fold: true
+    code-fold: false
     code-overflow: wrap
     toc: true
     toc-expand: true
@@ -25,12 +25,12 @@ format:
     number-sections: true
     lang: en-GB
     code-links:
-      - text: Data Import Code
+      - text: Github
         icon: file-code
-        href: data-import.py
+        href: https://github.com/stormeyseas/local_to_global_mariculture_modelling
     other-links:
-      - text: NASA Open Data
-        href: https://data.nasa.gov/
+      - text: Back to main
+        href: index.qmd
     grid:
       sidebar-width: 250px
       body-width: 1200px
@@ -39,7 +39,7 @@ format:
   
 execute:
   eval: false
-  freeze: auto
+  freeze: false
 
 bibliography: 
   - "refs.bib"

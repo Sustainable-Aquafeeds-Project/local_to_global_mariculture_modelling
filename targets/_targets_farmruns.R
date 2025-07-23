@@ -22,18 +22,23 @@ list(
   tar_target(farm_coords, qs::qread(farm_coords_file)),
   tar_target(
     farm_IDs,
-    qs::qread(farm_ts_data_file) %>% 
-      distinct(farm_ID) %>% 
-      pull(farm_ID) #%>% sample(25)
+    command = {
+      # c(1:39, 2704:2721) # Australia and US only
+
+      qs::qread(farm_ts_data_file) %>% 
+        distinct(farm_ID) %>% 
+        pull(farm_ID)
+    }
   ),
   tar_target(
     farm_ts_data, 
     qs::qread(farm_ts_data_file) %>% 
-      merge(farm_coords, by = "farm_ID") %>% 
-      dplyr::filter(farm_ID %in% farm_IDs) %>%
+      merge(farm_coords, by = "farm_ID") %>%
+      filter(farm_ID == farm_IDs) %>%
       mutate(keep = case_when(day >= t_start & day <= t_end ~ T, T ~ F)) %>% 
       dplyr::filter(keep) %>% 
-      dplyr::select(farm_ID, day, temp_c)
+      dplyr::select(farm_ID, day, temp_c),
+    pattern = farm_IDs
   ),
   tar_target(
     feed_names,
@@ -88,14 +93,12 @@ list(
   tar_target(
     harvest_size,
     command = {
-      farm_temp <- farm_ts_data %>%
-        filter(farm_ID == farm_IDs)
       fg <- fish_growth(
         pop_params = all_params,
         species_params = all_params,
-        water_temp = farm_temp$temp_c,
+        water_temp = farm_ts_data$temp_c,
         feed_params = reference_feed,
-        times = c(t_start = min(farm_temp$day), t_end = max(farm_temp$day), dt = 1),
+        times = c(t_start = min(farm_ts_data$day), t_end = max(farm_ts_data$day), dt = 1),
         init_weight = all_params["meanW"],
         ingmax = all_params["meanImax"]
       ) 
@@ -111,17 +114,18 @@ list(
             units::drop_units()
         )
     },
-    pattern = farm_IDs
+    pattern = map(farm_IDs, farm_ts_data)
   ),
 
 # Prepare parameters ----------------------------------------------------------------------------------------------
   tar_target(
     stat_names,
-    c("weight_stat", "dw_stat", "water_temp_stat", "T_response_stat", "P_excr_stat", 
-    "L_excr_stat", "C_excr_stat", "P_uneat_stat", "L_uneat_stat", "C_uneat_stat", 
-    "food_prov_stat", "food_enc_stat", "rel_feeding_stat", "ing_pot_stat", "ing_act_stat", 
-    "E_assim_stat", "E_somat_stat", "anab_stat","catab_stat", "O2_stat", 
-    "NH4_stat", "total_excr_stat", "total_uneat_stat", "metab_stat", "biomass_stat"),
+    c(
+      "weight_stat", "dw_stat", "water_temp_stat", "T_response_stat", "P_excr_stat", "L_excr_stat", "C_excr_stat", 
+      "P_uneat_stat", "L_uneat_stat", "C_uneat_stat", "food_prov_stat", "food_enc_stat", "rel_feeding_stat", 
+      "ing_pot_stat", "ing_act_stat", "E_assim_stat", "E_somat_stat", "anab_stat","catab_stat", "O2_stat", 
+      "NH4_stat", "total_excr_stat", "total_uneat_stat", "metab_stat", "biomass_stat"
+    ),
   ),
 
   tar_target(
@@ -137,14 +141,14 @@ list(
             units::drop_units()
         )
       c(
-        't_start' = min(farm_ts_data$day[farm_ts_data$farm_ID == farm_IDs]),
-        't_end' = max(farm_ts_data$day[farm_ts_data$farm_ID == farm_IDs]),
+        't_start' = min(farm_ts_data$day),
+        't_end' = max(farm_ts_data$day),
         'dt' = 1,
         'nruns' = 5000,
         'prod' = farm_production$tonnes_per_farm[farm_production$farm_id == farm_IDs]
       )
     },
-    pattern = farm_IDs
+    pattern = map(farm_IDs, farm_ts_data)
   ),
   
   tar_target(
@@ -166,7 +170,7 @@ list(
       fg <- farm_growth(
         pop_params = all_params,
         species_params = all_params,
-        water_temp = farm_ts_data$temp_c[farm_ts_data$farm_ID == farm_IDs],
+        water_temp = farm_ts_data$temp_c,
         feed_params = feed_params,
         times = farm_ID_data,
         N_pop = N_pop,
@@ -183,20 +187,27 @@ list(
             )
         })
     },
-    pattern = cross(map(farm_IDs, N_pop, farm_ID_data), map(feed_params, feed_names))
+    pattern = cross(map(farm_IDs, N_pop, farm_ID_data, farm_ts_data), map(feed_params, feed_names))
   ),
 
   tar_target(
     farm_results,
     command = {
       farm_run[[stat_names]] %>% 
-        mutate(sd = sd/mean) %>%
+        mutate(sd_mean = sd/mean) %>%
         group_by(farm_ID, feed, t) %>%
         reframe(
           mean = sumna(mean),
-          sd = sumna(sd)*mean,
+          sd_mean = sumna(sd_mean),
+          sd = sd_mean*mean,
           measure = as.factor(stat_names)
-        )
+        ) %>% 
+      # Fish are given no food on harvest day
+      group_by(farm_ID) %>% 
+      mutate(last_t = max(t)) %>% 
+      ungroup() %>% 
+      filter(t != last_t) %>% 
+      dplyr::select(-last_t)
     },
     pattern = cross(farm_run, stat_names)
   ),
@@ -205,7 +216,14 @@ list(
     cohort_results,
     command = {
       cohort_1 <- farm_run[[stat_names]] %>% 
-        mutate(sd = sd/mean)
+        mutate(sd_mean = sd/mean) %>% 
+      # Fish are given no food on harvest day
+      group_by(farm_ID) %>% 
+      mutate(last_t = max(t)) %>% 
+      ungroup() %>% 
+      filter(t != last_t) %>% 
+      dplyr::select(-last_t)
+      
       cohort_2 <- farm_to_cohort(cohort_1, time_offset = 365)
       cohort_3 <- farm_to_cohort(cohort_1, time_offset = 730)
       cohort_1 <- farm_to_cohort(cohort_1, time_offset = 0)
@@ -216,10 +234,11 @@ list(
         group_by(farm_ID, feed, t) %>%
         reframe(
           mean = sumna(mean),
-          sd = sumna(sd)*mean,
+          sd_mean = sumna(sd_mean),
+          sd = sd_mean*mean,
           measure = as.factor(stat_names)
         )
     },
-    pattern = farm_results
+    pattern = cross(farm_run, stat_names)
   )
 )

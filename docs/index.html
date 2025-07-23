@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Dr Tormey Reimer">
-<meta name="dcterms.date" content="2025-07-10">
+<meta name="dcterms.date" content="2025-07-23">
 
 <title>Local to Global Mariculture Modelling</title>
 <style>
@@ -22,7 +22,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="index_files/libs/clipboard/clipboard.min.js"></script>
@@ -36,6 +56,35 @@ ul.task-list li input[type="checkbox"] {
 <link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="index_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="extra.css">
 </head>
@@ -48,10 +97,30 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents"><span class="header-section-number">1</span> Table of Contents</a></li>
-  <li><a href="#data-analysis" id="toc-data-analysis" class="nav-link" data-scroll-target="#data-analysis"><span class="header-section-number">2</span> Data analysis</a></li>
+  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents"><span class="header-section-number">1</span> Table of Contents</a>
+  <ul class="collapse">
+  <li><a href="#main-analysis" id="toc-main-analysis" class="nav-link" data-scroll-target="#main-analysis"><span class="header-section-number">1.1</span> Main analysis</a></li>
+  <li><a href="#extra-analysis" id="toc-extra-analysis" class="nav-link" data-scroll-target="#extra-analysis"><span class="header-section-number">1.2</span> Extra analysis</a></li>
+  </ul></li>
+  <li><a href="#model-functioning" id="toc-model-functioning" class="nav-link" data-scroll-target="#model-functioning"><span class="header-section-number">2</span> Model functioning</a>
+  <ul class="collapse">
+  <li><a href="#population-and-biomass" id="toc-population-and-biomass" class="nav-link" data-scroll-target="#population-and-biomass"><span class="header-section-number">2.1</span> Population and biomass</a></li>
+  <li><a href="#sec-model-feeding" id="toc-sec-model-feeding" class="nav-link" data-scroll-target="#sec-model-feeding"><span class="header-section-number">2.2</span> Feed provision and feeding response to temperature</a></li>
+  </ul></li>
+  <li><a href="#sec-feeds" id="toc-sec-feeds" class="nav-link" data-scroll-target="#sec-feeds"><span class="header-section-number">3</span> Modelled experimental feeds</a></li>
+  <li><a href="#param-sensitivity" id="toc-param-sensitivity" class="nav-link" data-scroll-target="#param-sensitivity"><span class="header-section-number">4</span> Model sensitivity to parameter changes</a></li>
+  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs"><span class="header-section-number">5</span> Inputs</a>
+  <ul class="collapse">
+  <li><a href="#total-inputs-uneaten-and-excreted" id="toc-total-inputs-uneaten-and-excreted" class="nav-link" data-scroll-target="#total-inputs-uneaten-and-excreted"><span class="header-section-number">5.1</span> Total inputs (uneaten and excreted)</a>
+  <ul class="collapse">
+  <li><a href="#through-time" id="toc-through-time" class="nav-link" data-scroll-target="#through-time"><span class="header-section-number">5.1.1</span> Through time</a></li>
+  <li><a href="#at-harvest" id="toc-at-harvest" class="nav-link" data-scroll-target="#at-harvest"><span class="header-section-number">5.1.2</span> At harvest</a></li>
+  </ul></li>
+  <li><a href="#n-inputs" id="toc-n-inputs" class="nav-link" data-scroll-target="#n-inputs"><span class="header-section-number">5.2</span> N inputs</a></li>
+  </ul></li>
+  <li><a href="#code-and-packages-used" id="toc-code-and-packages-used" class="nav-link" data-scroll-target="#code-and-packages-used"><span class="header-section-number">6</span> Code and packages used</a></li>
   </ul>
-<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://data.nasa.gov/"><i class="bi bi-link-45deg"></i>NASA Open Data</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="data-import.py"><i class="bi bi-file-code"></i>Data Import Code</a></li></ul></div></nav>
+<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="index.qmd"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
@@ -77,7 +146,7 @@ ul.task-list li input[type="checkbox"] {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">10 July 2025</p>
+      <p class="date">23 July 2025</p>
     </div>
   </div>
   
@@ -91,32 +160,220 @@ ul.task-list li input[type="checkbox"] {
 
 <section id="table-of-contents" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Table of Contents</h1>
-<p>This project contains a comprehensive analysis of mariculture modelling from local to global scales. Below you’ll find links to all the main documentation pages:</p>
-<hr>
-<ol type="1">
-<li><p><strong><a href="01_tidying_data.html">Data Tidying</a></strong> Initial data cleaning and preparation procedures</p></li>
-<li><p><strong><a href="02_extracting_production_locations.html">Extracting Production Locations</a></strong><br>
-Identification and processing of mariculture production site locations</p></li>
-<li><p><strong><a href="03_assessing_species_potential.html">Assessing Species Potential</a></strong><br>
-Evaluation of species suitability for different locations</p></li>
-<li><p><strong><a href="04_extracting_temperatures.html">Extracting Temperatures</a></strong><br>
-Temperature data extraction and processing for model inputs</p></li>
-<li><p><strong><a href="05_formulating_feeds.html">Formulating Feeds</a></strong><br>
-Feed composition analysis and formulation procedures</p></li>
-<li><p><strong><a href="06_run_atlantic_salmon_model.html">Running Atlantic Salmon Model</a></strong><br>
-Atlantic salmon growth model implementation and execution</p></li>
-<li><p><strong><a href="07_species_layers.html">Species Layers</a></strong><br>
-Spatial analysis of species distribution layers</p></li>
-<li><p><strong><a href="08_relative_N_inputs.html">Relative N Inputs</a></strong><br>
-Analysis of nitrogen input patterns and their relative impacts</p></li>
-</ol>
-<hr>
+<p>All code and processes for this project are linked below. Note that some scripts require access to raw data which is not stored on Github. While this page (the index) has code that runs prior to rendering, all code in the subsequent pages has not been run for rendering.</p>
+<section id="main-analysis" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="main-analysis"><span class="header-section-number">1.1</span> Main analysis</h2>
+<p>The main analysis for this project focuses on the differences in total protein, carbohydrate, lipid and nitrogen losses between feeds.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Page</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong><a href="01_tidying_data.html">Data Tidying</a></strong></td>
+<td style="text-align: left;">Initial data tidying and preparation</td>
+</tr>
+<tr class="even">
+<td><strong><a href="02_extracting_production_locations.html">Extracting Production Locations</a></strong></td>
+<td style="text-align: left;">Identification and processing of mariculture production site locations</td>
+</tr>
+<tr class="odd">
+<td><strong><a href="03_assessing_species_potential.html">Assessing Species Potential</a></strong></td>
+<td style="text-align: left;">Evaluation of species suitability for different locations</td>
+</tr>
+<tr class="even">
+<td><strong><a href="04_extracting_temperatures.html">Extracting Temperatures</a></strong></td>
+<td style="text-align: left;">SST data extraction and processing for model inputs</td>
+</tr>
+<tr class="odd">
+<td><strong><a href="05_formulating_feeds.html">Formulating Feeds</a></strong></td>
+<td style="text-align: left;">Feed composition formulation for model runs</td>
+</tr>
+<tr class="even">
+<td><strong><a href="06_run_atlantic_salmon_model.html">Running Atlantic Salmon Model</a></strong></td>
+<td style="text-align: left;">Atlantic salmon growth model execution</td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="data-analysis" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Data analysis</h1>
+<section id="extra-analysis" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="extra-analysis"><span class="header-section-number">1.2</span> Extra analysis</h2>
+<p>The extra analyses for this project involved some exploration into potential impacts of nutrient losses. This will likely not make it into the final manuscript.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Page</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong><a href="07_species_layers.html">Species Layers</a></strong></td>
+<td style="text-align: left;">Spatial analysis of species distribution layers</td>
+</tr>
+<tr class="even">
+<td><strong><a href="08_relative_N_inputs.html">Relative N Inputs</a></strong></td>
+<td style="text-align: left;">Analysis of nitrogen input patterns and their relative impacts</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="model-functioning" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Model functioning</h1>
+<section id="population-and-biomass" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="population-and-biomass"><span class="header-section-number">2.1</span> Population and biomass</h2>
+<p>Each farm’s final population was calculated by dividing the production tonnage required by the average modelled individual harvest size for each farm (when feed reference feed, <a href="#fig-harvest-size" class="quarto-xref">Figure&nbsp;1</a>). A population timeseries was then generated using the standard mortality rate (0.06 % d<span class="math inline">\(^{-1}\)</span>).</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-harvest-size" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-harvest-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-harvest-size-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-harvest-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Frequency distribution of harvest sizes used to create the population timeseries for each farm, as predicted by the fish-growth model.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Using this method, a farm’s ‘population’ is not a good representation of the actual number of individuals being farmed, but it ensures each farm location is producing the correct tonnage while allowing comparisons between the different feeds.</p>
+<p>By this method, farm biomass as predicted by the model predicted farm tonnage relatively accurately. Predicted farm biomass was within -3.2% – 3% of tonnage produced.</p>
+</section>
+<section id="sec-model-feeding" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="sec-model-feeding"><span class="header-section-number">2.2</span> Feed provision and feeding response to temperature</h2>
+</section>
+</section>
+<section id="sec-feeds" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Modelled experimental feeds</h1>
+</section>
+<section id="param-sensitivity" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Model sensitivity to parameter changes</h1>
+<p>Parameter sensitivity was tested by varying each parameter by <span class="math inline">\(\pm 10\)</span>% and calculating sensitivity as <span class="math inline">\(S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}\)</span>, where <span class="math inline">\(S\)</span> is the sensitivity of the measured variable to changes in parameter <span class="math inline">\(p\)</span>, and <span class="math inline">\(P_{1.1}\)</span>, <span class="math inline">\(P_{0.9}\)</span>, and <span class="math inline">\(P_{1}\)</span> are the value of the measured variable when the model is run with parameter <span class="math inline">\(p\)</span> at 110%, 90%, and 100% of its value respectively. All parameters in Table <strong>?@tbl-params</strong> were tested. The population-level parameters (<span class="math inline">\(\overline{W}\)</span>, <span class="math inline">\(\Delta{W}\)</span>, <span class="math inline">\(\overline{I_{max}}\)</span>, <span class="math inline">\(\Delta{I_{max}}\)</span>, <span class="math inline">\(\overline{F}\)</span>, <span class="math inline">\(\Delta{F}\)</span>) were tested with a population of of 5000 on a random 10% of farms, while all other parameters were tested across all farms with a population of 10.</p>
+</section>
+<section id="inputs" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Inputs</h1>
+<section id="total-inputs-uneaten-and-excreted" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="total-inputs-uneaten-and-excreted"><span class="header-section-number">5.1</span> Total inputs (uneaten and excreted)</h2>
+<section id="through-time" class="level3" data-number="5.1.1">
+<h3 data-number="5.1.1" class="anchored" data-anchor-id="through-time"><span class="header-section-number">5.1.1</span> Through time</h3>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-uneat-excr-plot-ts" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-uneat-excr-plot-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-uneat-excr-plot-ts-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-uneat-excr-plot-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Initial look at excreted and uneaten through time
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>While the actual difference in excreted and uneaten feed (total loss) varied between countries and through time (<a href="#fig-uneat-excr-plot-ts" class="quarto-xref">Figure&nbsp;2</a>), relative changes between the feeds remained consistent. In both the US and Australia (all done so far), total excreted faeces was 23% (<span class="math inline">\(\pm\)</span> 0.1%) higher in the plant-dominant feed. Differences in total uneaten feed were much smaller at 0.2% (<span class="math inline">\(\pm\)</span> 0.1%) lower in the plant-dominant feed.</p>
+</section>
+<section id="at-harvest" class="level3" data-number="5.1.2">
+<h3 data-number="5.1.2" class="anchored" data-anchor-id="at-harvest"><span class="header-section-number">5.1.2</span> At harvest</h3>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="index_files/figure-html/uneat-excr-plot-end-1.png" class="img-fluid figure-img" width="816"></p>
+<figcaption>Caption</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="n-inputs" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="n-inputs"><span class="header-section-number">5.2</span> N inputs</h2>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="index_files/figure-html/N-loss-plot-total-1.png" class="img-fluid figure-img" width="816"></p>
+<figcaption>Caption</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="code-and-packages-used" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Code and packages used</h1>
+<p>All analysis was conducted in R version 4.4.2 “Pile of Leaves” <span class="citation" data-cites="R_base">(<a href="#ref-R_base" role="doc-biblioref">R Core Team 2019</a>)</span>. Major packages used include packages <code>aquamapsdata</code>, version 0.1.6 <span class="citation" data-cites="aquamapsdata">(<a href="#ref-aquamapsdata" role="doc-biblioref">Skyttner 2020</a>)</span>, <code>arrow</code>, version 20.0.0.2 <span class="citation" data-cites="arrow">(<a href="#ref-arrow" role="doc-biblioref">Richardson et al. 2024</a>)</span>, <code>dplyr</code>, version 1.1.4 <span class="citation" data-cites="dplyr">(<a href="#ref-dplyr" role="doc-biblioref">Wickham et al. 2023</a>)</span>, <code>furrr</code>, version 0.3.1 <span class="citation" data-cites="furrr">(<a href="#ref-furrr" role="doc-biblioref">Vaughan and Dancho 2022</a>)</span>, <code>future</code>, version 1.58.0 <span class="citation" data-cites="future">(<a href="#ref-future" role="doc-biblioref">Bengtsson 2021</a>)</span>, <code>ggplot2</code>, version 3.5.2 <span class="citation" data-cites="ggplot2">(<a href="#ref-ggplot2" role="doc-biblioref">Wickham 2016</a>)</span>, <code>lubridate</code>, version 1.9.4 <span class="citation" data-cites="lubridate">(<a href="#ref-lubridate" role="doc-biblioref">Grolemund and Wickham 2011</a>)</span>, <code>magrittr</code>, version 2.0.3 <span class="citation" data-cites="magrittr">(<a href="#ref-magrittr" role="doc-biblioref">Bache and Wickham 2022</a>)</span>, <code>rnaturalearth</code>, version 1.1.0 <span class="citation" data-cites="rnaturalearth">(<a href="#ref-rnaturalearth" role="doc-biblioref">Massicotte and South, n.d.</a>)</span>, <code>sf</code>, version 1.0.21 <span class="citation" data-cites="sf">(<a href="#ref-sf" role="doc-biblioref">Pebesma 2018</a>)</span>, <code>stringr</code>, version 1.5.1 <span class="citation" data-cites="stringr">(<a href="#ref-stringr" role="doc-biblioref">Wickham 2023</a>)</span>, <code>targets</code>, version 1.11.3 <span class="citation" data-cites="targets">(<a href="#ref-targets" role="doc-biblioref">Landau 2021</a>)</span>, <code>terra</code>, version 1.8.60 <span class="citation" data-cites="terra">(<a href="#ref-terra" role="doc-biblioref">Hijmans 2024</a>)</span>, <code>tidyr</code>, version 1.3.1 <span class="citation" data-cites="tidyr">(<a href="#ref-tidyr" role="doc-biblioref">Wickham, Vaughan, and Girlich 2024</a>)</span>, <code>units</code>, version 0.8.7 <span class="citation" data-cites="units">(<a href="#ref-units" role="doc-biblioref">Pebesma, Mailund, and Hiebert 2016</a>)</span>, and <code>worrms</code>, version 0.4.3 <span class="citation" data-cites="worrms">(<a href="#ref-worrms" role="doc-biblioref">Chamberlain and Vanhoorne. 2025</a>)</span>.</p>
+<p>For a full list of R packages used see the lockfile on <a href="https://www.github.com">Github</a>. This manuscript was written in Quarto <span class="citation" data-cites="quarto">(<a href="#ref-quarto" role="doc-biblioref">Allaire et al. 2024</a>)</span> using TinyTex <span class="citation" data-cites="tinytex">(<a href="#ref-tinytex" role="doc-biblioref">Xie 2017</a>)</span> and the acronyms extension <span class="citation" data-cites="acronyms">(<a href="#ref-acronyms" role="doc-biblioref">Chaput 2024</a>)</span>.</p>
+
 </section>
 
-</main>
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-quarto" class="csl-entry" role="listitem">
+Allaire, J. J., Charles Teague, Carlos Scheidegger, Yihui Xie, and Christophe Dervieux. 2024. <span>‘<span>Quarto</span>’</span>. <a href="https://doi.org/10.5281/zenodo.5960048">https://doi.org/10.5281/zenodo.5960048</a>.
+</div>
+<div id="ref-magrittr" class="csl-entry" role="listitem">
+Bache, Stefan Milton, and Hadley Wickham. 2022. <em>Magrittr: A Forward-Pipe Operator for r</em>. <a href="https://CRAN.R-project.org/package=magrittr">https://CRAN.R-project.org/package=magrittr</a>.
+</div>
+<div id="ref-future" class="csl-entry" role="listitem">
+Bengtsson, Henrik. 2021. <span>‘A Unifying Framework for Parallel and Distributed Processing in r Using Futures’</span>. <em>The R Journal</em> 13 (2): 208–27. <a href="https://doi.org/10.32614/RJ-2021-048">https://doi.org/10.32614/RJ-2021-048</a>.
+</div>
+<div id="ref-worrms" class="csl-entry" role="listitem">
+Chamberlain, Scott, and Bart Vanhoorne. 2025. <em>Worrms: World Register of Marine Species (WoRMS) Client</em>. <a href="https://docs.ropensci.org/worrms/">https://docs.ropensci.org/worrms/</a>.
+</div>
+<div id="ref-acronyms" class="csl-entry" role="listitem">
+Chaput, Remy. 2024. <span>‘<span class="nocase">acronyms</span>’</span>. <a href="https://github.com/rchaput/acronyms">https://github.com/rchaput/acronyms</a>.
+</div>
+<div id="ref-lubridate" class="csl-entry" role="listitem">
+Grolemund, Garrett, and Hadley Wickham. 2011. <span>‘Dates and Times Made Easy with <span class="nocase">lubridate</span>’</span>. <em>Journal of Statistical Software</em> 40 (3): 1–25. <a href="https://www.jstatsoft.org/v40/i03/">https://www.jstatsoft.org/v40/i03/</a>.
+</div>
+<div id="ref-terra" class="csl-entry" role="listitem">
+Hijmans, Robert J. 2024. <em>Terra: Spatial Data Analysis</em>. <a href="https://CRAN.R-project.org/package=terra">https://CRAN.R-project.org/package=terra</a>.
+</div>
+<div id="ref-targets" class="csl-entry" role="listitem">
+Landau, William Michael. 2021. <span>‘The Targets r Package: A Dynamic Make-Like Function-Oriented Pipeline Toolkit for Reproducibility and High-Performance Computing’</span>. <em>Journal of Open Source Software</em> 6 (57): 2959. <a href="https://doi.org/10.21105/joss.02959">https://doi.org/10.21105/joss.02959</a>.
+</div>
+<div id="ref-rnaturalearth" class="csl-entry" role="listitem">
+Massicotte, Philippe, and Andy South. n.d. <em>Rnaturalearth: World Map Data from Natural Earth</em>. <a href="https://github.com/ropensci/rnaturalearth">https://github.com/ropensci/rnaturalearth</a>.
+</div>
+<div id="ref-sf" class="csl-entry" role="listitem">
+Pebesma, Edzer. 2018. <span>‘Simple Features for r: Standardized Support for Spatial Vector Data’</span>. <em>The R Journal</em> 10 (1): 439–46. <a href="https://doi.org/10.32614/RJ-2018-009">https://doi.org/10.32614/RJ-2018-009</a>.
+</div>
+<div id="ref-units" class="csl-entry" role="listitem">
+Pebesma, Edzer, Thomas Mailund, and James Hiebert. 2016. <span>‘Measurement Units in <span>R</span>’</span>. <em>R Journal</em> 8 (2): 486–94. <a href="https://doi.org/10.32614/RJ-2016-061">https://doi.org/10.32614/RJ-2016-061</a>.
+</div>
+<div id="ref-R_base" class="csl-entry" role="listitem">
+R Core Team. 2019. <em>R: A Language and Environment for Statistical Computing</em>. Vienna, Austria: R Foundation for Statistical Computing. <a href="https://www.R-project.org">https://www.R-project.org</a>.
+</div>
+<div id="ref-arrow" class="csl-entry" role="listitem">
+Richardson, Neal, Ian Cook, Nic Crane, Dewey Dunnington, Romain François, Jonathan Keane, Dragoș Moldovan-Grünfeld, Jeroen Ooms, Jacob Wujciak-Jens, and Apache Arrow. 2024. <span>‘Arrow: Integration to ’Apache’ ’Arrow’’</span>. <a href="https://CRAN.R-project.org/package=arrow">https://CRAN.R-project.org/package=arrow</a>.
+</div>
+<div id="ref-aquamapsdata" class="csl-entry" role="listitem">
+Skyttner, Markus. 2020. <em>Aquamapsdata: Curated Data from AquaMaps.org</em>. <a href="https://github.com/raquamaps/aquamapsdata">https://github.com/raquamaps/aquamapsdata</a>.
+</div>
+<div id="ref-furrr" class="csl-entry" role="listitem">
+Vaughan, Davis, and Matt Dancho. 2022. <em>Furrr: Apply Mapping Functions in Parallel Using Futures</em>. <a href="https://CRAN.R-project.org/package=furrr">https://CRAN.R-project.org/package=furrr</a>.
+</div>
+<div id="ref-ggplot2" class="csl-entry" role="listitem">
+Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data Analysis</em>. Springer-Verlag New York. <a href="https://ggplot2.tidyverse.org">https://ggplot2.tidyverse.org</a>.
+</div>
+<div id="ref-stringr" class="csl-entry" role="listitem">
+———. 2023. <em>Stringr: Simple, Consistent Wrappers for Common String Operations</em>. <a href="https://CRAN.R-project.org/package=stringr">https://CRAN.R-project.org/package=stringr</a>.
+</div>
+<div id="ref-dplyr" class="csl-entry" role="listitem">
+Wickham, Hadley, Romain François, Lionel Henry, Kirill Müller, and Davis Vaughan. 2023. <em>Dplyr: A Grammar of Data Manipulation</em>. <a href="https://CRAN.R-project.org/package=dplyr">https://CRAN.R-project.org/package=dplyr</a>.
+</div>
+<div id="ref-tidyr" class="csl-entry" role="listitem">
+Wickham, Hadley, Davis Vaughan, and Maximilian Girlich. 2024. <em>Tidyr: Tidy Messy Data</em>. <a href="https://CRAN.R-project.org/package=tidyr">https://CRAN.R-project.org/package=tidyr</a>.
+</div>
+<div id="ref-tinytex" class="csl-entry" role="listitem">
+Xie, Yihui. 2017. <span>‘Tinytex: Helper Functions to Install and Maintain TeX Live, and Compile LaTeX Documents’</span>. <a href="https://cran.r-project.org/web/packages/tinytex">https://cran.r-project.org/web/packages/tinytex</a>.
+</div>
+</div></section></div></main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {

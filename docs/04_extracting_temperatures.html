@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Tormey Reimer">
-<meta name="dcterms.date" content="2025-07-10">
+<meta name="dcterms.date" content="2025-07-23">
 
 <title>Extracting salmon farm temperature data</title>
 <style>
@@ -116,7 +116,7 @@ window.Quarto = {
   <li><a href="#missing-data" id="toc-missing-data" class="nav-link" data-scroll-target="#missing-data"><span class="header-section-number">3</span> Missing data</a></li>
   <li><a href="#omit-farms" id="toc-omit-farms" class="nav-link" data-scroll-target="#omit-farms"><span class="header-section-number">4</span> Omit farms</a></li>
   </ul>
-<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://data.nasa.gov/"><i class="bi bi-link-45deg"></i>NASA Open Data</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="data-import.py"><i class="bi bi-file-code"></i>Data Import Code</a></li></ul></div></nav>
+<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="index.qmd"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
@@ -141,7 +141,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">10 July 2025</p>
+      <p class="date">23 July 2025</p>
     </div>
   </div>
   
@@ -165,8 +165,6 @@ window.Quarto = {
 <li>Determine which farms have a mean temperature &lt;=6 C (will be omitted)</li>
 </ol>
 <div class="cell">
-<details class="code-fold">
-<summary>R setup</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magrittr)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
@@ -187,18 +185,13 @@ window.Quarto = {
 <span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(conflicted)</span>
 <span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">conflicts_prefer</span>(dplyr<span class="sc">::</span><span class="fu">select</span>(), dplyr<span class="sc">::</span><span class="fu">filter</span>(), <span class="at">.quiet =</span> T)</span>
 <span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"00_dirs.R"</span>)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>overwrite <span class="ot">&lt;-</span> F</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">here</span>(<span class="st">"src"</span>) <span class="sc">%&gt;%</span> <span class="fu">list.files</span>(<span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> <span class="fu">walk</span>(source)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="farm-locations" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Farm locations</h1>
 <p>Get global farm locations and determine whether they’re in the southern or northern hemisphere.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Get all farm locations</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>farms <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"locations_w_species_fao_area_stocking.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(model_name <span class="sc">==</span> this_species) <span class="sc">%&gt;%</span> </span>
@@ -208,12 +201,9 @@ window.Quarto = {
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>hemi <span class="ot">&lt;-</span> <span class="fu">cbind</span>(farms<span class="sc">$</span>farm_id, sf<span class="sc">::</span><span class="fu">st_coordinates</span>(farms<span class="sc">$</span>geometry)) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">farm_ID =</span> V1, <span class="at">lon =</span> X, <span class="at">lat =</span> Y) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"farm_coords.parquet"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <p>Get daily temperatures for a period of 1100 days (to cover 3 cohorts of 548 days each). Whether a farm is in the southern or northern hemisphere determines the cohorts’ start date.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Create typical year of SST for all farms</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>day_number <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">1100</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>temp_data <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">map_dfc</span>(<span class="at">.x =</span> day_number, <span class="at">.f =</span> <span class="cf">function</span>(day_number){</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  rast_day_number <span class="ot">&lt;-</span> <span class="fu">if_else</span>(day_number <span class="sc">&lt;=</span> <span class="dv">365</span>, <span class="at">true =</span> day_number, <span class="at">false =</span> day_number<span class="dv">-365</span>)</span>
@@ -236,14 +226,11 @@ window.Quarto = {
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>farms_w_temp_df <span class="ot">&lt;-</span> farms <span class="sc">%&gt;%</span></span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(temp_data, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"farm_id"</span> <span class="ot">=</span> <span class="st">"farm_id"</span>)) <span class="sc">%&gt;%</span></span>
 <span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"day"</span>, <span class="at">values_to =</span> <span class="st">"temp_c"</span>, <span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"day_"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 <section id="missing-data" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Missing data</h1>
 <div class="cell">
-<details class="code-fold">
-<summary>Check which farms have missing temp data</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  missing_temp_farms <span class="ot">&lt;-</span> farms_w_temp_df <span class="sc">%&gt;%</span> </span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(temp_c <span class="sc">%&gt;%</span> <span class="fu">is.na</span>()) <span class="sc">%&gt;%</span> </span>
@@ -258,11 +245,8 @@ window.Quarto = {
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>farm_list <span class="ot">&lt;-</span> farms_w_temp_df <span class="sc">%&gt;%</span></span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(farm_id) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_split</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <div class="cell">
-<details class="code-fold">
-<summary>Loop through and assigned temp of farms missing temp data, to the farm adjacent (the nearest complete index before)</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(farm_list)){</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Checking temp data for "</span>, <span class="fu">unique</span>(farm_list[[i]]<span class="sc">$</span>farm_id)) </span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="fu">unique</span>(<span class="fu">is.na</span>(farm_list[[i]]<span class="sc">$</span>temp_c))){ <span class="co">#if temp data is NA see below</span></span>
@@ -282,11 +266,8 @@ window.Quarto = {
 <span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the new locations data </span></span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>farms_w_temp_df <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(farm_list)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 <div class="cell">
-<details class="code-fold">
-<summary>Save data</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># With geometry, for plotting</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> farms_w_temp_df, </span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="fu">file.path</span>(input_farm_coords_path, <span class="fu">sprintf</span>(<span class="st">"%s_locations_w_temps.qs"</span>, this_species)))</span>
@@ -294,15 +275,12 @@ window.Quarto = {
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Without geometry, for targets</span></span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>sf<span class="sc">::</span><span class="fu">st_drop_geometry</span>(farms_w_temp_df) <span class="sc">%&gt;%</span></span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_parquet</span>(<span class="fu">file.path</span>(input_farm_sst_path, <span class="st">"farm_SST_extracted.parquet"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 <section id="omit-farms" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Omit farms</h1>
 <p>Farms are omitted if the mean farm temp &lt;= 6<span class="math inline">\(^\circ\)</span>C.</p>
 <div class="cell">
-<details class="code-fold">
-<summary>Get the mean temps for each farm and omit farms that are too cold</summary>
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>mean_farm_temp <span class="ot">&lt;-</span> farm_list <span class="sc">%&gt;%</span> </span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_df</span>(<span class="at">.f =</span> <span class="cf">function</span>(x){</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.frame</span>(<span class="at">farm_id =</span> <span class="fu">unique</span>(x<span class="sc">$</span>farm_id), </span>
@@ -317,7 +295,6 @@ window.Quarto = {
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> farms_to_omit, </span>
 <span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">file =</span> <span class="fu">file.path</span>(input_farm_coords_path, <span class="fu">sprintf</span>(<span class="st">"%s_farms_to_omit.qs"</span>, this_species)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 
