@@ -220,7 +220,7 @@ for (sm in seq_along(sens_measures)) {
 
 # Run farms
 
-Note that this takes a long time - each branch of farmrun takes ~5 minutes, and a maximum of ~12 workers can run at a time. The total therefore takes ~17 hours.
+Note that this takes a long time - each branch of farmrun takes ~5.3 minutes, and a maximum of ~12 workers can run at a time. The total therefore takes ~17 hours.
 
 ```{r}
 #| label: run-farms-pipeline
@@ -232,7 +232,10 @@ targets::tar_validate()
 # targets::tar_outdated()
 targets::tar_prune()
 
-targets::tar_make(seconds_meta_append = 90)
+targets::tar_make(
+  names = c("farm_run", "farm_results", "cohort_results"),
+  seconds_meta_append = 90
+)
 
 meta <- targets::tar_meta() %>% 
   filter(grepl("farm_run", name))
@@ -243,18 +246,30 @@ meta$seconds %>% mean()/60 # minutes per target
 #| label: all-farms-cohorts-results
 
 targets::tar_load(stat_names)
-targets::tar_load(farm_results)
-targets::tar_load(cohort_results)
+targets::tar_load(farm_IDs)
+targets::tar_load(feed_names)
+branches <- length(stat_names) * length(farm_IDs) * length(feed_names)
+branches <- split(1:branches, ceiling(1:branches/length(farm_IDs)))
 
-purrr::map(stat_names, function(stat_name) {
-  farm_results %>% 
-    filter(measure == stat_name) %>% 
-    qsave(file.path(output_model_farm_path, str_c(stat_name, "_all_farms.qs")))
+for (stat_name in stat_names) {
+  farm_results <- purrr::map(branches, function(br) {
+    targets::tar_load(farm_results, branches = br)
+    farm_results %>% 
+      filter(measure == stat_name)
+  })
+  farm_results <- bind_rows(farm_results)
+  qsave(farm_results, file.path(output_model_farm_path, str_c(stat_name, "_all_farms.qs")))
 
-  cohort_results %>% 
-    filter(measure == stat_name) %>% 
-    qsave(file.path(output_model_cohort_path, str_c(stat_name, "_all_farms.qs")))
-})
+  cohort_results <- purrr::map(branches, function(br) {
+    targets::tar_load(cohort_results, branches = br)
+    cohort_results %>% 
+      filter(measure == stat_name)
+  })
+  cohort_results <- bind_rows(cohort_results)
+  qsave(cohort_results, file.path(output_model_cohort_path, str_c(stat_name, "_all_farms.qs")))
+
+  print(str_c("Files saved for ", stat_name))
+}
 
 rm(farm_results, cohort_results)
 ```
@@ -290,8 +305,8 @@ purrr::map(stat_names, function(stat_name) {
     mutate(
       biom_sd_mean = biom_sd/biom_mean,
       mean_perbiom = mean/biom_mean,
-      sd_perbiom = (sd_mean+biom_sd_mean) * mean_perbiom
-    ) %>% 
+      sd_perbiom = (sd/mean+biom_sd_mean) * mean_perbiom
+    ) %>%
       qs::qsave(file.path(per_biomass_farm_path, str_c(stat_name, "_all_farms.qs")))
 
   cohort_fnms %>% 
@@ -307,8 +322,8 @@ purrr::map(stat_names, function(stat_name) {
     mutate(
       biom_sd_mean = biom_sd/biom_mean,
       mean_perbiom = mean/biom_mean,
-      sd_perbiom = (sd_mean+biom_sd_mean) * mean_perbiom
-    ) %>% 
+      sd_perbiom = (sd/mean+biom_sd_mean) * mean_perbiom
+    ) %>%
       qs::qsave(file.path(per_biomass_cohort_path, str_c(stat_name, "_all_farms.qs")))
 })
 ```
