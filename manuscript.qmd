@@ -252,52 +252,6 @@ cowplot::plot_grid(
 
 ## Modelled experimental feeds {#sec-feeds}
 
-```{r feeds}
-feed_params <- file.path(output_species_data_path, "feed_params.qs") %>%
-  qs::qread() 
-
-feed_summary <- map_dfr(names(feed_params), function(feed) {
-  df <- feed_params[[feed]]
-  map_dfr(c("Proteins", "Lipids", "Carbohydrates"), function(macro) {
-    contrib <- df[[macro]]$proportion * df[[macro]]$macro
-    total <- sum(contrib)
-    digest <- sum(df[[macro]]$digest * contrib) / total
-        tibble(
-      feed = feed,
-      macro = macro,
-      total = total,
-      digest = digest
-    )
-  })
-}) %>%
-  mutate(macro = factor(macro, levels = c("Proteins", "Lipids", "Carbohydrates"), labels = c("P", "L", "C")),
-         feed = factor(feed, levels = c("reference", "past", "future")),
-         total_r = total * 100 %>% round(1),
-         digest_r = digest * 100 %>% round(1))
-```
-
-The reference feed was 
-`r round(100*filter(feed_summary, feed == "reference", macro == "P")$total, 1)`% protein, 
-`r round(100*filter(feed_summary, feed == "reference", macro == "L")$total, 1)`% lipid, and 
-`r round(100*filter(feed_summary, feed == "reference", macro == "C")$total, 1)`% carbohydrate, the past feed was 
-`r round(100*filter(feed_summary, feed == "past", macro == "P")$total, 1)`% protein, 
-`r round(100*filter(feed_summary, feed == "past", macro == "L")$total, 1)`% lipid, and 
-`r round(100*filter(feed_summary, feed == "past", macro == "C")$total, 1)`% carbohydrate, and the future feed was 
-`r round(100*filter(feed_summary, feed == "future", macro == "P")$total, 1)`% protein, 
-`r round(100*filter(feed_summary, feed == "future", macro == "L")$total, 1)`% lipid, and 
-`r round(100*filter(feed_summary, feed == "future", macro == "C")$total, 1)`% carbohydrate.
-
-Ingredients are tracked seperately through the model with their own digestibility coefficients. 
-Overall, protein digestibility was 
-`r round(100*filter(feed_summary, feed == "reference", macro == "P")$digest, 1)`%,
-`r round(100*filter(feed_summary, feed == "past", macro == "P")$digest, 1)`%, and 
-`r round(100*filter(feed_summary, feed == "future", macro == "P")$digest, 1)`% and carbohydrate digestibility was 
-`r round(100*filter(feed_summary, feed == "reference", macro == "C")$digest, 1)`%,
-`r round(100*filter(feed_summary, feed == "past", macro == "C")$digest, 1)`%, and 
-`r round(100*filter(feed_summary, feed == "future", macro == "C")$digest, 1)`%
-within the reference, past, and future feeds respectively. 
-The digestibility of lipids was assumed to remain constant across all ingredients at `r round(100*filter(feed_summary, feed == "past", macro == "L")$digest, 1)`%. 
-
 ```{r fig-feed-summary-ideas}
 #| fig-height: 7.5
 #| fig-cap: | 

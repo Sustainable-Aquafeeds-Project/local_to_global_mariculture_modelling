@@ -306,6 +306,43 @@ patchwork_mercator(p_bigmap_feeding)
 
 # Modelled experimental feeds {#sec-feeds}
 
+```{r}
+#| label: feed-details
+
+feed_params <- find_read(output_species_data_path, "feed_params")
+
+feed_summary <- map_dfr(names(feed_params), function(feed) {
+  df <- feed_params[[feed]]
+  map_dfr(c("Proteins", "Lipids", "Carbohydrates"), function(macro) {
+    contrib <- df[[macro]]$proportion * df[[macro]]$macro
+    total <- sum(contrib)
+    digest <- sum(df[[macro]]$digest * contrib) / total
+        tibble(
+      feed = feed,
+      macro = macro,
+      total = total,
+      digest = digest
+    )
+  })
+}) %>%
+  mutate(macro = factor(macro, levels = c("Proteins", "Lipids", "Carbohydrates"), labels = c("P", "L", "C")),
+         feed = factor(feed, levels = c("reference", "past", "future")),
+         total_r = total * 100 %>% round(1),
+         digest_r = digest * 100 %>% round(1))
+```
+
+| Feed | Protein (%, %) | Lipid (%, %) | Carbohydrate (%, %) |
+|------|:----------:|:----------:|:----------:|
+| Plant-dominant | `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "P")$total, 1)` (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "P")$digest, 1)`) | 
+                   `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "L")$total, 1)` (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "L")$digest, 1)`) | 
+                   `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "C")$total, 1)` (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "C")$digest, 1)`) |
+| Marine-dominant | `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "P")$total, 1)` (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "P")$digest, 1)`) | 
+                    `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "L")$total, 1)` (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "L")$digest, 1)`) | 
+                    `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "C")$total, 1)` (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "C")$digest, 1)`) |
+| Novel-inclusive | `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "P")$total, 1)` (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "P")$digest, 1)`) | 
+                    `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "L")$total, 1)` (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "L")$digest, 1)`) | 
+                    `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "C")$total, 1)` (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "C")$digest, 1)`) |
+
 # Model sensitivity to parameter changes {#param-sensitivity}
 
 Parameter sensitivity was tested by varying each parameter by $\pm 10$% and calculating sensitivity as $S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}$, where $S$ is the sensitivity of the measured variable to changes in parameter $p$, and $P_{1.1}$, $P_{0.9}$, and $P_{1}$ are the value of the measured variable when the model is run with parameter $p$ at 110%, 90%, and 100% of its value respectively. 
