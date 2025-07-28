@@ -96,13 +96,6 @@ install_unit("g_fish")
 install_unit("kg_fish", "1000 g_fish")
 install_unit("t_fish", "1000 kg_fish")
 
-# Set up parallel processing
-# plan(multisession, workers = parallelly::availableCores()-1)
-
-# Filenames
-# species_params_excel <- c(file = file.path(input_species_param_path, "Species.xlsx"), sheet = "Atlantic salmon")
-# pop_params_excel <- c(file = file.path(input_species_param_path, "Population.xlsx"))
-
 species_params <- find_read(output_species_data_path, "species_params")
 pop_params <- find_read(output_species_data_path, "pop_params")
   
@@ -240,6 +233,76 @@ production <- find_read(output_farm_data_path, "farm_static_data") %>%
 By this method, farm biomass as predicted by the model predicted farm tonnage relatively accurately. Predicted farm biomass was within `r round(100*min(production$min_percdiff),1)`% -- `r round(100*max(production$max_percdiff),1)`% of tonnage produced.
 
 ## Feed provision and feeding response to temperature {#sec-model-feeding}
+
+```{r}
+#| label: fig-functional-response-to-temperature
+#| eval: false
+#| fig-cap: Temperature changes in potential ingestion (solid line) and amount of food provided (dashed line), relative to maximum potential ingestion. 
+
+all_params <- c(
+  find_read(output_species_data_path, "species_params"),
+  find_read(output_species_data_path, "pop_params")
+)
+
+func_T_resp <- data.frame(water_temp = seq(-5, 26, 0.25))
+weight <- 1000
+
+# Relative feeding rate with temperature
+func_T_resp$feeding_rate <- sapply(
+  FUN = feeding_rate, 
+  X = func_T_resp$water_temp, 
+  species_params = all_params
+)
+
+# Maximum potential ingestion (g) at temperature
+func_T_resp$ing_pot <- all_params['meanImax'] * (weight^all_params['m']) * func_T_resp$feeding_rate
+
+# Food provided is based on calculated potential ingestion BUT if temperature is too low they are still provided with the food that would be required at lowest temperature (when feeding rate is ~18.3%)
+func_T_resp$food_prov <- food_prov_rate(
+  water_temp = func_T_resp$water_temp, 
+  ing_pot = func_T_resp$ing_pot,
+  ing_pot_min = all_params['meanImax'] * (weight^all_params['m']) * feeding_rate(all_params['Taa'], all_params),
+  species_params = all_params,
+  pop_params = all_params
+)
+
+func_T_resp$food_enc <- all_params['eff'] * func_T_resp$food_prov
+func_T_resp <- func_T_resp %>% 
+  mutate(ing_act = pmin(food_enc, ing_pot))
+
+func_T_resp %>% 
+  ggplot(aes(x = water_temp, y = ing_act)) +
+  geom_line(linewidth = 0.75) +
+  geom_line(aes(y = food_prov), linewidth = 0.75, linetype = "dotted") +
+  # scale_y_continuous(breaks = seq(0,1.5,0.25)) +
+  scale_x_continuous(breaks = seq(-5,30,5), limits = c(-5,26)) +
+  labs(x = expression("Water temperature ("*degree*"C)"), y = "Feedd ingested/provided") +
+  prettyplot()
+```
+
+```{r}
+#| label: patchwork-map-mercator
+#| fig-cap: |
+#|   Example of a patchwork
+#| fig-height: 9
+#| fig-width: 9.5
+
+p_bigmap_feeding <- p_bigmap_mercator +
+  geom_sf(data = feeding, aes(color = prop_feed_eaten, geometry = geometry), size = 2) +
+  scale_color_viridis_c(option = "turbo") +
+  guides(col = guide_colourbar(
+    title = "Proportion of provided feed eaten",
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top", 
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 2,
+    barwidth = 1.5, barheight = 20
+  )) +
+  prettyplot() +
+  labs(y = "Latitude", x = "Longitude")
+
+patchwork_mercator(p_bigmap_feeding)
+```
 
 # Modelled experimental feeds {#sec-feeds}
 

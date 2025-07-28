@@ -130,33 +130,6 @@ To detail here:
 * Overfeeding parameters and how they come into play
 * Deminstration of how feeding response and actual food given vary with temperature?
 
-```{r fig-functional-response-to-temperature}
-#| eval: false
-#| fig-cap: Temperature changes in potential ingestion (solid line) and amount of food provided (dashed line), relative to maximum potential ingestion. 
-
-df <- data.frame(water_temp = seq(-5, 26, 0.25))
-df$feeding <- sapply(FUN = feeding_rate, X = df$water_temp, species_params = species_params)
-df <- df %>% 
-mutate(ing_pot = pop_params['meanImax'] * (pop_params['meanW']^species_params['m']) * feeding,
-       food_prov = NA)
-for (i in 1:nrow(df)) {
-  df$food_prov[i] <- food_prov_rate(pop_params = pop_params, rel_feeding = df$feeding[i], ing_pot = df$ing_pot[i], 
-                                    ing_pot_10 = pop_params['meanImax'] * (pop_params['meanW']^species_params['m']) * 0.1)
-}
-df$ing_pot <- df$ing_pot/maxna(df$ing_pot)
-df$food_prov <- df$food_prov/maxna(df$ing_pot)
-
-df %>% 
-  ggplot(aes(x = water_temp, y = ing_pot)) +
-  geom_line(linewidth = 0.75) +
-  geom_line(aes(y = food_prov), linewidth = 0.75, linetype = "dotted") +
-  scale_y_continuous(breaks = seq(0,1.5,0.25)) +
-  scale_x_continuous(breaks = seq(-5,30,5), limits = c(-5,26)) +
-  labs(x = expression("Water temperature ("*degree*"C)"), y = "Relative food ingested/provided") +
-  prettyplot() +
-  theme(text = element_text(colour = "black", family = "serif", size = 12))
-```
-
 ## Farm temperature forcings
 
 ```{r farm info}
