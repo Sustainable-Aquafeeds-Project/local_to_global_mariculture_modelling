@@ -24,9 +24,9 @@ format:
 All code and processes for this project are linked below. Note that some scripts require access to raw data which is not stored on Github. 
 While this page (the index) has code that runs prior to rendering, all code in the subsequent pages has not been run for rendering.
 
-## Main analysis
+## Main scripts
 
-The main analysis for this project focuses on the differences in total protein, carbohydrate, lipid and nitrogen losses between feeds. 
+The main scripts for this project focus on setting up the model to examine the differences in total protein, carbohydrate, lipid and nitrogen losses between feeds. 
 
 | Page | Description |
 |---------|:-------------------------------------------------|
@@ -37,9 +37,9 @@ The main analysis for this project focuses on the differences in total protein, 
 | **[Formulating Feeds](05_formulating_feeds.html)** | Feed composition formulation for model runs |
 | **[Running Atlantic Salmon Model](06_run_atlantic_salmon_model.html)** | Atlantic salmon growth model execution |
 
-## Extra analysis
+## Extra scripts
 
-The extra analyses for this project involved some exploration into potential impacts of nutrient losses. This will likely not make it into the final manuscript. 
+The extra scripts for this project involved some exploration into potential impacts of nutrient losses. These will likely not make it into the final manuscript. 
 
 | Page | Description |
 |---------|:-------------------------------------------------|
@@ -126,7 +126,7 @@ prettyplot <- function() {
 }
 ```
 
-# Model functioning
+# Supplemental methods {#sec-supp-methods}
 
 ```{r}
 #| label: location-data
@@ -172,14 +172,11 @@ Using this method, a farm's 'population' is not a good representation of the act
 #| fig-cap: | 
 #|   Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days.
 
-fnms <- output_growth_data_path %>% 
-  list.files(full.names = T) %>% 
-  str_subset("reference")
-
-df <- qs::qread(fnms[1])[["biomass_stat"]] %>% 
-  as.data.frame() %>% 
-  mutate(mean = set_units(mean, "g") %>% set_units("t"),
-         sd = set_units(sd, "g") %>% set_units("t")) %>% 
+df <- find_read(output_model_farm_path, "dw_") %>% 
+  mutate(
+    mean = set_units(mean, "g") %>% set_units("t"),
+    sd = set_units(sd, "g") %>% set_units("t")
+  ) %>% 
   select(-farm_ID)
 
 df <- rbind(
@@ -195,13 +192,16 @@ max_t <- max(df$t[df$cohort == 2])
 
 df_2 <- df %>% 
   filter(t %in% min_t:max_t) %>% 
-  mutate(sd = sd/mean) %>% 
   group_by(t) %>% 
-  reframe(sd = sqrt(sum(sd^2)),
-          mean = sum(mean),
-          sd = sd*mean) %>% 
-  mutate(cohort = "all",
-         split = "Totalled")
+  reframe(
+    sd_mean = sqrt(sum(sd_mean^2)),
+    mean = sum(mean),
+    sd = sd_mean*mean
+  ) %>% 
+  mutate(
+    cohort = "all",
+    split = "Totalled"
+  )
 
 df <- rbind(df, df_2) %>% 
   mutate(cohort = as.factor(cohort))
@@ -323,7 +323,7 @@ p_bigmap_feeding <- p_bigmap_mercator +
 patchwork_mercator(p_bigmap_feeding)
 ```
 
-# Modelled experimental feeds {#sec-feeds}
+## Modelled experimental feeds {#sec-feeds}
 
 ```{r}
 #| label: feed-details
@@ -405,13 +405,7 @@ sens_results_files <- file.path(output_sens_data_path) %>%
 ```
 
 
-# Inputs {#inputs}
-
-```{r}
-#| label: farm-geometry
-
-farm_geometry <- find_read(output_farm_data_path, "farm_geometry")
-```
+# Results {#sec-results}
 
 ```{r}
 #| label: input-data
@@ -563,7 +557,7 @@ ins_P %>%
   scale_fill_manual(values = feed_pal)
 ```
 
-# Code and packages used
+# Code and packages used {#sec-code}
 
 All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
 Major packages used include `r cite_packages(packages)`.
