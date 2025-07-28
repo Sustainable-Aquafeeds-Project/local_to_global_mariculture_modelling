@@ -189,3 +189,70 @@ t1 <- toc(quiet = T)$callback_msg
 
 tic()
 t2 <- toc(quiet = T)$callback_msg
+
+# Population scaling ----------------------------------------------------------------------------------------------
+# Do I actually need 500 runs?
+Sys.setenv(TAR_PROJECT = "project_farmruns")
+tar_load(farm_ID_data, branches = 500)
+names(farm_ID_data) <- c("t_start", "t_end", "dt", "nruns", "prod")
+tar_load(N_pop, branches = 500)
+tar_load(farm_ts_data, branches = 500)
+tar_load(all_params)
+tar_load(feed_params, branches = 1)
+names(feed_params) <- c("Proteins", "Carbohydrates", "Lipids")
+days <- (farm_ID_data['t_start']:farm_ID_data['t_end'])*farm_ID_data['dt']
+
+nruns <-seq(500, 5000, 250)
+results <- purrr::map(nruns, function(nr) {
+  # Generate all random values upfront
+  init_weights <- rnorm(nr, mean = all_params['meanW'], sd = all_params['deltaW'])
+  ingmaxes <- rnorm(nr, mean = all_params['meanImax'], sd = all_params['deltaImax'])
+  
+  # Run parallel simulation for individuals
+  mc_results <- purrr::map2(init_weights, ingmaxes, function(init_w, ing_m) {
+    mat <- fish_growth(
+      pop_params = all_params,
+      species_params = all_params,
+      water_temp = farm_ts_data$temp_c,
+      feed_params = feed_params,
+      times = farm_ID_data,
+      init_weight = init_w,
+      ingmax = ing_m
+    ) %>% unname()
+  })
+  
+  lapply(mc_results, function(mc) {
+    weight <- mc[548, 2]
+    P_excr <- mc[, 6] %>% sum()
+    P_uneat <- mc[, 9] %>% sum()
+    ing_act <- mc[, 16] %>% sum()
+    cbind(weight, P_excr, P_uneat, ing_act) %>% 
+      as.data.frame()
+  }) %>% 
+    bind_rows() %>% 
+    slice_sample(n = 500)
+})
+
+# See if there are appreciable differences
+weight.stats <- data.frame(
+  "nruns" = nruns,
+  "weight.mean" = lapply(results, function(rs) {mean(rs$weight)}) %>% unlist(),
+  "weight.sd" = lapply(results, function(rs) {sd(rs$weight)}) %>% unlist()
+)
+for (i in seq_along(nruns)) {
+  weight.stats$p.value[i] <- t.test(results[[length(nruns)]]$weight, results[[i]]$weight)[["p.value"]]
+}
+ggplot(weight.stats, aes(x = nruns, y = weight.mean, colour = p.value)) +
+  geom_point(size = 4)
+
+P_excr.stats <- data.frame(
+  "nruns" = nruns,
+  "P_excr.mean" = lapply(results, function(rs) {mean(rs$P_excr)}) %>% unlist(),
+  "P_excr.sd" = lapply(results, function(rs) {sd(rs$P_excr)}) %>% unlist()
+)
+for (i in seq_along(nruns)) {
+  P_excr.stats$p.value[i] <- t.test(results[[length(nruns)]]$P_excr, results[[i]]$P_excr)[["p.value"]]
+}
+ggplot(P_excr.stats, aes(x = nruns, y = P_excr.mean, colour = p.value, size = p.value)) +
+  geom_point()
+
