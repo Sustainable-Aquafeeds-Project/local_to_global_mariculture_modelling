@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Dr Tormey Reimer">
-<meta name="dcterms.date" content="2025-07-23">
+<meta name="dcterms.date" content="2025-07-28">
 
 <title>Local to Global Mariculture Modelling</title>
 <style>
@@ -99,28 +99,28 @@ window.Quarto = {
   <ul>
   <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents"><span class="header-section-number">1</span> Table of Contents</a>
   <ul class="collapse">
-  <li><a href="#main-analysis" id="toc-main-analysis" class="nav-link" data-scroll-target="#main-analysis"><span class="header-section-number">1.1</span> Main analysis</a></li>
-  <li><a href="#extra-analysis" id="toc-extra-analysis" class="nav-link" data-scroll-target="#extra-analysis"><span class="header-section-number">1.2</span> Extra analysis</a></li>
+  <li><a href="#main-scripts" id="toc-main-scripts" class="nav-link" data-scroll-target="#main-scripts"><span class="header-section-number">1.1</span> Main scripts</a></li>
+  <li><a href="#extra-scripts" id="toc-extra-scripts" class="nav-link" data-scroll-target="#extra-scripts"><span class="header-section-number">1.2</span> Extra scripts</a></li>
   </ul></li>
-  <li><a href="#model-functioning" id="toc-model-functioning" class="nav-link" data-scroll-target="#model-functioning"><span class="header-section-number">2</span> Model functioning</a>
+  <li><a href="#sec-supp-methods" id="toc-sec-supp-methods" class="nav-link" data-scroll-target="#sec-supp-methods"><span class="header-section-number">2</span> Supplemental methods</a>
   <ul class="collapse">
-  <li><a href="#population-and-biomass" id="toc-population-and-biomass" class="nav-link" data-scroll-target="#population-and-biomass"><span class="header-section-number">2.1</span> Population and biomass</a></li>
+  <li><a href="#sec-population-biomass" id="toc-sec-population-biomass" class="nav-link" data-scroll-target="#sec-population-biomass"><span class="header-section-number">2.1</span> Population and biomass</a></li>
   <li><a href="#sec-model-feeding" id="toc-sec-model-feeding" class="nav-link" data-scroll-target="#sec-model-feeding"><span class="header-section-number">2.2</span> Feed provision and feeding response to temperature</a></li>
+  <li><a href="#sec-feeds" id="toc-sec-feeds" class="nav-link" data-scroll-target="#sec-feeds"><span class="header-section-number">2.3</span> Modelled experimental feeds</a></li>
+  <li><a href="#sec-param-sensitivity" id="toc-sec-param-sensitivity" class="nav-link" data-scroll-target="#sec-param-sensitivity"><span class="header-section-number">2.4</span> Model sensitivity to parameter changes</a></li>
   </ul></li>
-  <li><a href="#sec-feeds" id="toc-sec-feeds" class="nav-link" data-scroll-target="#sec-feeds"><span class="header-section-number">3</span> Modelled experimental feeds</a></li>
-  <li><a href="#param-sensitivity" id="toc-param-sensitivity" class="nav-link" data-scroll-target="#param-sensitivity"><span class="header-section-number">4</span> Model sensitivity to parameter changes</a></li>
-  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs"><span class="header-section-number">5</span> Inputs</a>
+  <li><a href="#sec-results" id="toc-sec-results" class="nav-link" data-scroll-target="#sec-results"><span class="header-section-number">3</span> Results</a>
   <ul class="collapse">
-  <li><a href="#total-inputs-uneaten-and-excreted" id="toc-total-inputs-uneaten-and-excreted" class="nav-link" data-scroll-target="#total-inputs-uneaten-and-excreted"><span class="header-section-number">5.1</span> Total inputs (uneaten and excreted)</a>
+  <li><a href="#total-inputs-uneaten-and-excreted" id="toc-total-inputs-uneaten-and-excreted" class="nav-link" data-scroll-target="#total-inputs-uneaten-and-excreted"><span class="header-section-number">3.1</span> Total inputs (uneaten and excreted)</a>
   <ul class="collapse">
-  <li><a href="#through-time" id="toc-through-time" class="nav-link" data-scroll-target="#through-time"><span class="header-section-number">5.1.1</span> Through time</a></li>
-  <li><a href="#at-harvest" id="toc-at-harvest" class="nav-link" data-scroll-target="#at-harvest"><span class="header-section-number">5.1.2</span> At harvest</a></li>
+  <li><a href="#through-time" id="toc-through-time" class="nav-link" data-scroll-target="#through-time"><span class="header-section-number">3.1.1</span> Through time</a></li>
+  <li><a href="#at-harvest" id="toc-at-harvest" class="nav-link" data-scroll-target="#at-harvest"><span class="header-section-number">3.1.2</span> At harvest</a></li>
   </ul></li>
-  <li><a href="#n-inputs" id="toc-n-inputs" class="nav-link" data-scroll-target="#n-inputs"><span class="header-section-number">5.2</span> N inputs</a></li>
+  <li><a href="#n-inputs" id="toc-n-inputs" class="nav-link" data-scroll-target="#n-inputs"><span class="header-section-number">3.2</span> N inputs</a></li>
   </ul></li>
-  <li><a href="#code-and-packages-used" id="toc-code-and-packages-used" class="nav-link" data-scroll-target="#code-and-packages-used"><span class="header-section-number">6</span> Code and packages used</a></li>
+  <li><a href="#sec-code" id="toc-sec-code" class="nav-link" data-scroll-target="#sec-code"><span class="header-section-number">4</span> Code and packages used</a></li>
   </ul>
-<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="index.qmd"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
+<div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://drtreimer.com/local_to_global_mariculture_modelling"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
 </div>
 <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
 </div>
@@ -146,7 +146,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">23 July 2025</p>
+      <p class="date">28 July 2025</p>
     </div>
   </div>
   
@@ -161,9 +161,9 @@ window.Quarto = {
 <section id="table-of-contents" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Table of Contents</h1>
 <p>All code and processes for this project are linked below. Note that some scripts require access to raw data which is not stored on Github. While this page (the index) has code that runs prior to rendering, all code in the subsequent pages has not been run for rendering.</p>
-<section id="main-analysis" class="level2" data-number="1.1">
-<h2 data-number="1.1" class="anchored" data-anchor-id="main-analysis"><span class="header-section-number">1.1</span> Main analysis</h2>
-<p>The main analysis for this project focuses on the differences in total protein, carbohydrate, lipid and nitrogen losses between feeds.</p>
+<section id="main-scripts" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="main-scripts"><span class="header-section-number">1.1</span> Main scripts</h2>
+<p>The main scripts for this project focus on setting up the model to examine the differences in total protein, carbohydrate, lipid and nitrogen losses between feeds.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -199,9 +199,9 @@ window.Quarto = {
 </tbody>
 </table>
 </section>
-<section id="extra-analysis" class="level2" data-number="1.2">
-<h2 data-number="1.2" class="anchored" data-anchor-id="extra-analysis"><span class="header-section-number">1.2</span> Extra analysis</h2>
-<p>The extra analyses for this project involved some exploration into potential impacts of nutrient losses. This will likely not make it into the final manuscript.</p>
+<section id="extra-scripts" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="extra-scripts"><span class="header-section-number">1.2</span> Extra scripts</h2>
+<p>The extra scripts for this project involved some exploration into potential impacts of nutrient losses. These will likely not make it into the final manuscript.</p>
 <table class="caption-top table">
 <thead>
 <tr class="header">
@@ -222,10 +222,10 @@ window.Quarto = {
 </table>
 </section>
 </section>
-<section id="model-functioning" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Model functioning</h1>
-<section id="population-and-biomass" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="population-and-biomass"><span class="header-section-number">2.1</span> Population and biomass</h2>
+<section id="sec-supp-methods" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Supplemental methods</h1>
+<section id="sec-population-biomass" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="sec-population-biomass"><span class="header-section-number">2.1</span> Population and biomass</h2>
 <p>Each farm’s final population was calculated by dividing the production tonnage required by the average modelled individual harvest size for each farm (when feed reference feed, <a href="#fig-harvest-size" class="quarto-xref">Figure&nbsp;1</a>). A population timeseries was then generated using the standard mortality rate (0.06 % d<span class="math inline">\(^{-1}\)</span>).</p>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
@@ -246,21 +246,67 @@ Figure&nbsp;1: Frequency distribution of harvest sizes used to create the popula
 </section>
 <section id="sec-model-feeding" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="sec-model-feeding"><span class="header-section-number">2.2</span> Feed provision and feeding response to temperature</h2>
+<p><a href="#fig-functional-response-to-temperature" class="quarto-xref">Figure&nbsp;2</a> shows the response of food ingested to temperature, and the food provided in response.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-functional-response-to-temperature" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-functional-response-to-temperature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-functional-response-to-temperature-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-functional-response-to-temperature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Temperature changes in potential ingestion (solid line) and amount of food provided (dotted line), relative to maximum potential ingestion. The vertical dotted lines show the actual minimum and maximum daily temperatures experienced by farms represented in the model.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
 </section>
+<section id="sec-feeds" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="sec-feeds"><span class="header-section-number">2.3</span> Modelled experimental feeds</h2>
+<table class="caption-top table">
+<caption>Feed macronutrient details (composition in feed, digestibility).</caption>
+<thead>
+<tr class="header">
+<th>Feed</th>
+<th style="text-align: center;">Protein</th>
+<th style="text-align: center;">Lipid</th>
+<th style="text-align: center;">Carbohydrate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Plant-dominant</td>
+<td style="text-align: center;">36% (89.4%)</td>
+<td style="text-align: center;">34% (96%)</td>
+<td style="text-align: center;">21% (69.7%)</td>
+</tr>
+<tr class="even">
+<td>Marine-dominant</td>
+<td style="text-align: center;">48% (90.5%)</td>
+<td style="text-align: center;">26.2% (96%)</td>
+<td style="text-align: center;">15.9% (80.1%)</td>
+</tr>
+<tr class="odd">
+<td>Novel-inclusive</td>
+<td style="text-align: center;">44.8% (86.3%)</td>
+<td style="text-align: center;">32.8% (96%)</td>
+<td style="text-align: center;">13.1% (69.4%)</td>
+</tr>
+</tbody>
+</table>
 </section>
-<section id="sec-feeds" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Modelled experimental feeds</h1>
-</section>
-<section id="param-sensitivity" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Model sensitivity to parameter changes</h1>
+<section id="sec-param-sensitivity" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="sec-param-sensitivity"><span class="header-section-number">2.4</span> Model sensitivity to parameter changes</h2>
 <p>Parameter sensitivity was tested by varying each parameter by <span class="math inline">\(\pm 10\)</span>% and calculating sensitivity as <span class="math inline">\(S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}\)</span>, where <span class="math inline">\(S\)</span> is the sensitivity of the measured variable to changes in parameter <span class="math inline">\(p\)</span>, and <span class="math inline">\(P_{1.1}\)</span>, <span class="math inline">\(P_{0.9}\)</span>, and <span class="math inline">\(P_{1}\)</span> are the value of the measured variable when the model is run with parameter <span class="math inline">\(p\)</span> at 110%, 90%, and 100% of its value respectively. All parameters in Table <strong>?@tbl-params</strong> were tested. The population-level parameters (<span class="math inline">\(\overline{W}\)</span>, <span class="math inline">\(\Delta{W}\)</span>, <span class="math inline">\(\overline{I_{max}}\)</span>, <span class="math inline">\(\Delta{I_{max}}\)</span>, <span class="math inline">\(\overline{F}\)</span>, <span class="math inline">\(\Delta{F}\)</span>) were tested with a population of of 5000 on a random 10% of farms, while all other parameters were tested across all farms with a population of 10.</p>
 </section>
-<section id="inputs" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> Inputs</h1>
-<section id="total-inputs-uneaten-and-excreted" class="level2" data-number="5.1">
-<h2 data-number="5.1" class="anchored" data-anchor-id="total-inputs-uneaten-and-excreted"><span class="header-section-number">5.1</span> Total inputs (uneaten and excreted)</h2>
-<section id="through-time" class="level3" data-number="5.1.1">
-<h3 data-number="5.1.1" class="anchored" data-anchor-id="through-time"><span class="header-section-number">5.1.1</span> Through time</h3>
+</section>
+<section id="sec-results" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Results</h1>
+<section id="total-inputs-uneaten-and-excreted" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="total-inputs-uneaten-and-excreted"><span class="header-section-number">3.1</span> Total inputs (uneaten and excreted)</h2>
+<section id="through-time" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="through-time"><span class="header-section-number">3.1.1</span> Through time</h3>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-uneat-excr-plot-ts" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
@@ -269,16 +315,16 @@ Figure&nbsp;1: Frequency distribution of harvest sizes used to create the popula
 <img src="index_files/figure-html/fig-uneat-excr-plot-ts-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-uneat-excr-plot-ts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2: Initial look at excreted and uneaten through time
+Figure&nbsp;3: Initial look at excreted and uneaten through time
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>While the actual difference in excreted and uneaten feed (total loss) varied between countries and through time (<a href="#fig-uneat-excr-plot-ts" class="quarto-xref">Figure&nbsp;2</a>), relative changes between the feeds remained consistent. In both the US and Australia (all done so far), total excreted faeces was 23% (<span class="math inline">\(\pm\)</span> 0.1%) higher in the plant-dominant feed. Differences in total uneaten feed were much smaller at 0.2% (<span class="math inline">\(\pm\)</span> 0.1%) lower in the plant-dominant feed.</p>
+<p>While the actual difference in excreted and uneaten feed (total loss) varied between countries and through time (<a href="#fig-uneat-excr-plot-ts" class="quarto-xref">Figure&nbsp;3</a>), relative changes between the feeds remained consistent. In both the US and Australia (all done so far), total excreted faeces was 23% (<span class="math inline">\(\pm\)</span> 0.1%) higher in the plant-dominant feed. Differences in total uneaten feed were much smaller at 0.2% (<span class="math inline">\(\pm\)</span> 0.1%) lower in the plant-dominant feed.</p>
 </section>
-<section id="at-harvest" class="level3" data-number="5.1.2">
-<h3 data-number="5.1.2" class="anchored" data-anchor-id="at-harvest"><span class="header-section-number">5.1.2</span> At harvest</h3>
+<section id="at-harvest" class="level3" data-number="3.1.2">
+<h3 data-number="3.1.2" class="anchored" data-anchor-id="at-harvest"><span class="header-section-number">3.1.2</span> At harvest</h3>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -291,8 +337,8 @@ Figure&nbsp;2: Initial look at excreted and uneaten through time
 </div>
 </section>
 </section>
-<section id="n-inputs" class="level2" data-number="5.2">
-<h2 data-number="5.2" class="anchored" data-anchor-id="n-inputs"><span class="header-section-number">5.2</span> N inputs</h2>
+<section id="n-inputs" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="n-inputs"><span class="header-section-number">3.2</span> N inputs</h2>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -305,8 +351,8 @@ Figure&nbsp;2: Initial look at excreted and uneaten through time
 </div>
 </section>
 </section>
-<section id="code-and-packages-used" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Code and packages used</h1>
+<section id="sec-code" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Code and packages used</h1>
 <p>All analysis was conducted in R version 4.4.2 “Pile of Leaves” <span class="citation" data-cites="R_base">(<a href="#ref-R_base" role="doc-biblioref">R Core Team 2019</a>)</span>. Major packages used include packages <code>aquamapsdata</code>, version 0.1.6 <span class="citation" data-cites="aquamapsdata">(<a href="#ref-aquamapsdata" role="doc-biblioref">Skyttner 2020</a>)</span>, <code>arrow</code>, version 20.0.0.2 <span class="citation" data-cites="arrow">(<a href="#ref-arrow" role="doc-biblioref">Richardson et al. 2024</a>)</span>, <code>dplyr</code>, version 1.1.4 <span class="citation" data-cites="dplyr">(<a href="#ref-dplyr" role="doc-biblioref">Wickham et al. 2023</a>)</span>, <code>furrr</code>, version 0.3.1 <span class="citation" data-cites="furrr">(<a href="#ref-furrr" role="doc-biblioref">Vaughan and Dancho 2022</a>)</span>, <code>future</code>, version 1.58.0 <span class="citation" data-cites="future">(<a href="#ref-future" role="doc-biblioref">Bengtsson 2021</a>)</span>, <code>ggplot2</code>, version 3.5.2 <span class="citation" data-cites="ggplot2">(<a href="#ref-ggplot2" role="doc-biblioref">Wickham 2016</a>)</span>, <code>lubridate</code>, version 1.9.4 <span class="citation" data-cites="lubridate">(<a href="#ref-lubridate" role="doc-biblioref">Grolemund and Wickham 2011</a>)</span>, <code>magrittr</code>, version 2.0.3 <span class="citation" data-cites="magrittr">(<a href="#ref-magrittr" role="doc-biblioref">Bache and Wickham 2022</a>)</span>, <code>rnaturalearth</code>, version 1.1.0 <span class="citation" data-cites="rnaturalearth">(<a href="#ref-rnaturalearth" role="doc-biblioref">Massicotte and South, n.d.</a>)</span>, <code>sf</code>, version 1.0.21 <span class="citation" data-cites="sf">(<a href="#ref-sf" role="doc-biblioref">Pebesma 2018</a>)</span>, <code>stringr</code>, version 1.5.1 <span class="citation" data-cites="stringr">(<a href="#ref-stringr" role="doc-biblioref">Wickham 2023</a>)</span>, <code>targets</code>, version 1.11.3 <span class="citation" data-cites="targets">(<a href="#ref-targets" role="doc-biblioref">Landau 2021</a>)</span>, <code>terra</code>, version 1.8.60 <span class="citation" data-cites="terra">(<a href="#ref-terra" role="doc-biblioref">Hijmans 2024</a>)</span>, <code>tidyr</code>, version 1.3.1 <span class="citation" data-cites="tidyr">(<a href="#ref-tidyr" role="doc-biblioref">Wickham, Vaughan, and Girlich 2024</a>)</span>, <code>units</code>, version 0.8.7 <span class="citation" data-cites="units">(<a href="#ref-units" role="doc-biblioref">Pebesma, Mailund, and Hiebert 2016</a>)</span>, and <code>worrms</code>, version 0.4.3 <span class="citation" data-cites="worrms">(<a href="#ref-worrms" role="doc-biblioref">Chamberlain and Vanhoorne. 2025</a>)</span>.</p>
 <p>For a full list of R packages used see the lockfile on <a href="https://www.github.com">Github</a>. This manuscript was written in Quarto <span class="citation" data-cites="quarto">(<a href="#ref-quarto" role="doc-biblioref">Allaire et al. 2024</a>)</span> using TinyTex <span class="citation" data-cites="tinytex">(<a href="#ref-tinytex" role="doc-biblioref">Xie 2017</a>)</span> and the acronyms extension <span class="citation" data-cites="acronyms">(<a href="#ref-acronyms" role="doc-biblioref">Chaput 2024</a>)</span>.</p>
 
