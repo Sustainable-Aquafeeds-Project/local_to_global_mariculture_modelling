@@ -84,12 +84,12 @@ feeding_rate <- function(water_temp, species_params) {
     (species_params['betac'] * (species_params['Tma'] - species_params['Toa']))
 }
 
-food_prov_rate <- function(pop_params, water_temp, ing_pot, ing_pot_10, species_params) {
+food_prov_rate <- function(pop_params, water_temp, ing_pot, ing_pot_min, species_params) {
   # Use ifelse vectorization instead of individual if statements
   ifelse(
     water_temp > species_params['Taa'],
     ing_pot * (1 + rnorm(1, pop_params['overFmean'], pop_params['overFdelta'])),
-    ing_pot_10
+    ing_pot_min
   ) # old formula: 0.25 * 0.066 * weight^0.75
 }
 
@@ -135,7 +135,7 @@ fish_growth <- function(pop_params, species_params, water_temp, feed_params, tim
       pop_params = pop_params, 
       water_temp = result[i, 'water_temp'],
       ing_pot = result[i, 'ing_pot'],
-      ing_pot_10 = ingmax * (result[i, 'weight']^species_params['m']) * 0.1,
+      ing_pot_min = ingmax * (result[i, 'weight']^species_params['m']) * feeding_rate(species_params['Taa'], species_params),
       species_params
     )
     result[i, 'food_enc'] <- species_params['eff'] * result[i, 'food_prov']
