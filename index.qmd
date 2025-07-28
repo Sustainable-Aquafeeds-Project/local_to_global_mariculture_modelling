@@ -128,9 +128,18 @@ prettyplot <- function() {
 
 # Model functioning
 
-## Population and biomass
+```{r}
+#| label: location-data
 
-```{r raw biomass and weight data}
+farm_locs <- find_read(output_farm_data_path, "geometry") %>% 
+  rename(farm_ID = farm_id)
+```
+
+## Population and biomass {#sec-population-biomass}
+
+```{r}
+#| label: raw biomass and weight data
+
 weight_cohort <- find_read(output_model_cohort_path, "weight_stat_all_farms")
 biomass_cohort <- find_read(output_model_cohort_path, "biomass_stat_all_farms")
 ```
@@ -234,10 +243,15 @@ By this method, farm biomass as predicted by the model predicted farm tonnage re
 
 ## Feed provision and feeding response to temperature {#sec-model-feeding}
 
+@fig-functional-response-to-temperature shows the response of food ingested to temperature, and the food provided in response.
+
 ```{r}
 #| label: fig-functional-response-to-temperature
-#| eval: false
-#| fig-cap: Temperature changes in potential ingestion (solid line) and amount of food provided (dashed line), relative to maximum potential ingestion. 
+#| fig-cap: Temperature changes in potential ingestion (solid line) and amount of food provided (dotted line), relative to maximum potential ingestion. The vertical dotted lines show the actual minimum and maximum daily temperatures experienced by farms represented in the model.
+
+tar_load(farm_ts_data)
+min_T <- min(farm_ts_data$temp_c)
+max_T <- max(farm_ts_data$temp_c)
 
 all_params <- c(
   find_read(output_species_data_path, "species_params"),
@@ -270,10 +284,14 @@ func_T_resp$food_enc <- all_params['eff'] * func_T_resp$food_prov
 func_T_resp <- func_T_resp %>% 
   mutate(ing_act = pmin(food_enc, ing_pot))
 
+max_ing <- max(func_T_resp$ing_act)
+
 func_T_resp %>% 
-  ggplot(aes(x = water_temp, y = ing_act)) +
+  ggplot(aes(x = water_temp, y = ing_act/max_ing)) +
   geom_line(linewidth = 0.75) +
-  geom_line(aes(y = food_prov), linewidth = 0.75, linetype = "dotted") +
+  geom_line(aes(y = food_prov/max_ing), linewidth = 0.75, linetype = "dotted") +
+  geom_vline(xintercept = min_T, linetype = "dotted") +
+  geom_vline(xintercept = max_T, linetype = "dotted") +
   # scale_y_continuous(breaks = seq(0,1.5,0.25)) +
   scale_x_continuous(breaks = seq(-5,30,5), limits = c(-5,26)) +
   labs(x = expression("Water temperature ("*degree*"C)"), y = "Feedd ingested/provided") +
@@ -282,6 +300,7 @@ func_T_resp %>%
 
 ```{r}
 #| label: patchwork-map-mercator
+#| eval: false
 #| fig-cap: |
 #|   Example of a patchwork
 #| fig-height: 9
