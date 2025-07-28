@@ -95,12 +95,18 @@ worldmap_mercator <- ne_countries(scale = "large", returnclass = "sf")
 get_insets_mercator <- function(map) {
   map2(inset_boxes_sm, labels_spec_mercator, function(specs, labs) {
     map + 
-      coord_sf(xlim = specs[["xlims"]], 
-              ylim = specs[["ylims"]])  +
-      draw_label("A", size = 14, fontface = "bold", 
-                x = specs[["labx"]], 
-                y = specs[["laby"]], 
-                hjust = labs["h"], vjust = labs["h"])
+      coord_sf(
+        xlim = specs[["xlims"]], 
+        ylim = specs[["ylims"]]
+      )  +
+      draw_label(
+        "A", 
+        size = 14, 
+        fontface = "bold", 
+        x = specs[["labx"]], 
+        y = specs[["laby"]], 
+        hjust = labs["h"], vjust = labs["h"]
+      )
   })
 }
 
@@ -110,6 +116,30 @@ p_bigmap_mercator <- ggplot() +
   theme_void() +
   labs(y = "Latitude", x = "Longitude")
 
-p_insets_mercator <- get_insets_mercator(p_bigmap_mercator)
-
-
+patchwork_mercator <- function(bigmap) {
+  p_insets <- get_insets_mercator(bigmap)
+  
+  grid_canada <- plot_grid(
+    p_insets[["CAN1"]], 
+    p_insets[["CAN2"]], 
+    ncol = 2, 
+    rel_widths =  c(1, 1.35)
+  )
+  grid_notcanada <- plot_grid(
+    plot_grid(
+      p_insets[["p_Eur"]],  
+      p_insets[["p_Aus"]],  
+      nrow = 2, 
+      rel_heights = c(1, 1)
+    ), 
+    p_insets[["p_Chi"]],  
+    ncol = 2, 
+    rel_widths =  c(1, 1)
+  )
+  
+  plot_grid(
+    grid_canada, grid_notcanada,
+    nrow = 2,
+    rel_heights = c(1, 1.5)
+  )
+}
