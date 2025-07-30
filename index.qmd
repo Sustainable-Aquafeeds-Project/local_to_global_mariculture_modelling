@@ -133,6 +133,22 @@ prettyplot <- function() {
 
 farm_locs <- find_read(output_farm_data_path, "geometry") %>% 
   rename(farm_ID = farm_id)
+
+farm_mean_lat <- farm_locs %>%
+  st_centroid() %>%
+  mutate(latitude = st_coordinates(.)[, "Y"]) %>%
+  st_drop_geometry() %>%
+  group_by(country) %>%
+  summarise(mean_latitude = mean(latitude, na.rm = TRUE)) %>% 
+  arrange(-mean_latitude)
+
+countries <- farm_mean_lat$country
+countries[str_detect(countries, "United States of America")] <- "USA"
+countries[str_detect(countries, "United Kingdom")] <- "UK"
+countries[str_detect(countries, "Russian Federation")] <- "Russia"
+
+farm_locs <- farm_locs %>% 
+  mutate(country = factor(country, levels = farm_mean_lat$country, labels = countries))
 ```
 
 ## Population and biomass {#sec-population-biomass}
