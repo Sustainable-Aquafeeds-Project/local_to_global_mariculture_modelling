@@ -1,6 +1,8 @@
 # This sets up all the directories for the project so that all scripts use the same directory names
+suppressPackageStartupMessages(suppressWarnings({
 library(here)
 library(stringr)
+}))
 
 # From run_individual
 this_species <- "atlantic_salmon"
