@@ -1,7 +1,15 @@
+suppressPackageStartupMessages(suppressWarnings({
+# These packages are called here so that renv doesn't clean them
 library(devtools)
+library(yaml)
+library(gitcreds)
+
 library(qs)
 library(arrow)
 library(stringr)
+library(units)
+library(magrittr)
+}))
 
 make_label <- function(lab){lab %>% str_remove_all("_stat") %>% str_replace_all("_", " ") %>% str_to_title()}
 fixnum <- function(n, digits = 4) {
@@ -32,7 +40,7 @@ cite_packages <- function(packages) {
   # Generate citations for each package
   citations <- sapply(packages, function(pkg) {
     version <- packageVersion(pkg)
-    paste0("`", pkg, "`, version ", version, " [@", pkg, "]")
+    paste0("`", pkg, "` version ", version, " [@", pkg, "]")
   })
   
   # Handle different cases based on number of packages
@@ -141,4 +149,36 @@ prettyplot <- function() {
           text = element_text(family = "serif", size = 12, colour = "black"),
           axis.title.x = element_text(vjust = 0.5),
           axis.title.y = element_text(hjust = 0.5))
+}
+
+# Sum values across a production period (with units)
+sum_prod <- function(path, pattern) {
+  find_read(path, pattern) %>% 
+    group_by(farm_ID, feed, measure) %>% 
+    reframe(
+      days = n() %>% set_units("d"),
+      total = sum(mean) %>% set_units("g"),
+      sd = sqrt(sumna(sd^2)),
+    ) %>%
+    mutate(
+      total_d = total/days,
+    )
+}
+
+# Convert daily values to daily values per biomass (with units)
+per_biom <- function(path, pattern) {
+  prepped_biomass <- farm_biomass %>% 
+    select(-measure) %>% 
+    rename(biom_mean = mean,
+           biom_sd = sd)
+
+  find_read(path, pattern) %>% 
+    merge(
+      prepped_biomass, 
+      by = c("farm_ID", "feed", "t")
+    ) %>% 
+    mutate(
+      mean_biom = (mean/biom_mean) %>% set_units("g g_fish-1"),
+      sd_biom = ratio_sd(mean, sd, biom_mean, biom_sd)
+    )
 }
