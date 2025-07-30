@@ -1,14 +1,18 @@
 library(targets)
-library(crew)
+# library(crew)
+library(magrittr)
 
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "tibble", "qs"), 
   format = "qs", 
-  controller = crew_controller_local(workers = 14),
+  controller = crew::crew_controller_local(workers = 12, seconds_idle = 300),
   workspace_on_error = TRUE
 )
 
-tar_source(files = list.files("src", pattern = "\\.R$", full.names = TRUE))
+tar_source(
+  files = list.files("src", pattern = "\\.R$", full.names = TRUE) %>% 
+    setdiff("src/map_templates.R")
+)
 
 list(
 # Get previously saved data ---------------------------------------------------------------------------------------
@@ -24,10 +28,10 @@ list(
     farm_IDs,
     command = {
       # c(1:39, 2704:2721) # Australia and US only
-
       qs::qread(farm_ts_data_file) %>% 
+        filter(farm_ID != 2703) %>% # The only Russian farm
         distinct(farm_ID) %>% 
-        pull(farm_ID) #%>% sample(272)
+        pull(farm_ID)
     }
   ),
   tar_target(
@@ -46,7 +50,6 @@ list(
       qs::qread(feed_params_file) %>% names()
       # c("plant_dominant", "marine_dominant")
     }
-    
   ),
   tar_target(
     feed_params,
@@ -107,12 +110,7 @@ list(
         filter(!is.na(weight)) %>% 
         slice_tail(n = 1) %>%
         select(weight) %>%
-        mutate(
-          farm_ID = farm_IDs,
-          weight = weight %>% 
-            units::set_units("g") %>% 
-            units::drop_units()
-        )
+        mutate(farm_ID = farm_IDs)
     },
     pattern = map(farm_IDs, farm_ts_data)
   ),
@@ -144,7 +142,7 @@ list(
         't_start' = min(farm_ts_data$day),
         't_end' = max(farm_ts_data$day),
         'dt' = 1,
-        'nruns' = 5000,
+        'nruns' = 3000, # 3000
         'prod' = farm_production$tonnes_per_farm[farm_production$farm_id == farm_IDs]
       )
     },
@@ -190,55 +188,56 @@ list(
     pattern = cross(map(farm_IDs, N_pop, farm_ID_data, farm_ts_data), map(feed_params, feed_names))
   ),
 
+# Process growth ------------------------------------------------------------------------------------------------------
   tar_target(
     farm_results,
     command = {
       farm_run[[stat_names]] %>% 
-        mutate(sd_mean = sd/mean) %>%
-        group_by(farm_ID, feed, t) %>%
-        reframe(
-          mean = sumna(mean),
-          sd_mean = sumna(sd_mean),
-          sd = sd_mean*mean,
-          measure = as.factor(stat_names)
+        mutate(
+          measure = as.factor(stat_names),
+          prod_t = t-min(t)+1
         ) %>% 
-      # Fish are given no food on harvest day
-      group_by(farm_ID) %>% 
-      mutate(last_t = max(t)) %>% 
-      ungroup() %>% 
-      filter(t != last_t) %>% 
-      dplyr::select(-last_t)
+        filter(t != max(t)) # Fish are given no food on harvest day
     },
-    pattern = cross(farm_run, stat_names)
+    pattern = cross(farm_run, stat_names),
+    memory = "persistent"
+  ),
+
+  tar_target(
+    biomass_produced,
+    command = {
+      farm_run[["biomass_stat"]] %>% 
+        mutate(
+          measure = as.factor("biomass_stat"),
+          prod_t = t-min(t)+1
+        ) %>% 
+        filter(t == max(t))
+    },
+    pattern = farm_run
   ),
 
   tar_target(
     cohort_results,
     command = {
       cohort_1 <- farm_run[[stat_names]] %>% 
-        mutate(sd_mean = sd/mean) %>% 
-      # Fish are given no food on harvest day
-      group_by(farm_ID) %>% 
-      mutate(last_t = max(t)) %>% 
-      ungroup() %>% 
-      filter(t != last_t) %>% 
-      dplyr::select(-last_t)
+        filter(t != max(t)) # Fish are given no food on harvest day
       
       cohort_2 <- farm_to_cohort(cohort_1, time_offset = 365)
       cohort_3 <- farm_to_cohort(cohort_1, time_offset = 730)
       cohort_1 <- farm_to_cohort(cohort_1, time_offset = 0)
-      lims <- unique(cohort_2$t)
+      lims <- min(cohort_2$t):(min(cohort_2$t)+365*2) # Two years after start of cohort 2
 
-      rbind(cohort_1, cohort_2, cohort_3) %>% 
+      tmp <- rbind(cohort_1, cohort_2, cohort_3) %>% 
         filter(t %in% lims) %>% 
         group_by(farm_ID, feed, t) %>%
         reframe(
           mean = sumna(mean),
-          sd_mean = sumna(sd_mean),
-          sd = sd_mean*mean,
+          sd = sqrt(sumna(sd^2)),
           measure = as.factor(stat_names)
-        )
+        ) %>% 
+        mutate(prod_t = t-min(lims)+1)
     },
-    pattern = cross(farm_run, stat_names)
+    pattern = cross(farm_run, stat_names),
+    memory = "persistent"
   )
 )
