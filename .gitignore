@@ -51,3 +51,7 @@ XX_confidential/*
 
 # Quarto temporary files
 /.quarto/
+
+# Raw data
+data/raw/*
+data/atlantic_salmon/production/*

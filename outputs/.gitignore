@@ -1,6 +1,6 @@
 # For managing big data files
-cohort_growth_data/*
-farm_growth_data/*
+all_outputs_farm/*
+all_outputs_cohort/*
 
 farm_data/farm_circles*
 farm_data/farm_ts_data*
