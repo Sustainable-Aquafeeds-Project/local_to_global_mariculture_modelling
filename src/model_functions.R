@@ -1,23 +1,18 @@
-# nolint start
-
-# These packages are called here so that renv doesn't clean them
-library(devtools)
-library(yaml)
-library(gitcreds)
-
-### Functions modified from Baldan et al 2018 R package for aquaculture. 
+### Main model functions here are modified from Baldan et al 2018 R package for aquaculture. 
 ### https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0195732
 ### https://github.com/cran/RAC/tree/master/R
 
-# Load required packages
+suppressPackageStartupMessages(suppressWarnings({
 library(qs)
-library(qs2) 
+library(qs2)
 library(terra)
 library(readxl)
 library(matrixStats)
 library(furrr)
 library(future)
 library(dplyr)
+library(msm)
+}))
 
 # Parameters definitions
 # species_params['alpha']         [-] Feeding catabolism coefficient
@@ -38,22 +33,6 @@ library(dplyr)
 # species_params['k']             [-] Weight exponent for energy content
 # species_params['eff']           [-] Food ingestion efficiency
 # species_params['fcr']           [-] Food conversion ratio
-
-get_farms <- function(farms_file, farm_ID, this_species){
-  qread(farms_file) %>% 
-    filter(model_name == this_species) %>% 
-    select(-row_num) %>% 
-    mutate(farm_id = row_number()) %>% 
-    filter(farm_id == farm_ID)
-}
-
-get_feed_params <- function(file){
-  df <- read.csv(file, header = F)
-  values <- as.numeric(df$V1)
-  names(values) <- df$V2
-  values <- values[!is.na(values)]
-  return(values)
-}
 
 generate_pop <- function(harvest_n, mort, times) {
   
@@ -84,6 +63,7 @@ feeding_rate <- function(water_temp, species_params) {
     (species_params['betac'] * (species_params['Tma'] - species_params['Toa']))
 }
 
+# Calculate how much food will be provided based on need
 food_prov_rate <- function(pop_params, water_temp, ing_pot, ing_pot_min, species_params) {
   # Use ifelse vectorization instead of individual if statements
   ifelse(
@@ -249,7 +229,7 @@ farm_growth <- function(pop_params, species_params, feed_params, water_temp, tim
   return(out_list)
 }
 
-# This is identical to the farm_growth function except without the Monte-Carlo sampling of initial weights (all uniform)
+# This is identical to the farm_growth function except without the Monte-Carlo sampling of initial weights (all fish are uniform)
 uni_farm_growth <- function(pop_params, species_params, feed_params, water_temp, times, N_pop){
   
   days <- (times['t_start']:times['t_end'])*times['dt']
@@ -305,4 +285,35 @@ combine_cohorts <- function(lst) {
             farm_to_cohort(lst[[i]], 730))
 }
 
-# nolint end
+# Calculate standard deviation of ratio using delta method
+ratio_sd <- function(mean1, sd1, mean2, sd2, correlation = 0) {  
+  # Vectorize the function for dataframe use
+  vectorized_ratio_sd <- function(m1, s1, m2, s2, corr) {
+    # Input validation
+    if (s1 < 0 || s2 < 0) {
+      stop("Standard deviations must be non-negative")
+    }
+    if (abs(corr) > 1) {
+      stop("Correlation must be between -1 and 1")
+    }
+    if (m2 == 0) {
+      stop("Denominator mean cannot be zero")
+    }
+    
+    # Set up means vector and covariance matrix
+    means <- c(m1, m2)
+    
+    # Create covariance matrix
+    covariance <- corr * s1 * s2
+    cov_matrix <- matrix(c(s1^2, covariance, covariance, s2^2), nrow = 2)
+    
+    # Calculate standard deviation using delta method
+    result_sd <- msm::deltamethod(~ x1/x2, means, cov_matrix)
+    
+    return(as.numeric(result_sd))
+  }
+  
+  # Apply function element-wise
+  mapply(vectorized_ratio_sd, mean1, sd1, mean2, sd2, correlation, 
+         SIMPLIFY = TRUE, USE.NAMES = FALSE)
+}
