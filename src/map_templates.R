@@ -1,3 +1,4 @@
+suppressPackageStartupMessages(suppressWarnings({
 library(devtools)
 library(qs)
 library(dplyr)
@@ -13,24 +14,25 @@ library(rnaturalearth)
 library(rnaturalearthdata)
 library(rnaturalearthhires)
 library(purrr)
+}))
 
 # Define areas -------------------------------------------------
 # For drawing area boxes on the big map
 inset_boxes <- list(   # lonmin, lonmax, latmin, latmax
-  CAN1 = c(-132, -122, 47.75, 54.25),
-  CAN2 = c(-70, -54, 43, 48.5),
+  CAN1 = c(-132, -122, 47.75, 54.1),
+  CAN2 = c(-69, -54.75, 43.25, 48.25),
   EUR = c(-26, 30, 51, 72),
   CHI = c(-77.5, -62.5, -56, -25),
   AUS = c(144, 149.5, -44, -39.75)
 )
 
-# For the corresponding patchwork map lims
+# For the corresponding patchwork map lims, basically the same, just a little refined
 inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
-  CAN1 = c(-132, -122, 48.5, 54),
-  CAN2 = c(-70, -54, 43, 48.5),
+  CAN1 = c(-131.5, -123, 48.25, 54.25),
+  CAN2 = c(-69, -55, 43.5, 48),
   EUR = c(-23, 28.5, 52, 71),
   CHI = c(-78, -62, -55.5, -27),
-  AUS = c(144, 149, -43.75, -40.75)
+  AUS = c(144.25, 148.5, -43.75, -40.75)
 ) %>% 
   map(function(bx) {
     list(
@@ -41,6 +43,7 @@ inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
       )
 })
 
+# Where should the inset labels be positioned in the big map
 labels_spec_robinson <- c(
   CAN1 = "bottom_left_outside", 
   CAN2 = "bottom_right_outside", 
@@ -58,14 +61,14 @@ labels_offset_robinson <- c(
 )
 
 labels_spec_mercator <- list(
-  CAN1 = c(h = -1, v = 0.5), 
-  CAN2 = c(h = 0.5, v = 0.5), 
-  EUR = c(h = -1, v = 0.5), 
-  CHI = c(h = 0, v = 0), 
-  AUS = c(h = 0, v = 0.5)
+  CAN1 = c(l = "A", h = 0, v = 0), 
+  CAN2 = c(l = "B", h = 0.75, v = 0), 
+  EUR = c(l = "C", h = -0.75, v = -0.5), 
+  CHI = c(l = "D", h = 0, v = 0), 
+  AUS = c(l = "E", h = 0, v = 0)
 )
 
-# The Robinson projection --------------------------------------
+# The Robinson projection --------------------------------------------------------------------------------------------------------------
 worldmap_robinson <- ne_countries(scale = "medium", returnclass = "sf") %>% 
   st_transform(crs = "+proj=robin")
 graticules_robinson <- st_graticule(worldmap_robinson, lon = seq(-180, 180, 30), lat = seq(-90, 90, 30)) 
@@ -89,7 +92,7 @@ p_bigmap_robinson <- ggplot() +
                hjust = 0.5, vjust = 0.5) +
   theme_void()
 
-# The Mercator projection --------------------------------------
+# The Mercator projection --------------------------------------------------------------------------------------------------------------
 worldmap_mercator <- ne_countries(scale = "large", returnclass = "sf")
 
 get_insets_mercator <- function(map) {
@@ -100,7 +103,7 @@ get_insets_mercator <- function(map) {
         ylim = specs[["ylims"]]
       )  +
       draw_label(
-        "A", 
+        labs["l"], 
         size = 14, 
         fontface = "bold", 
         x = specs[["labx"]], 
@@ -127,12 +130,12 @@ patchwork_mercator <- function(bigmap) {
   )
   grid_notcanada <- plot_grid(
     plot_grid(
-      p_insets[["p_Eur"]],  
-      p_insets[["p_Aus"]],  
+      p_insets[["EUR"]],  
+      p_insets[["AUS"]],  
       nrow = 2, 
       rel_heights = c(1, 1)
     ), 
-    p_insets[["p_Chi"]],  
+    p_insets[["CHI"]],  
     ncol = 2, 
     rel_widths =  c(1, 1)
   )
