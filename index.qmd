@@ -9,7 +9,6 @@ execute:
   warning: false
   message: false
   cache: true
-  freeze: auto
 knitr: 
   opts_chunk:
     fig.align: center
@@ -105,7 +104,10 @@ feed_pal <- c(
   "future" = "#4DAF4A",
   "plant_dominant" = "#4DAF4A",
   "marine_dominant" = "#377EB8",
-  "novel_inclusive" = "#E41A1C"
+  "novel_inclusive" = "#E41A1C",
+  "PD" = "#4DAF4A",
+  "MD" = "#377EB8",
+  "NI" = "#E41A1C"
 )
 cohort_pal <- c("1" = "#E41A1C", "2" = "#377EB8", "3" = "#4DAF4A", "all" = "black")
 macro_pal <- c(
@@ -184,51 +186,48 @@ Using this method, a farm's 'population' is not a good representation of the act
 
 ```{r}
 #| label: fig-cohorts
-#| eval: false
 #| fig-cap: | 
 #|   Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days.
 
-df <- find_read(output_model_farm_path, "dw_") %>% 
-  mutate(
-    mean = set_units(mean, "g") %>% set_units("t"),
-    sd = set_units(sd, "g") %>% set_units("t")
-  ) %>% 
-  select(-farm_ID)
+farm_biomass <- find_read(output_model_farm_path, "biomass_stat") %>% 
+  filter(farm_ID == 722 & feed == "plant_dominant")
 
-df <- rbind(
-  df %>% mutate(cohort = 1),
-  df %>% mutate(t = t+365, cohort = 2),
-  df %>% mutate(t = t+730, cohort = 3)
+cohort_biomass_split <- rbind(
+  farm_biomass %>% 
+    farm_to_cohort() %>% 
+    mutate(cohort = 1),
+  farm_biomass %>% 
+    farm_to_cohort(time_offset = 365) %>% 
+    mutate(cohort = 2),
+  farm_biomass %>% 
+    farm_to_cohort(time_offset = 730) %>% 
+    mutate(cohort = 3)
 ) %>% 
-  mutate(t = (t-min(t))+1,
-         split = "Split by cohort")
+  mutate(split = 0) %>% 
+  relocate(farm_ID, .before = t) %>% 
+  relocate(feed, .before = t)
 
-min_t <- min(df$t[df$cohort == 2])
-max_t <- max(df$t[df$cohort == 2])
+cohort_biomass <- find_read(output_model_cohort_path, "biomass_stat") %>% 
+  filter(farm_ID == 722 & feed == "plant_dominant") %>% 
+  mutate(cohort = "all", split = 1)
 
-df_2 <- df %>% 
-  filter(t %in% min_t:max_t) %>% 
-  group_by(t) %>% 
-  reframe(
-    sd_mean = sqrt(sum(sd_mean^2)),
-    mean = sum(mean),
-    sd = sd_mean*mean
+rbind(
+  cohort_biomass_split,
+  cohort_biomass
   ) %>% 
   mutate(
-    cohort = "all",
-    split = "Totalled"
-  )
-
-df <- rbind(df, df_2) %>% 
-  mutate(cohort = as.factor(cohort))
-
-ggplot(df, aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = as.factor(cohort))) +
+    t = t-min(t)+1,
+    mean = mean %>% set_units("g") %>% set_units("t"),
+    sd = sd %>% set_units("g") %>% set_units("t")
+  ) %>% 
+  ggplot(aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = as.factor(cohort))) +
   geom_line(linewidth = 0.75) +
   geom_ribbon(linetype = "dotted", alpha = 0) +
   facet_grid(cols = vars(split)) +
   scale_x_continuous(breaks = seq(0, 1600, 120)) +
   scale_colour_manual(values = cohort_pal) +
   prettyplot() +
+  theme(strip.background = element_blank(), strip.text = element_blank()) +
   labs(y = "Farm biomass", x = "Day of production")
 ```
 
@@ -265,6 +264,7 @@ By this method, farm biomass as predicted by the model predicted farm tonnage re
 #| label: fig-functional-response-to-temperature
 #| fig-cap: Temperature changes in potential ingestion (solid line) and amount of food provided (dotted line), relative to maximum potential ingestion. The vertical dotted lines show the actual minimum and maximum daily temperatures experienced by farms represented in the model.
 
+Sys.setenv(TAR_PROJECT = "project_farmruns")
 tar_load(farm_ts_data)
 min_T <- min(farm_ts_data$temp_c)
 max_T <- max(farm_ts_data$temp_c)
@@ -376,12 +376,12 @@ feed_summary <- map_dfr(names(feed_params), function(feed) {
 ## Model sensitivity to parameter changes {#sec-param-sensitivity}
 
 Parameter sensitivity was tested by varying each parameter by $\pm 10$% and calculating sensitivity as $S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}$, where $S$ is the sensitivity of the measured variable to changes in parameter $p$, and $P_{1.1}$, $P_{0.9}$, and $P_{1}$ are the value of the measured variable when the model is run with parameter $p$ at 110%, 90%, and 100% of its value respectively. 
-All parameters in Table @tbl-params were tested. The population-level parameters ($\overline{W}$, $\Delta{W}$, $\overline{I_{max}}$, $\Delta{I_{max}}$, $\overline{F}$, $\Delta{F}$) were tested with a population of of 5000 on a random 10% of farms, while all other parameters were tested across all farms with a population of 10.
+The population-level parameters ($\overline{W}$, $\Delta{W}$, $\overline{I_{max}}$, $\Delta{I_{max}}$, $\overline{F}$, $\Delta{F}$) were tested with a population of of 5000 on a random 10% of farms, while all other parameters were tested across all farms with a population of 10 (@fig-sensitivity-results).
 
-```{r salmon-param-names}
-#| code-summary: Get parameter and sensitivity data
+```{r}
+#| label: salmon-param-names
 
-params <- file.path(output_species_data_path, "sens_params.qs") %>% qs::qread()
+params <- find_read(output_species_data_path, "sens_params")
 
 param_names <- tibble::tribble(
   ~name,        ~lab,
@@ -413,165 +413,535 @@ param_names <- tibble::tribble(
 ```
 
 ```{r}
-#| label: sens-results
+#| label: fig-sensitivity-results
+#| fig-cap: Sensitivity of individual fish weight (blue) and total farm excretion (red) to a 10% increase in each model parameter. Bars show mean values, error bars show standard deviation between farms. 
+#| fig-width: 8
 
-sens_results_files <- file.path(output_sens_data_path) %>% 
-  list.files(full.names = T) %>% 
-  str_subset("results")
+sens_results <- find_read(output_sens_data_path, "sens_results") %>% 
+  filter(measure %in% c("total_excr", "weight") & adj_param != "nruns") %>% 
+  mutate(measure = droplevels(measure))
+
+sens_results %>% 
+  ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens-sd_sens, ymax = mean_sens+sd_sens, fill = measure)) +
+  geom_col(position = position_dodge(), width = 0.95, alpha = 0.65, colour = "black") +
+  geom_errorbar(position = position_dodge(width = 0.95), width = 0.5) +
+  coord_flip() +
+  prettyplot() +
+  scale_x_discrete(breaks = param_names$name, labels = param_names$lab) +
+  scale_y_continuous(breaks = seq(-10, 30, 5)) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(y = "Sensitivity", x = "Adjusted parameter")
 ```
-
 
 # Results {#sec-results}
 
-```{r}
-#| label: input-data
-
-ins_P <- list.files(per_biomass_cohort_path, full.names = T) %>% 
-  str_subset("P_uneat|P_excr") %>% 
-  purrr::map(function(nm) {qs::qread(nm)}) %>% 
-  bind_rows()
-
-ins_tot <- list.files(per_biomass_cohort_path, full.names = T) %>% 
-  str_subset("total_uneat|total_excr") %>% 
-  purrr::map(function(nm) {qs::qread(nm)}) %>% 
-  bind_rows()
-```
-
-## Total inputs (uneaten and excreted)
-
-### Through time
+## Biomass produced and feed provided
 
 ```{r}
-#| label: fig-uneat-excr-plot-ts
-#| fig-cap: Initial look at excreted and uneaten through time
+#| label: fig-biom-prod-comparison
+#| fig-caption: Percentage difference in the biomass produced by farms fed the marine-dominant feed (blue) or the novel-inclusive feed (red), in comparison to the plant-dominant feed.
+#| class-chunk: aside
 
-ins_tot %>% 
-  mutate(t = t-365) %>% 
-  merge(farm_geometry, by.x = "farm_ID", by.y = "farm_id") %>% 
-  group_by(country, feed, t, measure) %>% 
+biomass_produced <- find_read(output_model_farm_path, "biomass_produced_all_farms") %>% 
+  merge(st_drop_geometry(farm_locs), by = "farm_ID")
+
+biomass_produced <- biomass_produced %>% 
+  select(-sd, -prod_t) %>% 
+  mutate(feed = factor(feed, labels = c("MD", "PD", "NI"))) %>% 
+  pivot_wider(names_from = feed, values_from = mean) %>% 
+  mutate(MD = (MD-PD)/PD,
+         NI = (NI-PD)/PD) %>% 
+  select(-PD) %>% 
+  pivot_longer(
+    cols = c(MD, NI), 
+    names_to = "feed", 
+    names_transform = list(feed = as.factor),
+    values_to = "perc_diff"
+  ) 
+
+bps <- biomass_produced %>% 
+  group_by(feed) %>% 
   reframe(
-    sd_perbiom = sd(mean_perbiom),
-    mean_perbiom = mean(mean_perbiom)
+    diff = mean(perc_diff),
+    sd = sd(perc_diff),
     ) %>% 
   mutate(
-    mean_perbiom = mean_perbiom %>% 
-      set_units("g g_fish-1") %>% 
-      set_units("kg t_fish-1"),
-    sd_perbiom = sd_perbiom %>% 
-      set_units("g g_fish-1") %>% 
-      set_units("kg t_fish-1")
+    sign = case_when(diff < 0 ~ "less", T ~ "more"),
+    diff = round(100*diff, 2),
+    sd = round(100*sd, 2),
+    abs_diff = abs(diff)
+  )
+
+biomass_produced %>% 
+  ggplot(aes(x = country, y = 100*perc_diff, fill = feed)) +
+  geom_boxplot() +
+  scale_fill_manual(values = feed_pal) +
+  prettyplot() +
+  labs(x = "Country", y = "% difference")
+```
+
+Overall, when farms were fed the marine-dominant feed they produced `r bps$abs_diff[bps$feed == "MD"]`% `r bps$sign[bps$feed == "MD"]` ($\pm$ `r bps$sd[bps$feed == "MD"]`%) biomass with the same population, and when farms were fed the novel-inclusive feed they produced `r bps$abs_diff[bps$feed == "NI"]`% `r bps$sign[bps$feed == "NI"]` ($\pm$ `r bps$sd[bps$feed == "NI"]`%) biomass than when fed the plant-dominant feed (@fig-biom-prod-comparison). 
+
+```{r}
+#| label: feed-prov-comparison
+
+feed_provided <- sum_prod(output_model_farm_path, "food_prov") %>% 
+  merge(st_drop_geometry(farm_locs), by = "farm_ID")
+
+feed_provided <- feed_provided %>% 
+  select(-sd, -total_d) %>% 
+  mutate(feed = factor(feed, labels = c("MD", "PD", "NI"))) %>% 
+  pivot_wider(names_from = feed, values_from = total) %>% 
+  mutate(MD = (MD-PD)/PD,
+         NI = (NI-PD)/PD) %>% 
+  select(-PD) %>% 
+  pivot_longer(
+    cols = c(MD, NI), 
+    names_to = "feed", 
+    names_transform = list(feed = as.factor),
+    values_to = "perc_diff"
   ) %>% 
-  ggplot(aes(
-    x = t, 
-    y = drop_units(mean_perbiom), 
-    ymin = drop_units(mean_perbiom-sd_perbiom), 
-    ymax = drop_units(mean_perbiom+sd_perbiom), 
-    colour = feed, 
-    fill = feed
+  mutate(perc_diff = perc_diff %>% drop_units())
+
+fps <- feed_provided %>% 
+  group_by(feed) %>% 
+  reframe(
+    diff = mean(perc_diff),
+    sd = sd(perc_diff),
+    ) %>% 
+  mutate(
+    sign = case_when(diff < 0 ~ "less", T ~ "more"),
+    diff = round(100*diff, 2),
+    sd = round(100*sd, 2),
+    abs_diff = abs(diff)
+  )
+```
+
+Farms were therefore provided `r fps$abs_diff[fps$feed == "MD"]`% `r fps$sign[fps$feed == "MD"]` ($\pm$ `r fps$sd[fps$feed == "MD"]`%) feed when fed the marine-dominant feed, and `r fps$abs_diff[fps$feed == "NI"]`% `r fps$sign[fps$feed == "NI"]` ($\pm$ `r fps$sd[fps$feed == "NI"]`%) feed when fed the novel-inclusive feed compared to the plant-dominant feed (@fig-feedprov-comparison). 
+
+```{r}
+#| label: fig-feedprov-comparison
+#| fig-cap: Percentage difference in the total feed provided when farms were fed the marine-dominant feed (blue) or the novel-inclusive feed (red), in comparison to the plant-dominant feed.
+#| class-chunk: aside
+
+feed_provided %>% 
+  ggplot(aes(x = country, y = 100*perc_diff, fill = feed)) +
+  geom_boxplot() +
+  prettyplot() +
+  scale_fill_manual(values = feed_pal) +
+  labs(x = "Country", y = "Mean feed provided (kg/kg salmon)")
+```
+
+```{r}
+#| label: feed-uneat-comparison
+
+uneaten_feed <- sum_prod(output_model_farm_path, "total_uneat") %>% 
+  merge(st_drop_geometry(farm_locs), by = "farm_ID")
+
+uneaten_feed <- uneaten_feed %>% 
+  select(-sd, -total_d) %>% 
+  mutate(feed = factor(feed, labels = c("MD", "PD", "NI"))) %>% 
+  pivot_wider(names_from = feed, values_from = total) %>% 
+  mutate(MD = (MD-PD)/PD,
+         NI = (NI-PD)/PD) %>% 
+  select(-PD) %>% 
+  pivot_longer(
+    cols = c(MD, NI), 
+    names_to = "feed", 
+    names_transform = list(feed = as.factor),
+    values_to = "perc_diff"
+  ) %>% 
+  mutate(perc_diff = perc_diff %>% drop_units())
+
+ufs <- uneaten_feed %>% 
+  group_by(feed) %>% 
+  reframe(
+    diff = mean(perc_diff),
+    sd = sd(perc_diff),
+    ) %>% 
+  mutate(
+    sign = case_when(diff < 0 ~ "less", T ~ "more"),
+    diff = round(100*diff, 3),
+    sd = round(100*sd, 2),
+    abs_diff = abs(diff)
+  )
+```
+
+Consequently, farms lost `r ufs$abs_diff[ufs$feed == "MD"]`% `r ufs$sign[ufs$feed == "MD"]` ($\pm$ `r ufs$sd[ufs$feed == "MD"]`%) uneaten feed when fed the marine-dominant feed and `r ufs$abs_diff[ufs$feed == "NI"]`% `r ufs$sign[ufs$feed == "NI"]` ($\pm$ `r ufs$sd[ufs$feed == "NI"]`%) uneaten feed when fed the novel-inclusive feed compared to the plant-dominant feed. 
+
+### Summary
+
+| Feed | Change in biomass produced | Change in feed provided | Change in uneaten feed lost |
+|----------|-----|-----|-----|
+| Marine-dominant | `r bps$diff[bps$feed == "MD"]` | `r fps$diff[fps$feed == "MD"]` | `r ufs$diff[ufs$feed == "MD"]` |
+| Novel-inclusive | `r bps$diff[bps$feed == "NI"]` | `r fps$diff[fps$feed == "NI"]` | `r ufs$diff[ufs$feed == "NI"]` |
+
+# Inputs
+
+## Total inputs (mass)
+
+```{r}
+#| label: total-inputs
+
+# Total inputs, all times
+total_uneaten <- find_read(output_model_cohort_path, "total_uneat")
+total_excreted <- find_read(output_model_cohort_path, "total_excr")
+
+total_inputs <- rbind(total_uneaten, total_excreted) %>% 
+  merge(st_drop_geometry(farm_locs), by = "farm_ID") %>% 
+  select(-c(sd)) %>% 
+  pivot_wider(names_from = measure, values_from = mean, id_cols = c(farm_ID, feed, country, prod_t)) %>% 
+  mutate(perc_excr = total_excr_stat/(total_excr_stat+total_uneat_stat)) %>% 
+  select(-c(total_excr_stat, total_uneat_stat))
+
+# Total inputs, summed across production period
+total_uneaten_sum <- sum_prod(output_model_farm_path, "total_uneat")
+total_excreted_sum <- sum_prod(output_model_farm_path, "total_excr")
+
+total_inputs_sum <- rbind(total_uneaten_sum, total_excreted_sum) %>% 
+  merge(st_drop_geometry(farm_locs), by = "farm_ID") %>% 
+  select(-c(sd)) %>% 
+  pivot_wider(names_from = measure, values_from = total, id_cols = c(farm_ID, feed, country)) %>% 
+  mutate(perc_excr = total_excr_stat/(total_excr_stat+total_uneat_stat)) %>% 
+  select(-c(total_excr_stat, total_uneat_stat))
+
+tis <- total_inputs_sum %>% 
+  mutate(
+    perc_excr = drop_units(perc_excr),
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "novel_inclusive", "plant_dominant"), 
+      labels = c("MD", "NI", "PD")
+    )
+  )
+```
+
+Total farm inputs (excreted matter and uneaten feed) were on average composed of
+`r round(100*mean(tis$perc_excr[tis$feed == "PD"]), 1)`% ($\pm$ `r round(100*sd(tis$perc_excr[tis$feed == "PD"]), 2)`%) excreted matter (`r 100-round(100*mean(tis$perc_excr[tis$feed == "PD"]), 1)`% uneaten feed) when farms were fed the plant-dominant feed, 
+`r round(100*mean(tis$perc_excr[tis$feed == "MD"]), 1)`% ($\pm$ `r round(100*sd(tis$perc_excr[tis$feed == "MD"]), 2)`%) excreted matter (`r 100-round(100*mean(tis$perc_excr[tis$feed == "MD"]), 1)`% uneaten feed) when farms were fed the marine-dominant feed, 
+`r round(100*mean(tis$perc_excr[tis$feed == "NI"]), 1)`% ($\pm$ `r round(100*sd(tis$perc_excr[tis$feed == "NI"]), 2)`%) excreted matter (`r 100-round(100*mean(tis$perc_excr[tis$feed == "MD"]), 1)`% uneaten feed) when farms were fed the novel-inclusive feed.
+
+```{r}
+#| label: input-glimpse
+#| eval: false
+
+total_inputs_sum %>% 
+  ggplot(aes(x = country, y = perc_excr, fill = feed)) +
+  geom_boxplot() 
+
+total_inputs_sum %>% 
+  filter(country == "Canada") %>% 
+  ggplot(aes(x = perc_excr)) +
+  geom_histogram()
+```
+
+```{r}
+#| label: fig-total-inputs-through-time
+#| class-chunk: aside
+
+total_inputs_tt <- rbind(total_uneaten, total_excreted) %>% 
+  merge(st_drop_geometry(farm_locs), by = "farm_ID") %>% 
+  mutate(measure = droplevels(measure),
+         feed = factor(
+           feed,
+           levels = c("marine_dominant", "novel_inclusive", "plant_dominant"),
+           labels = c("MD", "NI", "PD")
+         )) %>%
+  group_by(country, feed, prod_t, measure) %>% 
+  reframe(
+    # sd = sqrt(sumna(sd^2)),
+    mean = meanna(mean)
+  ) %>% 
+  pivot_wider(names_from = feed, values_from = mean) %>% 
+  mutate(MD = (MD-PD)/PD,
+         NI = (NI-PD)/PD) %>% 
+  select(-PD) %>% 
+  pivot_longer(cols = c(MD, NI), names_to = "feed", values_to = "perc_diff", names_transform = list(feed = as.factor))
+
+# Shows that % change in uneaten/excreted feed between feeds is very consistent through time
+total_inputs_tt %>%
+  ggplot(aes(x = prod_t, y = perc_diff, colour = country, linetype = feed)) +
+  geom_line(linewidth = 0.75) +
+  facet_wrap(vars(measure)) +
+  prettyplot() +
+  theme(legend.position = "bottom")
+```
+
+The difference between feeds in the uneaten feed and excreted matter lost remained relatively consistent through time for each farm (@fig-total-inputs-through-time). 
+
+```{r}
+#| label: total-inputs-map-data
+
+total_inputs_sum <- rbind(total_uneaten_sum, total_excreted_sum) %>% 
+  select(-c(sd)) %>% 
+  mutate(
+    feed = factor(feed, levels = c("marine_dominant", "novel_inclusive", "plant_dominant"), labels = c("MD", "NI", "PD"))
+    ) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = total,
+    id_cols = c(farm_ID, measure)
+  ) %>% 
+  mutate(
+    MD = (MD-PD)/PD,
+    NI = (NI-PD)/PD
+  ) %>% 
+  select(-PD) %>% 
+  pivot_longer(
+    cols = c(MD, NI),
+    names_to = "feed", names_transform = list(feed = as.factor),
+    values_to = "perc_diff", values_transform = list(perc_diff = drop_units)
+  ) %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  st_as_sf()
+```
+
+Differences spatially:
+
+* It looks like the marine-dominant feed overall results in less inputs (higher digestibility)
+* It is interesting that the changes due to switching to the marine-dominant feed seem so random spatially
+* However the changes in the novel-inclusive feed are less variable, probably because the novel-inclusive feed is very similar to the plant-dominant feed.
+
+```{r}
+#| label: fig-total-inputs-big-map
+#| fig-width: 8.5
+#| fig-height: 10
+#| fig-cap: Percentage difference in total inputs when farms are fed the marine-dominant feed (top) or the novel-inclusive feed (bottom).
+
+p_bigmap_robinson +
+  geom_sf(
+    data = total_inputs_sum, 
+    aes(colour = 100*perc_diff, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", limits = c(-30, 10)) +
+  guides(col = guide_colourbar(
+    title = expression("% Change in total inputs (from PD feed)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top", 
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1.5,
+    barheight = 1.5, barwidth = 20,
   )) +
-  geom_line() +
-  geom_ribbon(alpha = 0.25) +
-  facet_grid(
-    rows = vars(country),
-    cols = vars(measure),
-    scales = "free"
+  facet_grid(rows = vars(feed)) +
+  prettyplot() +
+  theme(strip.background = element_blank(), strip.text = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "bottom")
+```
+
+```{r}
+#| label: total-inputs-patchwork-map
+#| cache: false
+
+p_mercator <- p_bigmap_mercator + 
+  geom_sf(
+    data = total_inputs_sum,
+    # data = filter(total_inputs_sum, feed == "MD"), 
+    aes(colour = 100*perc_diff, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", limits = c(-30, 10)) +
+  facet_grid(cols = vars(feed)) +
+  prettyplot() +
+  theme(strip.background = element_blank(), strip.text = element_blank()) +
+  labs(y = "Latitude", x = "Longitude")
+
+ins <- get_insets_mercator(p_mercator)
+```
+
+```{r}
+#| label: fig-total-inputs-patchwork-map-CAN1
+#| fig-cap: Change in total inputs (west Canada)
+#| cache: false
+
+ins[[1]]
+```
+
+```{r}
+#| label: fig-total-inputs-patchwork-map-CAN2
+#| fig-cap: Change in total inputs (east Canada)
+#| cache: false
+
+ins[[2]]
+```
+
+```{r}
+#| label: fig-total-inputs-patchwork-map-EUR
+#| fig-cap: Change in total inputs (Europe)
+#| cache: false
+
+ins[[3]]
+```
+
+```{r}
+#| label: fig-total-inputs-patchwork-map-CHI
+#| fig-cap: Change in total inputs (Chile)
+#| cache: false
+
+ins[[4]]
+```
+
+```{r}
+#| label: fig-total-inputs-patchwork-map-AUS
+#| fig-cap: Change in total inputs (Australia)
+#| cache: false
+
+ins[[5]]
+```
+
+# N inputs
+
+```{r}
+#| label: N-inputs-map-data
+
+N_uneaten_sum <- sum_prod(output_model_farm_path, "P_uneat") %>% 
+  mutate(total = total * 6.25)
+N_excreted_sum <- sum_prod(output_model_farm_path, "P_excr") %>% 
+  mutate(total = total * 6.25)
+
+N_inputs_sum <- rbind(N_uneaten_sum, N_excreted_sum) %>% 
+  select(-c(sd, total_d)) %>% 
+  mutate(
+    feed = factor(feed, 
+                  levels = c("marine_dominant", "novel_inclusive", "plant_dominant"), 
+                  labels = c("MD", "NI", "PD"))
+    ) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = total,
+    id_cols = c(farm_ID, measure)
+  ) %>% 
+  mutate(
+    MD = (MD-PD)/PD,
+    NI = (NI-PD)/PD
+  ) %>% 
+  select(-PD) %>% 
+  pivot_longer(
+    cols = c(MD, NI),
+    names_to = "feed", names_transform = list(feed = as.factor),
+    values_to = "perc_diff", values_transform = list(perc_diff = drop_units)
+  ) %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  st_as_sf()
+```
+
+```{r}
+#| label: fig-N-inputs-boxplot
+
+N_inputs_sum_raw_0 <- rbind(N_uneaten_sum, N_excreted_sum) %>% 
+  select(-c(sd)) %>% 
+  mutate(
+    total_d = (total_d * 6.25) %>% set_units("kg d-1"),
+    feed = factor(feed, 
+                  levels = c("marine_dominant", "plant_dominant", "novel_inclusive"), 
+                  labels = c("MD", "PD", "NI"))
+    ) %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  group_by(country, feed, measure) %>% 
+  reframe(mean = mean(total_d)) 
+
+N_inputs_sum_raw_1 <- N_inputs_sum_raw_0 %>% 
+  group_by(country, feed) %>% 
+  reframe(mean = sum(mean))
+
+N_inputs_sum_raw_0 <- N_inputs_sum_raw_0 %>% 
+  filter(measure == "P_excr_stat")
+
+ggplot(N_inputs_sum_raw_0, aes(x = country, y = mean, fill = feed)) +
+  geom_col(position = position_dodge(), width = 0.95, colour = "black", alpha = 0.75) +
+  geom_col(
+    data = N_inputs_sum_raw_1,
+    position = position_dodge(), width = 0.95, colour = "black", alpha = 0.25
   ) +
   prettyplot() +
-  scale_colour_manual(values = feed_pal) +
   scale_fill_manual(values = feed_pal) +
-  scale_y_continuous(
-    name = expression("Loss (kg g"^-1*")"),
-    breaks = seq(0, 1, 0.2)
-  )
+  labs(x = "Country", y = "N inputs")
 ```
 
 ```{r}
-#| label: uneat-excr-plot-perc-diff
+#| label: fig-N-inputs-big-map
+#| fig-width: 8.5
+#| fig-height: 10
+#| fig-cap: Percentage difference in N inputs when farms are fed the marine-dominant feed (top) or the novel-inclusive feed (bottom).
 
-tmp <- ins_tot %>% 
-  mutate(t = t-365) %>% 
-  merge(farm_geometry, by.x = "farm_ID", by.y = "farm_id") %>% 
-  dplyr::select(-c(mean, sd_mean, sd, biom_mean, biom_sd, biom_sd_mean, sd_perbiom)) %>% 
-  group_by(country, t, measure) %>% 
-  pivot_wider(
-    names_from = feed, 
-    values_from = mean_perbiom
-  ) %>% 
-  mutate(
-    diff = plant_dominant - marine_dominant,
-    perc_diff = diff/plant_dominant
-  ) %>%
-  group_by(country, t, measure) %>% 
-  reframe(
-    mean_diff = mean(diff),
-    mean_perc_diff = mean(perc_diff),
-    sd_diff = sd(diff),
-    sd_perc_diff = sd(perc_diff)
-  )
-
-tmp <- tmp %>% 
-  group_by(measure, country) %>% 
-  reframe(
-    mean_t_perc_diff = mean(mean_perc_diff),
-    sd_t_perc_diff = sd(mean_perc_diff)
-    )
-```
-
-While the actual difference in excreted and uneaten feed (total loss) varied between countries and through time (@fig-uneat-excr-plot-ts), relative changes between the feeds remained consistent. 
-In both the US and Australia (all done so far), total excreted faeces was 
-`r round(100*tmp$mean_t_perc_diff[tmp$country == "Australia" & tmp$measure == "total_excr_stat"], 1)`% ($\pm$ `r round(100*tmp$sd_t_perc_diff[tmp$country == "Australia" & tmp$measure == "total_excr_stat"], 1)`%) higher in the plant-dominant feed. 
-Differences in total uneaten feed were much smaller at 
-`r round(100*-tmp$mean_t_perc_diff[tmp$country == "Australia" & tmp$measure == "total_uneat_stat"], 1)`% ($\pm$ `r round(100*tmp$sd_t_perc_diff[tmp$country == "Australia" & tmp$measure == "total_uneat_stat"], 1)`%) lower in the plant-dominant feed.
-
-### At harvest
-
-```{r}
-#| label: uneat-excr-plot-end
-#| fig-cap: Caption
-
-ins_tot %>% 
-  group_by(farm_ID) %>%
-  arrange(farm_ID, t) %>%
-  mutate(
-    cumsum_mean = cumsum(mean_perbiom) %>% 
-      set_units("g g_fish-1") %>% 
-      set_units("kg t_fish-1"),
-    end_t = max(t)
-    ) %>% 
-  ungroup() %>% 
-  filter(t == end_t) %>% 
-  merge(farm_geometry, by.x = "farm_ID", by.y = "farm_id") %>% 
-  ggplot(aes(x = country, y = cumsum_mean, fill = feed)) +
-  geom_boxplot() +
-  facet_grid(cols = vars(measure)) +
+p_bigmap_robinson +
+  geom_sf(data = total_inputs_sum, aes(colour = 100*perc_diff, geometry = geometry), size = 2) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", limits = c(-30, 10)) +
+  guides(col = guide_colourbar(
+    title = expression("% Change in N inputs (from PD feed)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top", 
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1.5,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  facet_grid(rows = vars(feed)) +
   prettyplot() +
-  scale_fill_manual(values = feed_pal)
+  theme(strip.background = element_blank(), strip.text = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "bottom")
 ```
-
-## N inputs
 
 ```{r}
-#| label: N-loss-plot-total
-#| fig-cap: Caption
+#| label: N-inputs-patchwork-map
+#| cache: false
 
-ins_P %>% 
-  group_by(farm_ID) %>%
-  arrange(farm_ID, t) %>%
-  mutate(
-    cumsum_mean = cumsum(mean_perbiom)*6.25 %>% 
-      set_units("g g_fish-1") %>% 
-      set_units("kg t_fish-1"),
-    end_t = max(t)
-    ) %>% 
-  ungroup() %>% 
-  filter(t == end_t) %>% 
-  merge(farm_geometry, by.x = "farm_ID", by.y = "farm_id") %>% 
-  ggplot(aes(x = country, y = cumsum_mean, fill = feed)) +
-  geom_boxplot() +
-  facet_grid(cols = vars(measure)) +
+p_mercator <- p_bigmap_mercator + 
+  geom_sf(data = N_inputs_sum, aes(colour = 100*perc_diff, geometry = geometry), size = 2) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", limits = c(-30, 10)) +
+  facet_grid(cols = vars(feed)) +
   prettyplot() +
-  scale_fill_manual(values = feed_pal)
+  theme(strip.background = element_blank(), strip.text = element_blank()) +
+  labs(y = "Latitude", x = "Longitude")
+
+ins <- get_insets_mercator(p_mercator)
 ```
+
+```{r}
+#| label: fig-N-inputs-patchwork-map-CAN1
+#| fig-cap: Change in N inputs (west Canada)
+#| cache: false
+
+ins[[1]]
+```
+
+```{r}
+#| label: fig-N-inputs-patchwork-map-CAN2
+#| fig-cap: Change in N inputs (east Canada)
+#| cache: false
+
+ins[[2]]
+```
+
+```{r}
+#| label: fig-N-inputs-patchwork-map-EUR
+#| fig-cap: Change in N inputs (Europe)
+#| cache: false
+
+ins[[3]]
+```
+
+```{r}
+#| label: fig-N-inputs-patchwork-map-CHI
+#| fig-cap: Change in N inputs (Chile)
+#| cache: false
+
+ins[[4]]
+```
+
+```{r}
+#| label: fig-N-inputs-patchwork-map-AUS
+#| fig-cap: Change in N inputs (Australia)
+#| cache: false
+
+ins[[5]]
+```
+
 
 # Code and packages used {#sec-code}
 
