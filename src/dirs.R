@@ -33,6 +33,7 @@ per_biomass_cohort_path <- file.path(output_path, "per_biomass_outputs_cohort")
 output_model_farm_path <- file.path(output_path, "all_outputs_farm")
 output_model_cohort_path <- file.path(output_path, "all_outputs_cohort")
 data_analysis_path <- file.path(output_path, "data_analysis")
+comparisons_path <- file.path(data_analysis_path, "feed_comparisons")
 impacts_path <- file.path(output_path, "nutrient_impacts")
 
 # Create output directories
@@ -44,6 +45,7 @@ dir.create(per_biomass_cohort_path, showWarnings = F)
 dir.create(output_model_farm_path, showWarnings = F)
 dir.create(output_model_cohort_path, showWarnings = F)
 dir.create(data_analysis_path, showWarnings = F)
+dir.create(comparisons_path, showWarnings = F)
 dir.create(impacts_path, showWarnings = F)
 
 # From extracting_temperature

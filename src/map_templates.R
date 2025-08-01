@@ -28,7 +28,7 @@ inset_boxes <- list(   # lonmin, lonmax, latmin, latmax
 
 # For the corresponding patchwork map lims, basically the same, just a little refined
 inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
-  CAN1 = c(-131.5, -123, 48.25, 54.25),
+  CAN1 = c(-130.5, -123, 48.25, 54.25),
   CAN2 = c(-69, -55, 43.5, 48),
   EUR = c(-23, 28.5, 52, 71),
   CHI = c(-78, -62, -55.5, -27),
@@ -63,7 +63,7 @@ labels_offset_robinson <- c(
 labels_spec_mercator <- list(
   CAN1 = c(l = "A", h = 0, v = 0), 
   CAN2 = c(l = "B", h = 0.75, v = 0), 
-  EUR = c(l = "C", h = -0.75, v = -0.5), 
+  EUR = c(l = "C", h = -0.75, v = 0.5), 
   CHI = c(l = "D", h = 0, v = 0), 
   AUS = c(l = "E", h = 0, v = 0)
 )
@@ -101,15 +101,15 @@ get_insets_mercator <- function(map) {
       coord_sf(
         xlim = specs[["xlims"]], 
         ylim = specs[["ylims"]]
-      )  +
-      draw_label(
-        labs["l"], 
-        size = 14, 
-        fontface = "bold", 
-        x = specs[["labx"]], 
-        y = specs[["laby"]], 
-        hjust = labs["h"], vjust = labs["h"]
-      )
+      )  #+
+      # draw_label(
+      #   labs["l"], 
+      #   size = 14, 
+      #   fontface = "bold", 
+      #   x = specs[["labx"]], 
+      #   y = specs[["laby"]], 
+      #   hjust = labs["h"], vjust = labs["h"]
+      # )
   })
 }
 

@@ -1,0 +1,1279 @@
+---
+title: "Process data from Atlantic salmon model runs"
+format: html
+editor: source
+---
+
+# Introduction
+
+The purpose of this script is to take the raw model outputs and save them as files which answer (or go towards answering) specific questions. These files can then be directly called by index.qmd to quickly create plots or text summaries.
+
+```{r}
+#| label: setup
+#| warning: false
+#| message: false
+
+library(arrow)
+library(sf)
+library(dplyr)
+library(tidyr)
+library(terra)
+library(magrittr)
+library(purrr)
+library(furrr)
+library(future)
+library(tictoc)
+library(ggplot2)
+library(fs)
+library(conflicted)
+library(stringr)
+library(readxl)
+library(units)
+library(qs)
+library(here)
+library(targets)
+conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  str_subset("map", negate = T) %>% 
+  walk(source)
+
+remove_unit("g_fish")
+remove_unit("kg_fish")
+remove_unit("t_fish")
+install_unit("g_fish")
+install_unit("kg_fish", "1000 g_fish")
+install_unit("t_fish", "1000 kg_fish")
+```
+
+It becomes necessary at this point to explicitly declare the units of some outputs, and make clear whether they refer to individual fish within a farm (mean across nruns) or the whole farm (individual fish x population).
+
+| Stat name | Unit | Description | Level |
+|-------|-----|------------------------------------|
+weight        | g | Mean weight of an individual fish within a farm | Individual |
+dw            | g | Mean daily weight change per individual within a farm | Individual |
+water_temp    | $^{\circ}$C | Mean daily temperature on farm | Farm |
+T_response    | - | Temperature response of all fish within a farm (identical for all fish in a farm) | Farm |
+P_excr        | g | Total excreted protein from the entire farm | Farm |
+L_excr        | g | Total excreted lipid from the entire farm | Farm |
+C_excr        | g | Total excreted carbohydrate from the entire farm | Farm |
+P_uneat       | g | Total uneaten protein from the entire farm | Farm |
+L_uneat       | g | Total uneaten lipid from the entire farm | Farm |
+C_uneat       | g | Total uneaten carbohydrate from the entire farm | Farm |
+food_prov     | g | Total food provided to the entire farm | Farm |
+food_enc      | g | Total food encountered by each individual fish | Individual |
+rel_feeding   | - | Temperature-driven relative feeding rate (identical for all fish in a farm) | Farm |
+ing_pot       | g | Total ingestion potential of each (i.e. the maximum that can be eaten) | Individual |
+ing_act       | g | Total actual ingestion of feed by fish in the entire farm | Farm |
+E_assim       |  |  | Individual |
+E_somat       |  |  | Individual |
+anab          |  |  | Individual |
+catab         |  |  | Individual |
+O2            |  |  | Farm |
+NH4           |  |  | Farm |
+total_excr    | g | Total excretion from the entire farm (P+L+C) | Farm |
+total_uneat   | g | Total uneaten feed from the entire farm (P+L+C) | Farm |
+metab         |  |  | Individual |
+biomass       | g | Mean weight of all fish within a farm (i.e. weight * population) | Farm |
+: Summary of model outputs being used in this script. Note that all the outputs are daily values (i.e. value at day = t). None are summed across a production period.
+
+# Raw output processing
+
+For some of the outputs of the model, it makes sense to sum them across a production period and/or calculate their values per unit of biomass. 
+```{r}
+#| label: biomass-location-globals-farm
+
+farm_locs <- find_read(output_farm_data_path, "geometry") %>% 
+  rename(farm_ID = farm_id) %>% 
+  mutate(country = as.factor(country))
+
+fish_weight <- find_read(output_model_farm_path, "weight")
+farm_biomass <- find_read(output_model_farm_path, "biomass_stat")
+biomass_produced <- find_read(output_model_farm_path, "biomass_produced")
+
+# farm_biomass has had the final day (when fish are not fed) removed - this adds it back
+all_biomass <- rbind(farm_biomass, biomass_produced)
+qs::qsave(all_biomass, file.path(data_analysis_path, "all_biomass.qs"))
+
+farm_biomass %>% filter(farm_ID == 1) %>% pull(t) %>% unique() %>% length()
+all_biomass %>% filter(farm_ID == 1) %>% pull(t) %>% unique() %>% length()
+```
+
+Note that this next block takes a long time to run, almost entirely because of the proper calculation of the ratio standard deviation for the per biomass stats.
+
+```{r}
+#| label: summed-per-biomass-outputs
+
+further_stats <- c(
+  # Nutrients excreted
+  "P_excr_stat", "L_excr_stat", "C_excr_stat", 
+  # Nutrients uneaten
+  "P_uneat_stat", "L_uneat_stat", "C_uneat_stat",
+  # Food provided and eaten
+  "food_prov_stat", "ing_act_stat",
+  # Oxygen consumed, ammonium produced
+  "O2_stat", "NH4_stat",
+  # PLC uneaten and excreted
+  "total_excr_stat", "total_uneat_stat"
+)
+
+analysis_names <- further_stats %>% str_remove("_stat")
+
+print(str_c("Starting further stats processing at ", Sys.time()))
+
+prepped_biomass <- farm_biomass %>% 
+  select(-measure) %>% 
+  rename(biom_mean = mean,biom_sd = sd)
+
+prepped_biomass_produced <- biomass_produced %>% 
+  select(-measure) %>% 
+  rename(biom_mean = mean, biom_sd = sd) %>% 
+  select(farm_ID, feed, biom_mean, biom_sd)
+
+for (fs in seq_along(further_stats)) {
+  # Model output
+  out <- find_read(output_model_farm_path, further_stats[fs])
+  
+  # Total summed across the production period
+  stat_summed <- out %>% 
+    group_by(farm_ID, feed, measure) %>% 
+    reframe(
+      days = n(),
+      total = sum(mean),
+      sd = sqrt(sumna(sd^2)),
+    ) %>% 
+    merge(farm_locs, by = "farm_ID") %>% 
+    relocate(country, .before = farm_ID) %>% 
+    st_as_sf() %>% 
+    mutate(
+      days = days %>% set_units("d"),
+      total = total %>% set_units("g"),
+      sd = sd %>% set_units("g")
+    )
+  
+  qs::qsave(stat_summed, file.path(data_analysis_path, str_c(analysis_names[fs], "_farm_summed.qs")))
+
+  # Total per biomass (/g salmon)
+  # This needs the "farm_biomass" global from above
+  stat_per_biom <- out %>% 
+    merge(
+      prepped_biomass, 
+      by = c("farm_ID", "feed", "t", "prod_t")
+    ) %>% 
+    mutate(
+      mean_biom = mean/biom_mean,
+      sd_biom = (mean/biom_mean) * sqrt((biom_sd/biom_mean)^2 + (sd/mean)^2)
+    ) %>% 
+    select(-c(mean, sd, biom_mean, biom_sd)) %>% 
+    merge(farm_locs, by = "farm_ID") %>% 
+    relocate(country, .before = farm_ID) %>% 
+    st_as_sf() %>% 
+    mutate(
+      mean_biom = mean_biom %>% set_units("g g_fish-1"),
+      sd_biom = sd_biom %>% set_units("g g_fish-1")
+    )
+  
+  qs::qsave(stat_per_biom, file.path(data_analysis_path, str_c(analysis_names[fs], "_farm_per_biom.qs")))
+
+  # Total per biomass (/g salmon) summed across the production period
+  # This needs the "biomass_produced" global from above
+  stat_per_biom_summed <- out %>% 
+    group_by(farm_ID, feed, measure) %>% 
+    reframe(
+      days = n(),
+      total = sum(mean),
+      sd = sqrt(sumna(sd^2)),
+    ) %>% 
+    select(farm_ID, feed, measure, total, sd) %>% 
+    merge(
+      prepped_biomass_produced, 
+      by = c("farm_ID", "feed")
+    ) %>% 
+    mutate(
+      mean_biom = (total/biom_mean),
+      sd_biom = (total/biom_mean) * sqrt((biom_sd/biom_mean)^2 + (sd/total)^2)
+    ) %>% 
+    select(-c(total, sd, biom_mean, biom_sd)) %>% 
+    merge(farm_locs, by = "farm_ID") %>% 
+    relocate(country, .before = farm_ID) %>% 
+    st_as_sf() %>% 
+    mutate(mean_biom = mean_biom %>% set_units("g g_fish-1"),
+           sd_biom = sd_biom %>% set_units("g g_fish-1"))
+  
+  qs::qsave(stat_per_biom_summed, file.path(data_analysis_path, str_c(analysis_names[fs], "_farm_per_biom_summed.qs")))
+  
+  print(str_c(
+    "Finished ", further_stats[fs], " at ", Sys.time(), " --- ", round(100*fs/length(further_stats),1), "% done"
+  ))
+}
+
+rm(stat_summed, stat_per_biom, stat_per_biom_summed)
+```
+
+Similarly, some cohort stats can be expressed per biomass. The cohort stats are only really useful when talking about daily values on an operating farm (with the overlapping cohorts) and average values per day or year.
+
+```{r}
+#| label: biomass-location-globals-cohort
+
+cohort_biomass <- find_read(output_model_cohort_path, "biomass_stat")
+cohort_biomass %>% filter(farm_ID == 1) %>% pull(t) %>% unique() %>% length()
+```
+
+```{r}
+#| label: summed-per-biomass-outputs-cohort
+#| eval: false
+
+further_stats <- c(
+  # Nutrients excreted
+  "P_excr_stat", "L_excr_stat", "C_excr_stat", 
+  # Nutrients uneaten
+  "P_uneat_stat", "L_uneat_stat", "C_uneat_stat",
+  # Food provided and eaten
+  "food_prov_stat", "ing_act_stat",
+  # Oxygen consumed, ammonium produced
+  "O2_stat", "NH4_stat",
+  # PLC uneaten and excreted
+  "total_excr_stat", "total_uneat_stat"
+)
+
+analysis_names <- further_stats %>% str_remove("_stat")
+
+for (fs in seq_along(further_stats)) {
+  # Model output
+  out <- find_read(output_model_cohort_path, further_stats[fs])
+  
+  # # Total summed across the production period
+  # stat_summed <- out %>% 
+    # group_by(farm_ID, feed, measure) %>% 
+    # reframe(
+    #   days = n(),
+    #   total = sum(mean),
+    #   sd = sqrt(sumna(sd^2)),
+    # ) %>% 
+  #   merge(farm_locs, by = "farm_ID") %>% 
+  #   relocate(country, .before = farm_ID) %>% 
+  #   st_as_sf() %>% 
+  #   mutate(days = days %>% set_units("d"),
+  #          total = total %>% set_units("g"),
+  #          sd = sd %>% set_units("g"))
+  
+  # Finish this - I want to have:
+  # * Mean output per year (total, and per biomass)
+  # * Mean, min and max output per day (total, and per biomass)
+  
+  # This needs the "cohort_biomass" global from above
+  stat_per_biom <- per_biom_coho(out) %>% 
+    merge(farm_locs, by = "farm_ID") %>% 
+    relocate(country, .before = farm_ID) %>% 
+    st_as_sf() %>% 
+    mutate(mean_biom = mean_biom %>% set_units("g g_fish-1"),
+           sd_biom = sd_biom %>% set_units("g g_fish-1"))
+
+  qs::qsave(stat_per_biom, file.path(data_analysis_path, str_c(analysis_names[fs], "_cohort_per_biom.qs")))
+  
+
+  
+  print(str_c(
+    "Finished ", further_stats[fs], " at ", Sys.time(), " --- ", round(100*fs/length(further_stats),1), "% done"
+  ))
+}
+```
+
+# Biomass and feed provided/consumed questions
+
+```{r}
+#| label: biomass-produced-comparisons
+
+biomass_produced <- find_read(output_model_farm_path, "biomass_produced") %>% 
+  mutate(feed = factor(feed, 
+                       levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+                       labels = c("MD", "PD", "NI"))) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = c(mean, sd),
+    id_cols = c(farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd_MD = (1/mean_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/mean_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    mean_MD = (mean_MD-mean_PD)/mean_PD,
+    mean_NI = (mean_NI-mean_PD)/mean_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "mean"))
+  ) %>% 
+  merge(farm_locs, by = c("farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+ggplot(biomass_produced, aes(x = country, y = mean, fill = feed)) +
+  geom_boxplot()
+
+qs::qsave(biomass_produced, file.path(comparisons_path, "biomass_produced.qs"))
+rm(biomass_produced)
+```
+
+## Are fish fed different feeds given more or less feed?
+
+```{r}
+#| label: food-provided-comparison
+
+# Summed across the whole production period
+food_prov_farm_summed <- find_read(data_analysis_path, "food_prov_farm_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(feed = factor(feed, 
+                       levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+                       labels = c("MD", "PD", "NI"))) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD = (1/total_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/total_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    total_MD = (total_MD-total_PD)/total_PD,
+    total_NI = (total_NI-total_PD)/total_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(food_prov_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(food_prov_farm_summed, file.path(comparisons_path, "food_prov_farm_summed.qs"))
+rm(food_prov_farm_summed)
+
+# Summed across the whole production period, per biomass of fish produced -  is this identical to FCE?
+food_prov_farm_per_biom_summed <- find_read(data_analysis_path, "food_prov_farm_per_biom_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed, names_sep = ".", 
+    values_from = c(mean_biom, sd_biom), values_fn = list(mean_biom = drop_units, sd_biom = drop_units),
+    id_cols = c(country, farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd_biom.MD = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.MD^2),
+    sd_biom.NI = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.NI^2),
+    mean_biom.MD = (mean_biom.MD-mean_biom.PD)/mean_biom.PD,
+    mean_biom.NI = (mean_biom.NI-mean_biom.PD)/mean_biom.PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "[.]", names_transform = list(feed = as.factor),
+    cols = contains(c("sd_biom", "mean_biom"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+ggplot(food_prov_farm_per_biom_summed, aes(x = country, y = mean_biom, fill = feed)) +
+  geom_boxplot()
+
+qs::qsave(food_prov_farm_per_biom_summed, file.path(comparisons_path, "food_prov_farm_per_biom_summed.qs"))
+rm(food_prov_farm_per_biom_summed)
+```
+
+# Total inputs (mass) questions
+## Does uneaten feed increase or decrease with novel feeds?
+
+```{r}
+#| label: uneaten-feed-comparisons
+
+# Summed across the whole production period
+total_uneat_farm_summed <- find_read(data_analysis_path, "total_uneat_farm_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(feed = factor(feed, 
+                       levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+                       labels = c("MD", "PD", "NI"))) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD = (1/total_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/total_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    total_MD = (total_MD-total_PD)/total_PD,
+    total_NI = (total_NI-total_PD)/total_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(total_uneat_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(total_uneat_farm_summed, file.path(comparisons_path, "total_uneat_farm_summed.qs"))
+rm(total_uneat_farm_summed)
+
+# Summed across the whole production period, per biomass of fish produced
+total_uneat_farm_per_biom_summed <- find_read(data_analysis_path, "total_uneat_farm_per_biom_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed, names_sep = ".", 
+    values_from = c(mean_biom, sd_biom), values_fn = list(mean_biom = drop_units, sd_biom = drop_units),
+    id_cols = c(country, farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd_biom.MD = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.MD^2),
+    sd_biom.NI = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.NI^2),
+    mean_biom.MD = (mean_biom.MD-mean_biom.PD)/mean_biom.PD,
+    mean_biom.NI = (mean_biom.NI-mean_biom.PD)/mean_biom.PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "[.]", names_transform = list(feed = as.factor),
+    cols = contains(c("sd_biom", "mean_biom"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(total_uneat_farm_per_biom_summed, aes(x = country, y = mean_biom, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(total_uneat_farm_per_biom_summed, file.path(comparisons_path, "total_uneat_farm_per_biom_summed.qs"))
+rm(total_uneat_farm_per_biom_summed)
+```
+
+## Does excretion increase or decrease with novel feeds?
+
+```{r}
+#| label: excreted-comparison
+
+# Summed across the whole production period
+total_excr_farm_summed <- find_read(data_analysis_path, "total_excr_farm_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD = (1/total_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/total_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    total_MD = (total_MD-total_PD)/total_PD,
+    total_NI = (total_NI-total_PD)/total_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(total_excr_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(total_excr_farm_summed, file.path(comparisons_path, "total_excr_farm_summed.qs"))
+rm(total_excr_farm_summed)
+
+# Summed across the whole production period, per biomass of fish produced
+total_excr_farm_per_biom_summed <- find_read(data_analysis_path, "total_excr_farm_per_biom_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed, names_sep = ".", 
+    values_from = c(mean_biom, sd_biom), values_fn = list(mean_biom = drop_units, sd_biom = drop_units),
+    id_cols = c(country, farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd_biom.MD = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.MD^2),
+    sd_biom.NI = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.NI^2),
+    mean_biom.MD = (mean_biom.MD-mean_biom.PD)/mean_biom.PD,
+    mean_biom.NI = (mean_biom.NI-mean_biom.PD)/mean_biom.PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "[.]", names_transform = list(feed = as.factor),
+    cols = contains(c("sd_biom", "mean_biom"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(total_excr_farm_per_biom_summed, aes(x = country, y = mean_biom, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(total_excr_farm_per_biom_summed, file.path(comparisons_path, "total_excr_farm_per_biom_summed.qs"))
+rm(total_excr_farm_per_biom_summed)
+```
+
+## Do total inputs (mass, excreted and uneaten) increase or decrease with novel feeds?
+
+```{r}
+#| label: total-mass-inputs-comparison
+
+total_mass_inputs_farm_summed <- rbind(
+  find_read(data_analysis_path, "total_uneat_farm_summed"), 
+  find_read(data_analysis_path, "total_excr_farm_summed")
+) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  group_by(country, farm_ID, feed, days) %>% 
+  reframe(
+    total = sum(total),
+    sd = sqrt(sum(sd^2)),
+    measure = as.factor("excr_uneat")
+  )
+qs::qsave(total_mass_inputs_farm_summed, file.path(data_analysis_path, "total_mass_inputs_farm_summed.qs"))
+rm(total_mass_inputs_farm_summed)
+
+
+# Summed across the whole production period
+total_mass_inputs_farm_summed <- rbind(
+  find_read(data_analysis_path, "total_uneat_farm_summed"), 
+  find_read(data_analysis_path, "total_excr_farm_summed")
+) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  group_by(country, farm_ID, feed, days) %>% 
+  reframe(
+    total = sum(total),
+    sd = sqrt(sum(sd^2)),
+    measure = as.factor("excr_uneat")
+  ) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD = (1/total_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/total_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    total_MD = (total_MD-total_PD)/total_PD,
+    total_NI = (total_NI-total_PD)/total_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+ggplot(total_mass_inputs_farm_summed, aes(x = country, y = total, fill = feed)) +
+  geom_boxplot()
+
+qs::qsave(total_mass_inputs_farm_summed, file.path(comparisons_path, "total_mass_inputs_farm_summed.qs"))
+rm(total_mass_inputs_farm_summed)
+
+# Summed across the whole production period, per biomass of fish produced
+total_mass_inputs_farm_per_biom_summed <- rbind(
+  find_read(data_analysis_path, "total_uneat_farm_per_biom_summed"), 
+  find_read(data_analysis_path, "total_excr_farm_per_biom_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  group_by(country, farm_ID, feed) %>% 
+  reframe(
+    mean_biom = sum(mean_biom),
+    sd_biom = sqrt(sum(sd_biom^2)),
+    measure = as.factor("excr_uneat")
+  ) %>% 
+  pivot_wider(
+    names_from = feed, names_sep = ".", 
+    values_from = c(mean_biom, sd_biom), values_fn = list(mean_biom = drop_units, sd_biom = drop_units),
+    id_cols = c(country, farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd_biom.MD = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.MD^2),
+    sd_biom.NI = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.NI^2),
+    mean_biom.MD = (mean_biom.MD-mean_biom.PD)/mean_biom.PD,
+    mean_biom.NI = (mean_biom.NI-mean_biom.PD)/mean_biom.PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "[.]", names_transform = list(feed = as.factor),
+    cols = contains(c("sd_biom", "mean_biom"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+ggplot(total_mass_inputs_farm_per_biom_summed, aes(x = country, y = mean_biom, fill = feed)) +
+  geom_boxplot()
+
+qs::qsave(total_mass_inputs_farm_per_biom_summed, file.path(comparisons_path, "total_mass_inputs_farm_per_biom_summed.qs"))
+rm(total_mass_inputs_farm_per_biom_summed)
+```
+
+## Does the proportion of total inputs (mass) attributed to excretion increase or decrease with novel feeds?
+
+```{r}
+#| label: proportion-of-waste-comparison
+
+proportion_of_waste <- find_read(data_analysis_path, "total_excr_farm_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  rbind(find_read(data_analysis_path, "total_mass_inputs_farm_summed.qs")) %>% 
+  mutate(
+    measure = factor(
+      measure, 
+      levels = c("total_excr_stat", "excr_uneat"),
+      labels = c("excr", "waste")
+      )
+  ) %>% 
+  pivot_wider(
+    names_from = measure,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, feed, days)
+  ) %>% 
+  mutate(
+    total = total_excr/total_waste,
+    sd = (total_excr/total_waste) * sqrt((sd_waste/total_waste)^2 + (sd_excr/total_excr)^2)
+  ) %>% 
+  select(-contains(c("waste", "excr")))
+
+# Check that it looks reasonable
+ggplot(proportion_of_waste, aes(x = country, y = total, fill = feed)) +
+  geom_boxplot()
+
+qs::qsave(proportion_of_waste, file.path(comparisons_path, "excr_proportion_of_waste.qs"))
+rm(proportion_of_waste)
+```
+
+## Does total inputs (mass) of each macronutrient increase or decrease with novel feeds?
+
+```{r}
+#| label: PLC-mass-inputs-comparison
+
+PLC_uneat_excr_farm_summed <- rbind(
+    find_read(data_analysis_path, "P_uneat_farm_summed"), 
+    find_read(data_analysis_path, "L_uneat_farm_summed"), 
+    find_read(data_analysis_path, "C_uneat_farm_summed"),
+    find_read(data_analysis_path, "P_excr_farm_summed"), 
+    find_read(data_analysis_path, "L_excr_farm_summed"), 
+    find_read(data_analysis_path, "C_excr_farm_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    measure = droplevels(measure),
+    measure = factor(
+      measure,
+      labels = str_remove(levels(measure), "_stat")
+    ),
+    macro = as.factor(str_split_i(measure, "_", 1)),
+    measure = as.factor(str_split_i(measure, "_", 2)),
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  )
+# Check that it looks reasonable
+# ggplot(PLC_uneat_excr_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot() +
+#   facet_grid(cols = vars(macro), rows = vars(measure))
+
+qs::qsave(PLC_uneat_excr_farm_summed, file.path(data_analysis_path, "PLC_uneat_excr_farm_summed.qs"))
+rm(PLC_uneat_excr_farm_summed)
+
+
+# Summed across the whole production period
+PLC_uneat_excr_farm_summed <- rbind(
+    find_read(data_analysis_path, "P_uneat_farm_summed"), 
+    find_read(data_analysis_path, "L_uneat_farm_summed"), 
+    find_read(data_analysis_path, "C_uneat_farm_summed"),
+    find_read(data_analysis_path, "P_excr_farm_summed"), 
+    find_read(data_analysis_path, "L_excr_farm_summed"), 
+    find_read(data_analysis_path, "C_excr_farm_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    measure = droplevels(measure),
+    measure = factor(
+      measure,
+      labels = str_remove(levels(measure), "_stat")
+    ),
+    macro = as.factor(str_split_i(measure, "_", 1)),
+    measure = as.factor(str_split_i(measure, "_", 2)),
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = c(feed, macro),
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD_P = (1/total_PD_P) * sqrt(sd_MD_P^2 + sd_PD_P^2),
+    sd_NI_P = (1/total_PD_P) * sqrt(sd_NI_P^2 + sd_PD_P^2),
+    total_MD_P = (total_MD_P-total_PD_P)/total_PD_P,
+    total_NI_P = (total_NI_P-total_PD_P)/total_PD_P,
+    sd_MD_P = (1/total_PD_P) * sqrt(sd_MD_P^2 + sd_PD_P^2),
+    sd_NI_P = (1/total_PD_P) * sqrt(sd_NI_P^2 + sd_PD_P^2),
+    total_MD_L = (total_MD_L-total_PD_L)/total_PD_L,
+    total_NI_L = (total_NI_L-total_PD_L)/total_PD_L,
+    sd_MD_P = (1/total_PD_P) * sqrt(sd_MD_P^2 + sd_PD_P^2),
+    sd_NI_P = (1/total_PD_P) * sqrt(sd_NI_P^2 + sd_PD_P^2),
+    total_MD_C = (total_MD_C-total_PD_C)/total_PD_C,
+    total_NI_C = (total_NI_C-total_PD_C)/total_PD_C
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed", "macro"), names_sep = "_", names_transform = list(feed = as.factor, macro = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(PLC_uneat_excr_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot() +
+#   facet_grid(cols = vars(macro), rows = vars(measure))
+
+qs::qsave(PLC_uneat_excr_farm_summed, file.path(comparisons_path, "PLC_uneat_excr_farm_summed.qs"))
+rm(PLC_uneat_excr_farm_summed)
+
+# Summed across the whole production period, per biomass of fish produced
+PLC_uneat_excr_farm_per_biom_summed <- rbind(
+    find_read(data_analysis_path, "P_uneat_farm_per_biom_summed"), 
+    find_read(data_analysis_path, "L_uneat_farm_per_biom_summed"), 
+    find_read(data_analysis_path, "C_uneat_farm_per_biom_summed"),
+    find_read(data_analysis_path, "P_excr_farm_per_biom_summed"), 
+    find_read(data_analysis_path, "L_excr_farm_per_biom_summed"), 
+    find_read(data_analysis_path, "C_excr_farm_per_biom_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    measure = droplevels(measure),
+    measure = factor(
+      measure,
+      labels = str_remove(levels(measure), "_stat")
+    ),
+    macro = as.factor(str_split_i(measure, "_", 1)),
+    measure = as.factor(str_split_i(measure, "_", 2)),
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  rename(
+    mean.biom = mean_biom,
+    sd.biom = sd_biom
+  ) %>% 
+  pivot_wider(
+    names_from = c(feed, macro),
+    values_from = c(mean.biom, sd.biom), values_fn = list(mean.biom = drop_units, sd.biom = drop_units),
+    id_cols = c(country, farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd.biom_MD_P = (1/mean.biom_PD_P) * sqrt(sd.biom_MD_P^2 + sd.biom_PD_P^2),
+    sd.biom_NI_P = (1/mean.biom_PD_P) * sqrt(sd.biom_NI_P^2 + sd.biom_PD_P^2),
+    mean.biom_MD_P = (mean.biom_MD_P-mean.biom_PD_P)/mean.biom_PD_P,
+    mean.biom_NI_P = (mean.biom_NI_P-mean.biom_PD_P)/mean.biom_PD_P,
+    sd.biom_MD_L = (1/mean.biom_PD_L) * sqrt(sd.biom_MD_L^2 + sd.biom_PD_L^2),
+    sd.biom_NI_L = (1/mean.biom_PD_L) * sqrt(sd.biom_NI_L^2 + sd.biom_PD_L^2),
+    mean.biom_MD_L = (mean.biom_MD_L-mean.biom_PD_L)/mean.biom_PD_L,
+    mean.biom_NI_L = (mean.biom_NI_L-mean.biom_PD_L)/mean.biom_PD_L,
+    sd.biom_MD_C = (1/mean.biom_PD_C) * sqrt(sd.biom_MD_C^2 + sd.biom_PD_C^2),
+    sd.biom_NI_C = (1/mean.biom_PD_C) * sqrt(sd.biom_NI_C^2 + sd.biom_PD_C^2),
+    mean.biom_MD_C = (mean.biom_MD_C-mean.biom_PD_C)/mean.biom_PD_C,
+    mean.biom_NI_C = (mean.biom_NI_C-mean.biom_PD_C)/mean.biom_PD_C
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed", "macro"), names_sep = "_", names_transform = list(feed = as.factor, macro = as.factor),
+    cols = contains(c("sd.biom", "mean.biom"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(PLC_uneat_excr_farm_per_biom_summed, aes(x = country, y = mean.biom, fill = feed)) +
+#   geom_boxplot() +
+#   facet_grid(cols = vars(macro), rows = vars(measure))
+
+qs::qsave(PLC_uneat_excr_farm_per_biom_summed, file.path(comparisons_path, "PLC_uneat_excr_farm_per_biom_summed.qs"))
+rm(PLC_uneat_excr_farm_per_biom_summed)
+```
+
+## Does the proportion of total inputs (mass) attributed to each macronutrient increase or decrease with novel feeds?
+
+```{r}
+#| label: macronutrient-proportion-comparison
+
+# Summed across the whole production period
+PLC_proportion_farm_summed_1 <- rbind(
+    find_read(data_analysis_path, "P_uneat_farm_summed"), 
+    find_read(data_analysis_path, "L_uneat_farm_summed"), 
+    find_read(data_analysis_path, "C_uneat_farm_summed"),
+    find_read(data_analysis_path, "P_excr_farm_summed"), 
+    find_read(data_analysis_path, "L_excr_farm_summed"), 
+    find_read(data_analysis_path, "C_excr_farm_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    measure = droplevels(measure),
+    measure = factor(
+      measure,
+      labels = str_remove(levels(measure), "_stat")
+    ),
+    macro = as.factor(str_split_i(measure, "_", 1)),
+    measure = as.factor(str_split_i(measure, "_", 2)),
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = macro,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, feed, measure, days)
+  ) %>% 
+  mutate(
+    total_sum = total_P+total_C+total_L,
+    sd_sum = sqrt(sd_P^2+sd_C^2+sd_L^2),
+    prop_P = total_P/total_sum,
+    prop_C = total_C/total_sum,
+    prop_L = total_L/total_sum,
+    sd_P = ratio_sd(total_P, sd_P, total_sum, sd_sum),
+    sd_C = ratio_sd(total_C, sd_C, total_sum, sd_sum),
+    sd_L = ratio_sd(total_L, sd_P, total_sum, sd_sum),
+  ) %>% 
+  select(-contains(c("total", "sum"))) %>% 
+  pivot_longer(
+    names_to = c(".value", "macro"), names_sep = "_", names_transform = list(macro = as.factor),
+    cols = contains(c("sd", "prop"))
+  )
+
+# Check that it looks reasonable
+# ggplot(PLC_proportion_farm_summed_1, aes(x = measure, y = prop, fill = feed)) +
+#   geom_col(position = "dodge") +
+#   facet_grid(rows = vars(macro))
+
+qs::qsave(PLC_proportion_farm_summed_1, file.path(data_analysis_path, "PLC_proportion_farm_summed.qs"))
+
+PLC_proportion_farm_summed_2 <- PLC_proportion_farm_summed_1 %>% 
+  pivot_wider(
+    names_from = c(feed, macro),
+    values_from = c(prop, sd),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD_P = (1/prop_PD_P) * sqrt(sd_MD_P^2 + sd_PD_P^2),
+    sd_NI_P = (1/prop_PD_P) * sqrt(sd_NI_P^2 + sd_PD_P^2),
+    prop_MD_P = (prop_MD_P-prop_PD_P)/prop_PD_P,
+    prop_NI_P = (prop_NI_P-prop_PD_P)/prop_PD_P,
+    sd_MD_L = (1/prop_PD_L) * sqrt(sd_MD_L^2 + sd_PD_L^2),
+    sd_NI_L = (1/prop_PD_L) * sqrt(sd_NI_L^2 + sd_PD_L^2),
+    prop_MD_L = (prop_MD_L-prop_PD_L)/prop_PD_L,
+    prop_NI_L = (prop_NI_L-prop_PD_L)/prop_PD_L,
+    sd_MD_C = (1/prop_PD_C) * sqrt(sd_MD_C^2 + sd_PD_C^2),
+    sd_NI_C = (1/prop_PD_C) * sqrt(sd_NI_C^2 + sd_PD_C^2),
+    prop_MD_C = (prop_MD_C-prop_PD_C)/prop_PD_C,
+    prop_NI_C = (prop_NI_C-prop_PD_C)/prop_PD_C
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed", "macro"), names_sep = "_", names_transform = list(feed = as.factor, macro = as.factor),
+    cols = contains(c("sd", "prop"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(PLC_proportion_farm_summed_2, aes(x = macro, y = prop, fill = feed)) +
+#   geom_boxplot() +
+#   facet_grid(cols = vars(measure))
+
+qs::qsave(PLC_proportion_farm_summed_2, file.path(comparisons_path, "PLC_proportion_farm_summed.qs"))
+rm(PLC_proportion_farm_summed_1, PLC_proportion_farm_summed_2)
+```
+
+# N inputs questions
+
+This is very similar to the previous set of questions, however in this set only the protein outputs are considered and converted to nitrogen ($N=P\times 6.25$). 
+
+## Does N from uneaten feed increase or decrease with novel feeds?
+
+```{r}
+#| label: uneaten-feed-N-comparison
+
+# Summed across the whole production period
+N_uneat_farm_summed <- find_read(data_analysis_path, "P_uneat_farm_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    total = total * 6.25,
+    sd = sd * 6.25,
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD = (1/total_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/total_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    total_MD = (total_MD-total_PD)/total_PD,
+    total_NI = (total_NI-total_PD)/total_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(N_uneat_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(N_uneat_farm_summed, file.path(comparisons_path, "N_uneat_farm_summed.qs"))
+rm(N_uneat_farm_summed)
+
+# Summed across the whole production period, per biomass of fish produced
+N_uneat_farm_per_biom_summed <- find_read(data_analysis_path, "P_uneat_farm_per_biom_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    mean_biom = mean_biom * 6.25,
+    sd_biom = mean_biom * 6.25,
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed, names_sep = ".", 
+    values_from = c(mean_biom, sd_biom), values_fn = list(mean_biom = drop_units, sd_biom = drop_units),
+    id_cols = c(country, farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd_biom.MD = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.MD^2),
+    sd_biom.NI = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.NI^2),
+    mean_biom.MD = (mean_biom.MD-mean_biom.PD)/mean_biom.PD,
+    mean_biom.NI = (mean_biom.NI-mean_biom.PD)/mean_biom.PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "[.]", names_transform = list(feed = as.factor),
+    cols = contains(c("sd_biom", "mean_biom"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(N_uneat_farm_per_biom_summed, aes(x = country, y = mean_biom, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(N_uneat_farm_per_biom_summed, file.path(comparisons_path, "N_uneat_farm_per_biom_summed.qs"))
+rm(N_uneat_farm_per_biom_summed)
+```
+
+## Does N excretion increase or decrease with novel feeds?
+
+```{r}
+#| label: excreted-N-comparison
+
+# Summed across the whole production period
+N_excr_farm_summed <- find_read(data_analysis_path, "P_excr_farm_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    total = total * 6.25,
+    sd = sd * 6.25,
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD = (1/total_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/total_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    total_MD = (total_MD-total_PD)/total_PD,
+    total_NI = (total_NI-total_PD)/total_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(N_excr_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(N_excr_farm_summed, file.path(comparisons_path, "N_excr_farm_summed.qs"))
+rm(N_excr_farm_summed)
+
+# Summed across the whole production period, per biomass of fish produced
+N_excr_farm_per_biom_summed <- find_read(data_analysis_path, "P_excr_farm_per_biom_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    mean_biom = mean_biom * 6.25,
+    sd_biom = mean_biom * 6.25,
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed, names_sep = ".", 
+    values_from = c(mean_biom, sd_biom), values_fn = list(mean_biom = drop_units, sd_biom = drop_units),
+    id_cols = c(country, farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd_biom.MD = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.MD^2),
+    sd_biom.NI = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.NI^2),
+    mean_biom.MD = (mean_biom.MD-mean_biom.PD)/mean_biom.PD,
+    mean_biom.NI = (mean_biom.NI-mean_biom.PD)/mean_biom.PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "[.]", names_transform = list(feed = as.factor),
+    cols = contains(c("sd_biom", "mean_biom"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(N_excr_farm_per_biom_summed, aes(x = country, y = mean_biom, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(N_excr_farm_per_biom_summed, file.path(comparisons_path, "N_excr_farm_per_biom_summed.qs"))
+rm(N_excr_farm_per_biom_summed)
+```
+
+```{r}
+#| label: total-N-comparison
+
+# Summed across the whole production period
+N_total_farm_summed <- rbind(
+  find_read(data_analysis_path, "P_excr_farm_summed"),
+  find_read(data_analysis_path, "P_uneat_farm_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    total = total * 6.25,
+    sd = sd * 6.25,
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  group_by(country, farm_ID, feed, days) %>% 
+  reframe(
+    total = sum(total),
+    sd = sqrt(sum(sd^2))
+  ) %>% 
+  mutate(measure = as.factor("total")) %>% 
+  relocate(measure, .after = feed) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(N_total_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(N_total_farm_summed, file.path(data_analysis_path, "N_total_farm_summed.qs"))
+
+N_total_farm_summed <- N_total_farm_summed %>% 
+  st_drop_geometry() %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD = (1/total_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/total_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    total_MD = (total_MD-total_PD)/total_PD,
+    total_NI = (total_NI-total_PD)/total_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+ggplot(N_total_farm_summed, aes(x = country, y = total, fill = feed)) +
+  geom_boxplot()
+
+qs::qsave(N_total_farm_summed, file.path(comparisons_path, "N_total_farm_summed.qs"))
+
+
+
+# Summed across the whole production period, per biomass of fish produced
+N_excr_farm_per_biom_summed <- find_read(data_analysis_path, "P_excr_farm_per_biom_summed") %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    mean_biom = mean_biom * 6.25,
+    sd_biom = mean_biom * 6.25,
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    )
+  ) %>% 
+  pivot_wider(
+    names_from = feed, names_sep = ".", 
+    values_from = c(mean_biom, sd_biom), values_fn = list(mean_biom = drop_units, sd_biom = drop_units),
+    id_cols = c(country, farm_ID, measure)
+  ) %>% 
+  mutate(
+    sd_biom.MD = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.MD^2),
+    sd_biom.NI = (1/mean_biom.PD) * sqrt(sd_biom.PD^2 + sd_biom.NI^2),
+    mean_biom.MD = (mean_biom.MD-mean_biom.PD)/mean_biom.PD,
+    mean_biom.NI = (mean_biom.NI-mean_biom.PD)/mean_biom.PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "[.]", names_transform = list(feed = as.factor),
+    cols = contains(c("sd_biom", "mean_biom"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(N_excr_farm_per_biom_summed, aes(x = country, y = mean_biom, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(N_excr_farm_per_biom_summed, file.path(comparisons_path, "N_excr_farm_per_biom_summed.qs"))
+rm(N_excr_farm_per_biom_summed)
+```
+
+```{r}
+
+N_total_farm_summed <- rbind(
+  find_read(data_analysis_path, "P_excr_farm_summed"),
+  find_read(data_analysis_path, "P_uneat_farm_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    total = total * 6.25,
+    sd = sd * 6.25,
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant", "plant_dominant", "novel_inclusive"),
+      labels = c("MD", "PD", "NI")
+    ),
+    measure = factor(
+      measure, 
+      levels = c("P_excr_stat", "P_uneat_stat"),
+      labels = c("excr", "uneat")
+      )
+  ) %>% 
+  rbind(N_total_farm_summed_0)
+  
+  pivot_wider(
+    names_from = feed,
+    values_from = c(total, sd), values_fn = list(total = drop_units, sd = drop_units),
+    id_cols = c(country, farm_ID, measure, days)
+  ) %>% 
+  mutate(
+    sd_MD = (1/total_PD) * sqrt(sd_MD^2 + sd_PD^2),
+    sd_NI = (1/total_PD) * sqrt(sd_NI^2 + sd_PD^2),
+    total_MD = (total_MD-total_PD)/total_PD,
+    total_NI = (total_NI-total_PD)/total_PD
+  ) %>% 
+  select(-contains("PD")) %>% 
+  pivot_longer(
+    names_to = c(".value", "feed"), names_sep = "_", names_transform = list(feed = as.factor),
+    cols = contains(c("sd", "total"))
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+
+# Check that it looks reasonable
+# ggplot(N_excr_farm_summed, aes(x = country, y = total, fill = feed)) +
+#   geom_boxplot()
+
+qs::qsave(N_excr_farm_summed, file.path(comparisons_path, "N_excr_farm_summed.qs"))
+rm(N_excr_farm_summed)
+```
+
+
