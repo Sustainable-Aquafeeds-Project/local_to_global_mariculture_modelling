@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Dr Tormey Reimer">
-<meta name="dcterms.date" content="2025-07-30">
+<meta name="dcterms.date" content="2025-08-01">
 
 <title>Local to Global Mariculture Modelling</title>
 <style>
@@ -102,26 +102,16 @@ window.Quarto = {
   <li><a href="#main-scripts" id="toc-main-scripts" class="nav-link" data-scroll-target="#main-scripts"><span class="header-section-number">1.1</span> Main scripts</a></li>
   <li><a href="#extra-scripts" id="toc-extra-scripts" class="nav-link" data-scroll-target="#extra-scripts"><span class="header-section-number">1.2</span> Extra scripts</a></li>
   </ul></li>
-  <li><a href="#sec-supp-methods" id="toc-sec-supp-methods" class="nav-link" data-scroll-target="#sec-supp-methods"><span class="header-section-number">2</span> Supplemental methods</a>
+  <li><a href="#sec-results" id="toc-sec-results" class="nav-link" data-scroll-target="#sec-results"><span class="header-section-number">2</span> Results</a></li>
+  <li><a href="#spatially" id="toc-spatially" class="nav-link" data-scroll-target="#spatially"><span class="header-section-number">3</span> Spatially</a></li>
+  <li><a href="#sec-supp-methods" id="toc-sec-supp-methods" class="nav-link" data-scroll-target="#sec-supp-methods"><span class="header-section-number">4</span> Supplemental methods</a>
   <ul class="collapse">
-  <li><a href="#sec-population-biomass" id="toc-sec-population-biomass" class="nav-link" data-scroll-target="#sec-population-biomass"><span class="header-section-number">2.1</span> Population and biomass</a></li>
-  <li><a href="#sec-model-feeding" id="toc-sec-model-feeding" class="nav-link" data-scroll-target="#sec-model-feeding"><span class="header-section-number">2.2</span> Feed provision and feeding response to temperature</a></li>
-  <li><a href="#sec-feeds" id="toc-sec-feeds" class="nav-link" data-scroll-target="#sec-feeds"><span class="header-section-number">2.3</span> Modelled experimental feeds</a></li>
-  <li><a href="#sec-param-sensitivity" id="toc-sec-param-sensitivity" class="nav-link" data-scroll-target="#sec-param-sensitivity"><span class="header-section-number">2.4</span> Model sensitivity to parameter changes</a></li>
+  <li><a href="#sec-population-biomass" id="toc-sec-population-biomass" class="nav-link" data-scroll-target="#sec-population-biomass"><span class="header-section-number">4.1</span> Population and biomass</a></li>
+  <li><a href="#sec-model-feeding" id="toc-sec-model-feeding" class="nav-link" data-scroll-target="#sec-model-feeding"><span class="header-section-number">4.2</span> Feed provision and feeding response to temperature</a></li>
+  <li><a href="#sec-feeds" id="toc-sec-feeds" class="nav-link" data-scroll-target="#sec-feeds"><span class="header-section-number">4.3</span> Modelled experimental feeds</a></li>
+  <li><a href="#sec-param-sensitivity" id="toc-sec-param-sensitivity" class="nav-link" data-scroll-target="#sec-param-sensitivity"><span class="header-section-number">4.4</span> Model sensitivity to parameter changes</a></li>
   </ul></li>
-  <li><a href="#sec-results" id="toc-sec-results" class="nav-link" data-scroll-target="#sec-results"><span class="header-section-number">3</span> Results</a>
-  <ul class="collapse">
-  <li><a href="#biomass-produced-and-feed-provided" id="toc-biomass-produced-and-feed-provided" class="nav-link" data-scroll-target="#biomass-produced-and-feed-provided"><span class="header-section-number">3.1</span> Biomass produced and feed provided</a>
-  <ul class="collapse">
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">3.1.1</span> Summary</a></li>
-  </ul></li>
-  </ul></li>
-  <li><a href="#inputs" id="toc-inputs" class="nav-link" data-scroll-target="#inputs"><span class="header-section-number">4</span> Inputs</a>
-  <ul class="collapse">
-  <li><a href="#total-inputs-mass" id="toc-total-inputs-mass" class="nav-link" data-scroll-target="#total-inputs-mass"><span class="header-section-number">4.1</span> Total inputs (mass)</a></li>
-  </ul></li>
-  <li><a href="#n-inputs" id="toc-n-inputs" class="nav-link" data-scroll-target="#n-inputs"><span class="header-section-number">5</span> N inputs</a></li>
-  <li><a href="#sec-code" id="toc-sec-code" class="nav-link" data-scroll-target="#sec-code"><span class="header-section-number">6</span> Code and packages used</a></li>
+  <li><a href="#sec-code" id="toc-sec-code" class="nav-link" data-scroll-target="#sec-code"><span class="header-section-number">5</span> Code and packages used</a></li>
   </ul>
 <div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://drtreimer.com/local_to_global_mariculture_modelling"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
 </div>
@@ -149,7 +139,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">30 July 2025</p>
+      <p class="date">1 August 2025</p>
     </div>
   </div>
   
@@ -225,11 +215,257 @@ window.Quarto = {
 </table>
 </section>
 </section>
-<section id="sec-supp-methods" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Supplemental methods</h1>
-<section id="sec-population-biomass" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="sec-population-biomass"><span class="header-section-number">2.1</span> Population and biomass</h2>
-<p>Each farm’s final population was calculated by dividing the production tonnage required by the average modelled individual harvest size for each farm (when feed reference feed, <a href="#fig-harvest-size" class="quarto-xref">Figure&nbsp;1</a>). A population timeseries was then generated using the standard mortality rate (0.06 % d<span class="math inline">\(^{-1}\)</span>).</p>
+<section id="sec-results" class="level1 page-columns page-full" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Results</h1>
+<p><a href="#tbl-results-summary" class="quarto-xref">Table&nbsp;1</a> is a summary of all the results I’ve processed so far, basically trying to acertain all the major differences in inputs between the feeds.</p>
+<div id="tbl-results-summary" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-tbl figure">
+<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-results-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Table&nbsp;1: Summary of all results. Unless otherwise specified, values presented are means across all farms, summed across a single production period. Some cells of this table are blank - sometimes that means it doesn’t make sense to fill that cell, but sometimes it means I haven’t got to it yet.
+</figcaption>
+<div aria-describedby="tbl-results-summary-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<table class="caption-top table">
+<colgroup>
+<col style="width: 31%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Description</th>
+<th style="text-align: center;">Plant-dominant</th>
+<th style="text-align: center;">Marine-dominant</th>
+<th style="text-align: center;">Novel-inclusive</th>
+<th style="text-align: center;">Change from PD to MD (%)</th>
+<th style="text-align: center;">Change from PD to NI (%)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Salmon biomass produced (t)</td>
+<td style="text-align: center;">847.5</td>
+<td style="text-align: center;">811.6</td>
+<td style="text-align: center;">865.2</td>
+<td style="text-align: center;">-4.3</td>
+<td style="text-align: center;">2.1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Feed provided (t)</td>
+<td style="text-align: center;">909.5</td>
+<td style="text-align: center;">885.4</td>
+<td style="text-align: center;">921.3</td>
+<td style="text-align: center;">-2.7</td>
+<td style="text-align: center;">1.3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Feed provided (kg/kg salmon)</td>
+<td style="text-align: center;">1.09</td>
+<td style="text-align: center;">1.11</td>
+<td style="text-align: center;">1.08</td>
+<td style="text-align: center;">1.7</td>
+<td style="text-align: center;">-0.8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Uneaten feed (t)</td>
+<td style="text-align: center;">25</td>
+<td style="text-align: center;">24.2</td>
+<td style="text-align: center;">25.3</td>
+<td style="text-align: center;">-3.6</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Excreted waste (t)</td>
+<td style="text-align: center;">101.8</td>
+<td style="text-align: center;">75.6</td>
+<td style="text-align: center;">102.2</td>
+<td style="text-align: center;">-25.8</td>
+<td style="text-align: center;">0.4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total waste (E+U, t)</td>
+<td style="text-align: center;">126.9</td>
+<td style="text-align: center;">99.7</td>
+<td style="text-align: center;">127.5</td>
+<td style="text-align: center;">-21.4</td>
+<td style="text-align: center;">0.5</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Proportion of total waste composed of excretion (%)</td>
+<td style="text-align: center;">80.2</td>
+<td style="text-align: center;">75.7</td>
+<td style="text-align: center;">80.1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total protein waste (t)</td>
+<td style="text-align: center;">43.5</td>
+<td style="text-align: center;">52.2</td>
+<td style="text-align: center;">67.3</td>
+<td style="text-align: center;">23.4</td>
+<td style="text-align: center;">44.6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Total carbohydrate waste (t)</td>
+<td style="text-align: center;">62</td>
+<td style="text-align: center;">31.6</td>
+<td style="text-align: center;">39.3</td>
+<td style="text-align: center;">-38.9</td>
+<td style="text-align: center;">-36.8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total lipid waste (t)</td>
+<td style="text-align: center;">21.4</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">20.9</td>
+<td style="text-align: center;">-24.9</td>
+<td style="text-align: center;">-2.2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Proportion of protein waste from excretion (%)</td>
+<td style="text-align: center;">77.2</td>
+<td style="text-align: center;">75.3</td>
+<td style="text-align: center;">81.4</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Proportion of carbohydrate waste from excretion (%)</td>
+<td style="text-align: center;">90.6</td>
+<td style="text-align: center;">86.4</td>
+<td style="text-align: center;">90.8</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Proportion of lipid waste from excretion (%)</td>
+<td style="text-align: center;">56.1</td>
+<td style="text-align: center;">56.2</td>
+<td style="text-align: center;">56</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total N from uneaten feed (t)</td>
+<td style="text-align: center;">61.8</td>
+<td style="text-align: center;">80.4</td>
+<td style="text-align: center;">78.1</td>
+<td style="text-align: center;">30</td>
+<td style="text-align: center;">26.3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Total N from excreted waste (t)</td>
+<td style="text-align: center;">210.2</td>
+<td style="text-align: center;">245.6</td>
+<td style="text-align: center;">342.4</td>
+<td style="text-align: center;">16.8</td>
+<td style="text-align: center;">62.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total N inputs (E+U, t)</td>
+<td style="text-align: center;">272</td>
+<td style="text-align: center;">326</td>
+<td style="text-align: center;">420.5</td>
+<td style="text-align: center;">19.8</td>
+<td style="text-align: center;">54.6</td>
+</tr>
+</tbody>
+</table>
+</div>
+</figure>
+</div>
+<p>So here are the major themes I’m getting from <a href="#tbl-results-summary" class="quarto-xref">Table&nbsp;1</a>:</p>
+
+<div class="no-row-height column-margin column-container"><div class="margin-aside">
+<p>*Note that when I refer to “FCE” here I’m talking about the PLC weight (protein + lipid + carbohydrate) weight of feed, which may differ from its actual weight because of the inclusion of minerals and non-digestible material.</p>
+</div></div><ol type="1">
+<li>The NI diet was more efficient than the PD diet. When farms were fed the NI diet they had an average FCE* of 1.08, compared to the average FCE of 1.09 when farms were fed the PD diet, and feeding the NI diet resulted in 2.1% more biomass produced with the same population compared to the PD diet.</li>
+<li>Despite this, nutrients lost to the environment were generally highest in the NI diet and lowest in the MD diet.</li>
+</ol>
+<ul>
+<li>In terms of total waste inputs (bulk mass), the NI and PD diets were very similar (probably due to their very similar ingredient compositions). The MD diet had markedly lower total waste inputs than either the PD or NI diets.</li>
+</ul>
+<ol start="3" type="1">
+<li>However, the PLC composition of nutrients was very different between the diets (<a href="#fig-PLC-waste-comparison" class="quarto-xref">Figure&nbsp;1</a>). The PD diet had the lowest protein waste output and the NI diet had the highest, while the MD diet had the lowest carbohydrate and lipid waste outputs and the PD diet the highest. Overall, changing from the PD diet to the NI diet would result in a 44.6% increase in protein waste but a 36.8% and 2.2% reduction in carbohydrates and lipids respectively, while changing to the MD diet would result in a 23.4% increase in protein waste but a 36.8% and 2.2% reduction in carbohydrates and lipids respectively.</li>
+<li>Overall, nitrogen inputs were 54.6% higher in the NI diet and 19.8% higher in the MD diet.</li>
+</ol>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-PLC-waste-comparison" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-PLC-waste-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-PLC-waste-comparison-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-PLC-waste-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Mean waste lost to the environment in a complete production cycle when farms are fed the MD (blue), PD (green) or NI (red) diet. Errorbars show SD across all farms.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="spatially" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Spatially</h1>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div id="fig-spatial-PLC" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-spatial-PLC-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-spatial-PLC-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-spatial-PLC-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Total N inputs per unit biomass of salmon produced when farms are fed the MD feed (top), the PD feed (middle) or the NI feed (bottom).
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="index_files/figure-html/protein-inputs-patchwork-map-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="index_files/figure-html/protein-inputs-patchwork-map-2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="index_files/figure-html/protein-inputs-patchwork-map-3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="index_files/figure-html/protein-inputs-patchwork-map-4.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="index_files/figure-html/protein-inputs-patchwork-map-5.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sec-supp-methods" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Supplemental methods</h1>
+<section id="sec-population-biomass" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="sec-population-biomass"><span class="header-section-number">4.1</span> Population and biomass</h2>
+<p>Each farm’s final population was calculated by dividing the production tonnage required by the average modelled individual harvest size for each farm (when feed reference feed, <a href="#fig-harvest-size" class="quarto-xref">Figure&nbsp;3</a>). A population timeseries was then generated using the standard mortality rate (0.06 % d<span class="math inline">\(^{-1}\)</span>).</p>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-harvest-size" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
@@ -238,7 +474,7 @@ window.Quarto = {
 <img src="index_files/figure-html/fig-harvest-size-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-harvest-size-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Frequency distribution of harvest sizes used to create the population timeseries for each farm, as predicted by the fish-growth model.
+Figure&nbsp;3: Frequency distribution of harvest sizes used to create the population timeseries for each farm, as predicted by the fish-growth model.
 </figcaption>
 </figure>
 </div>
@@ -253,7 +489,7 @@ Figure&nbsp;1: Frequency distribution of harvest sizes used to create the popula
 <img src="index_files/figure-html/fig-cohorts-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cohorts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2: Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days.
+Figure&nbsp;4: Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days.
 </figcaption>
 </figure>
 </div>
@@ -261,9 +497,9 @@ Figure&nbsp;2: Example of how the overlapping cohorts combine into a single farm
 </div>
 <p>By this method, farm biomass as predicted by the model predicted farm tonnage relatively accurately. Predicted farm biomass was within -3.2% – 3% of tonnage produced.</p>
 </section>
-<section id="sec-model-feeding" class="level2" data-number="2.2">
-<h2 data-number="2.2" class="anchored" data-anchor-id="sec-model-feeding"><span class="header-section-number">2.2</span> Feed provision and feeding response to temperature</h2>
-<p><a href="#fig-functional-response-to-temperature" class="quarto-xref">Figure&nbsp;3</a> shows the response of food ingested to temperature, and the food provided in response.</p>
+<section id="sec-model-feeding" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="sec-model-feeding"><span class="header-section-number">4.2</span> Feed provision and feeding response to temperature</h2>
+<p><a href="#fig-functional-response-to-temperature" class="quarto-xref">Figure&nbsp;5</a> shows the response of food ingested to temperature, and the food provided in response.</p>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-functional-response-to-temperature" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
@@ -272,15 +508,15 @@ Figure&nbsp;2: Example of how the overlapping cohorts combine into a single farm
 <img src="index_files/figure-html/fig-functional-response-to-temperature-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-functional-response-to-temperature-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3: Temperature changes in potential ingestion (solid line) and amount of food provided (dotted line), relative to maximum potential ingestion. The vertical dotted lines show the actual minimum and maximum daily temperatures experienced by farms represented in the model.
+Figure&nbsp;5: Temperature changes in potential ingestion (solid line) and amount of food provided (dotted line), relative to maximum potential ingestion. The vertical dotted lines show the actual minimum and maximum daily temperatures experienced by farms represented in the model.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
 </section>
-<section id="sec-feeds" class="level2" data-number="2.3">
-<h2 data-number="2.3" class="anchored" data-anchor-id="sec-feeds"><span class="header-section-number">2.3</span> Modelled experimental feeds</h2>
+<section id="sec-feeds" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="sec-feeds"><span class="header-section-number">4.3</span> Modelled experimental feeds</h2>
 <table class="caption-top table">
 <caption>Feed macronutrient details (composition in feed, digestibility).</caption>
 <thead>
@@ -313,9 +549,9 @@ Figure&nbsp;3: Temperature changes in potential ingestion (solid line) and amoun
 </tbody>
 </table>
 </section>
-<section id="sec-param-sensitivity" class="level2" data-number="2.4">
-<h2 data-number="2.4" class="anchored" data-anchor-id="sec-param-sensitivity"><span class="header-section-number">2.4</span> Model sensitivity to parameter changes</h2>
-<p>Parameter sensitivity was tested by varying each parameter by <span class="math inline">\(\pm 10\)</span>% and calculating sensitivity as <span class="math inline">\(S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}\)</span>, where <span class="math inline">\(S\)</span> is the sensitivity of the measured variable to changes in parameter <span class="math inline">\(p\)</span>, and <span class="math inline">\(P_{1.1}\)</span>, <span class="math inline">\(P_{0.9}\)</span>, and <span class="math inline">\(P_{1}\)</span> are the value of the measured variable when the model is run with parameter <span class="math inline">\(p\)</span> at 110%, 90%, and 100% of its value respectively. The population-level parameters (<span class="math inline">\(\overline{W}\)</span>, <span class="math inline">\(\Delta{W}\)</span>, <span class="math inline">\(\overline{I_{max}}\)</span>, <span class="math inline">\(\Delta{I_{max}}\)</span>, <span class="math inline">\(\overline{F}\)</span>, <span class="math inline">\(\Delta{F}\)</span>) were tested with a population of of 5000 on a random 10% of farms, while all other parameters were tested across all farms with a population of 10 (<a href="#fig-sensitivity-results" class="quarto-xref">Figure&nbsp;4</a>).</p>
+<section id="sec-param-sensitivity" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="sec-param-sensitivity"><span class="header-section-number">4.4</span> Model sensitivity to parameter changes</h2>
+<p>Parameter sensitivity was tested by varying each parameter by <span class="math inline">\(\pm 10\)</span>% and calculating sensitivity as <span class="math inline">\(S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}\)</span>, where <span class="math inline">\(S\)</span> is the sensitivity of the measured variable to changes in parameter <span class="math inline">\(p\)</span>, and <span class="math inline">\(P_{1.1}\)</span>, <span class="math inline">\(P_{0.9}\)</span>, and <span class="math inline">\(P_{1}\)</span> are the value of the measured variable when the model is run with parameter <span class="math inline">\(p\)</span> at 110%, 90%, and 100% of its value respectively. The population-level parameters (<span class="math inline">\(\overline{W}\)</span>, <span class="math inline">\(\Delta{W}\)</span>, <span class="math inline">\(\overline{I_{max}}\)</span>, <span class="math inline">\(\Delta{I_{max}}\)</span>, <span class="math inline">\(\overline{F}\)</span>, <span class="math inline">\(\Delta{F}\)</span>) were tested with a population of of 5000 on a random 10% of farms, while all other parameters were tested across all farms with a population of 10 (<a href="#fig-sensitivity-results" class="quarto-xref">Figure&nbsp;6</a>).</p>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
 <div id="fig-sensitivity-results" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
@@ -324,7 +560,7 @@ Figure&nbsp;3: Temperature changes in potential ingestion (solid line) and amoun
 <img src="index_files/figure-html/fig-sensitivity-results-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="768">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-sensitivity-results-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4: Sensitivity of individual fish weight (blue) and total farm excretion (red) to a 10% increase in each model parameter. Bars show mean values, error bars show standard deviation between farms.
+Figure&nbsp;6: Sensitivity of modelled individual fish weight (blue) and total farm excretion across a full production period (red) to a 10% increase in each model parameter. Bars show mean values, error bars show standard deviation between farms.
 </figcaption>
 </figure>
 </div>
@@ -332,297 +568,8 @@ Figure&nbsp;4: Sensitivity of individual fish weight (blue) and total farm excre
 </div>
 </section>
 </section>
-<section id="sec-results" class="level1 page-columns page-full" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Results</h1>
-<section id="biomass-produced-and-feed-provided" class="level2 page-columns page-full" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="biomass-produced-and-feed-provided"><span class="header-section-number">3.1</span> Biomass produced and feed provided</h2>
-<div class="cell page-columns page-full" data-layout-align="center" data-fig-caption="Percentage difference in the biomass produced by farms fed the marine-dominant feed (blue) or the novel-inclusive feed (red), in comparison to the plant-dominant feed.">
-
-<div class="no-row-height column-margin column-container"><div class="margin-aside">
-<div class="cell-output-display">
-<div id="fig-biom-prod-comparison" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" width="816">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-biom-prod-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-biom-prod-comparison-1.png" id="fig-biom-prod-comparison" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-biom-prod-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5
-</figcaption>
-</figure>
-</div>
-</div>
-</div></div></div>
-<p>Overall, when farms were fed the marine-dominant feed they produced 6.24% less (<span class="math inline">\(\pm\)</span> 1.57%) biomass with the same population, and when farms were fed the novel-inclusive feed they produced 2.04% less (<span class="math inline">\(\pm\)</span> 1.6%) biomass than when fed the plant-dominant feed (<a href="#fig-biom-prod-comparison" class="quarto-xref">Figure&nbsp;5</a>).</p>
-<p>Farms were therefore provided 3.95% less (<span class="math inline">\(\pm\)</span> 1.62%) feed when fed the marine-dominant feed, and 1.28% less (<span class="math inline">\(\pm\)</span> 1.62%) feed when fed the novel-inclusive feed compared to the plant-dominant feed (<a href="#fig-feedprov-comparison" class="quarto-xref">Figure&nbsp;6</a>).</p>
-<div class="cell page-columns page-full" data-layout-align="center">
-
-<div class="no-row-height column-margin column-container"><div class="margin-aside">
-<div class="cell-output-display">
-<div id="fig-feedprov-comparison" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-feedprov-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-feedprov-comparison-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-feedprov-comparison-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;6: Percentage difference in the total feed provided when farms were fed the marine-dominant feed (blue) or the novel-inclusive feed (red), in comparison to the plant-dominant feed.
-</figcaption>
-</figure>
-</div>
-</div>
-</div></div></div>
-<p>Consequently, farms lost 4.512% less (<span class="math inline">\(\pm\)</span> 1.61%) uneaten feed when fed the marine-dominant feed and 0.965% less (<span class="math inline">\(\pm\)</span> 1.63%) uneaten feed when fed the novel-inclusive feed compared to the plant-dominant feed.</p>
-<section id="summary" class="level3" data-number="3.1.1">
-<h3 data-number="3.1.1" class="anchored" data-anchor-id="summary"><span class="header-section-number">3.1.1</span> Summary</h3>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 40%">
-<col style="width: 20%">
-<col style="width: 20%">
-<col style="width: 20%">
-</colgroup>
-<thead>
-<tr class="header">
-<th>Feed</th>
-<th>Change in biomass produced</th>
-<th>Change in feed provided</th>
-<th>Change in uneaten feed lost</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>Marine-dominant</td>
-<td>-6.24</td>
-<td>-3.95</td>
-<td>-4.512</td>
-</tr>
-<tr class="even">
-<td>Novel-inclusive</td>
-<td>-2.04</td>
-<td>-1.28</td>
-<td>-0.965</td>
-</tr>
-</tbody>
-</table>
-</section>
-</section>
-</section>
-<section id="inputs" class="level1 page-columns page-full" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Inputs</h1>
-<section id="total-inputs-mass" class="level2 page-columns page-full" data-number="4.1">
-<h2 data-number="4.1" class="anchored" data-anchor-id="total-inputs-mass"><span class="header-section-number">4.1</span> Total inputs (mass)</h2>
-<p>Total farm inputs (excreted matter and uneaten feed) were on average composed of 80.2% (<span class="math inline">\(\pm\)</span> 0.67%) excreted matter (19.8% uneaten feed) when farms were fed the plant-dominant feed, 75.7% (<span class="math inline">\(\pm\)</span> 0.76%) excreted matter (24.3% uneaten feed) when farms were fed the marine-dominant feed, 80.1% (<span class="math inline">\(\pm\)</span> 0.68%) excreted matter (24.3% uneaten feed) when farms were fed the novel-inclusive feed.</p>
-<div class="cell page-columns page-full" data-layout-align="center">
-
-<div class="no-row-height column-margin column-container"><div class="margin-aside">
-<div class="cell-output-display">
-<div id="fig-total-inputs-through-time" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" width="816">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-inputs-through-time-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-total-inputs-through-time-1.png" id="fig-total-inputs-through-time" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-total-inputs-through-time-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;7
-</figcaption>
-</figure>
-</div>
-</div>
-</div></div></div>
-<p>The difference between feeds in the uneaten feed and excreted matter lost remained relatively consistent through time for each farm (<a href="#fig-total-inputs-through-time" class="quarto-xref">Figure&nbsp;7</a>).</p>
-<p>Differences spatially:</p>
-<ul>
-<li>It looks like the marine-dominant feed overall results in less inputs (higher digestibility)</li>
-<li>It is interesting that the changes due to switching to the marine-dominant feed seem so random spatially</li>
-<li>However the changes in the novel-inclusive feed are less variable, probably because the novel-inclusive feed is very similar to the plant-dominant feed.</li>
-</ul>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-total-inputs-big-map" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-inputs-big-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-total-inputs-big-map-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-inputs-big-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;8: Percentage difference in total inputs when farms are fed the marine-dominant feed (top) or the novel-inclusive feed (bottom).
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-total-inputs-patchwork-map-CAN1" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-inputs-patchwork-map-CAN1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-total-inputs-patchwork-map-CAN1-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-inputs-patchwork-map-CAN1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;9: Change in total inputs (west Canada)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-total-inputs-patchwork-map-CAN2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-inputs-patchwork-map-CAN2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-total-inputs-patchwork-map-CAN2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-inputs-patchwork-map-CAN2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;10: Change in total inputs (east Canada)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-total-inputs-patchwork-map-EUR" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-inputs-patchwork-map-EUR-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-total-inputs-patchwork-map-EUR-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-inputs-patchwork-map-EUR-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;11: Change in total inputs (Europe)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-total-inputs-patchwork-map-CHI" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-inputs-patchwork-map-CHI-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-total-inputs-patchwork-map-CHI-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-inputs-patchwork-map-CHI-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;12: Change in total inputs (Chile)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-total-inputs-patchwork-map-AUS" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-total-inputs-patchwork-map-AUS-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-total-inputs-patchwork-map-AUS-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-total-inputs-patchwork-map-AUS-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;13: Change in total inputs (Australia)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-</section>
-</section>
-<section id="n-inputs" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> N inputs</h1>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-N-inputs-boxplot" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center" width="816">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-N-inputs-boxplot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-N-inputs-boxplot-1.png" id="fig-N-inputs-boxplot" class="img-fluid quarto-figure quarto-figure-center anchored figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig quarto-uncaptioned" id="fig-N-inputs-boxplot-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;14
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-N-inputs-big-map" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-N-inputs-big-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-N-inputs-big-map-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-N-inputs-big-map-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;15: Percentage difference in N inputs when farms are fed the marine-dominant feed (top) or the novel-inclusive feed (bottom).
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-N-inputs-patchwork-map-CAN1" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-N-inputs-patchwork-map-CAN1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-N-inputs-patchwork-map-CAN1-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-N-inputs-patchwork-map-CAN1-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;16: Change in N inputs (west Canada)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-N-inputs-patchwork-map-CAN2" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-N-inputs-patchwork-map-CAN2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-N-inputs-patchwork-map-CAN2-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-N-inputs-patchwork-map-CAN2-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;17: Change in N inputs (east Canada)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-N-inputs-patchwork-map-EUR" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-N-inputs-patchwork-map-EUR-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-N-inputs-patchwork-map-EUR-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-N-inputs-patchwork-map-EUR-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;18: Change in N inputs (Europe)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-N-inputs-patchwork-map-CHI" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-N-inputs-patchwork-map-CHI-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-N-inputs-patchwork-map-CHI-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-N-inputs-patchwork-map-CHI-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;19: Change in N inputs (Chile)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-<div class="cell" data-layout-align="center">
-<div class="cell-output-display">
-<div id="fig-N-inputs-patchwork-map-AUS" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
-<figure class="quarto-float quarto-float-fig figure">
-<div aria-describedby="fig-N-inputs-patchwork-map-AUS-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-N-inputs-patchwork-map-AUS-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="816">
-</div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-N-inputs-patchwork-map-AUS-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;20: Change in N inputs (Australia)
-</figcaption>
-</figure>
-</div>
-</div>
-</div>
-</section>
-<section id="sec-code" class="level1" data-number="6">
-<h1 data-number="6"><span class="header-section-number">6</span> Code and packages used</h1>
+<section id="sec-code" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Code and packages used</h1>
 <p>All analysis was conducted in R version 4.4.2 “Pile of Leaves” <span class="citation" data-cites="R_base">(<a href="#ref-R_base" role="doc-biblioref">R Core Team 2019</a>)</span>. Major packages used include packages <code>aquamapsdata</code> version 0.1.6 <span class="citation" data-cites="aquamapsdata">(<a href="#ref-aquamapsdata" role="doc-biblioref">Skyttner 2020</a>)</span>, <code>arrow</code> version 20.0.0.2 <span class="citation" data-cites="arrow">(<a href="#ref-arrow" role="doc-biblioref">Richardson et al. 2024</a>)</span>, <code>dplyr</code> version 1.1.4 <span class="citation" data-cites="dplyr">(<a href="#ref-dplyr" role="doc-biblioref">Wickham et al. 2023</a>)</span>, <code>furrr</code> version 0.3.1 <span class="citation" data-cites="furrr">(<a href="#ref-furrr" role="doc-biblioref">Vaughan and Dancho 2022</a>)</span>, <code>future</code> version 1.58.0 <span class="citation" data-cites="future">(<a href="#ref-future" role="doc-biblioref">Bengtsson 2021</a>)</span>, <code>ggplot2</code> version 3.5.2 <span class="citation" data-cites="ggplot2">(<a href="#ref-ggplot2" role="doc-biblioref">Wickham 2016</a>)</span>, <code>lubridate</code> version 1.9.4 <span class="citation" data-cites="lubridate">(<a href="#ref-lubridate" role="doc-biblioref">Grolemund and Wickham 2011</a>)</span>, <code>magrittr</code> version 2.0.3 <span class="citation" data-cites="magrittr">(<a href="#ref-magrittr" role="doc-biblioref">Bache and Wickham 2022</a>)</span>, <code>rnaturalearth</code> version 1.1.0 <span class="citation" data-cites="rnaturalearth">(<a href="#ref-rnaturalearth" role="doc-biblioref">Massicotte and South, n.d.</a>)</span>, <code>sf</code> version 1.0.21 <span class="citation" data-cites="sf">(<a href="#ref-sf" role="doc-biblioref">Pebesma 2018</a>)</span>, <code>stringr</code> version 1.5.1 <span class="citation" data-cites="stringr">(<a href="#ref-stringr" role="doc-biblioref">Wickham 2023</a>)</span>, <code>targets</code> version 1.11.3 <span class="citation" data-cites="targets">(<a href="#ref-targets" role="doc-biblioref">Landau 2021</a>)</span>, <code>terra</code> version 1.8.60 <span class="citation" data-cites="terra">(<a href="#ref-terra" role="doc-biblioref">Hijmans 2024</a>)</span>, <code>tidyr</code> version 1.3.1 <span class="citation" data-cites="tidyr">(<a href="#ref-tidyr" role="doc-biblioref">Wickham, Vaughan, and Girlich 2024</a>)</span>, <code>units</code> version 0.8.7 <span class="citation" data-cites="units">(<a href="#ref-units" role="doc-biblioref">Pebesma, Mailund, and Hiebert 2016</a>)</span>, and <code>worrms</code> version 0.4.3 <span class="citation" data-cites="worrms">(<a href="#ref-worrms" role="doc-biblioref">Chamberlain and Vanhoorne. 2025</a>)</span>.</p>
 <p>For a full list of R packages used see the lockfile on <a href="https://www.github.com">Github</a>. This manuscript was written in Quarto <span class="citation" data-cites="quarto">(<a href="#ref-quarto" role="doc-biblioref">Allaire et al. 2024</a>)</span> using TinyTex <span class="citation" data-cites="tinytex">(<a href="#ref-tinytex" role="doc-biblioref">Xie 2017</a>)</span> and the acronyms extension <span class="citation" data-cites="acronyms">(<a href="#ref-acronyms" role="doc-biblioref">Chaput 2024</a>)</span>.</p>
 
