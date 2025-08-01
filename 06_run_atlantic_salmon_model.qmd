@@ -34,7 +34,10 @@ library(here)
 library(targets)
 conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
-here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% str_subset("map", negate = T) %>% walk(source)
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  str_subset("map", negate = T) %>% 
+  walk(source)
 ```
 
 ```{r}
@@ -149,11 +152,12 @@ Sys.setenv(TAR_PROJECT = "project_farmruns")
 # Check that the feed will actually work
 targets::tar_make(test_reference_feed)
 targets::tar_load(test_reference_feed)
-test_reference_feed # should be ~1430 g, or really anything other than 0
+test_reference_feed # if weight = 0 then the feeds aren't processing properly
 
 # Get harvest sizes for all farms
-targets::tar_make(names = c("harvest_size", "feed_params"))
-targets::tar_load(harvest_size)
+targets::tar_make(names = contains(c("harvest_size", "feed_params")))
+targets::tar_load(harvest_size_chunked)
+harvest_size <- harvest_size_chunked %>% bind_rows()
 
 ggplot(harvest_size, aes(x = weight)) +
   geom_histogram(fill = "salmon", alpha = 0.75, colour = "black")
@@ -231,17 +235,15 @@ targets::tar_prune()
 
 # Pre-run to reduce load
 targets::tar_make(
-  names = !c("farm_run", "cohort_results", "biomass_produced", "farm_results"), 
-  seconds_meta_append = 90,
-  callr_function = NULL
+  names = c("farm_IDs_chunked", "farm_ts_data_chunked", "farm_IDs", "test_reference_feed", "farm_temp_data_chunked", "harvest_size_chunked", "farm_static_data_chunked"), 
+  seconds_meta_append = 90#, callr_function = NULL
 )
 
 # Run results
 targets::tar_make(
-  names = c("farm_run", "cohort_results", "biomass_produced", "farm_results"), 
+  names = c("farm_run_chunked", "stat_names", "farm_results_chunked", "biomass_produced_chunked", "cohort_results_chunked" ), 
   seconds_meta_append = 90,
-  shortcut = T,
-  callr_function = NULL
+  shortcut = T
 )
 
 meta <- targets::tar_meta() %>% 
@@ -255,13 +257,13 @@ Load objects from the targets pipeline and save them as .qs files, which are muc
 #| label: all-farms-cohorts-results
 
 targets::tar_load(stat_names)
-targets::tar_load(farm_IDs)
+targets::tar_load(farm_IDs_chunked) %>% unlist()
 targets::tar_load(feed_names)
 
 print("Loading farm results...")
-targets::tar_load(farm_results)
+targets::tar_load(farm_results_chunked)
 for (stat_name in stat_names) {
-  farm_results %>% 
+  farm_results_chunked %>% 
       filter(measure == stat_name) %>% 
       qsave(file.path(output_model_farm_path, str_c(stat_name, "_all_farms.qs")))
 }
