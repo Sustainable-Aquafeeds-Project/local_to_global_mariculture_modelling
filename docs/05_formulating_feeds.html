@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Tormey Reimer">
-<meta name="dcterms.date" content="2025-08-01">
+<meta name="dcterms.date" content="2025-08-04">
 
 <title>Formulating experimental feeds</title>
 <style>
@@ -85,6 +85,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
   <li><a href="#import-ingredients" id="toc-import-ingredients" class="nav-link" data-scroll-target="#import-ingredients"><span class="header-section-number">2</span> Import ingredients</a></li>
   <li><a href="#import-feeds" id="toc-import-feeds" class="nav-link" data-scroll-target="#import-feeds"><span class="header-section-number">3</span> Import feeds</a></li>
+  <li><a href="#similarity" id="toc-similarity" class="nav-link" data-scroll-target="#similarity"><span class="header-section-number">4</span> Similarity</a></li>
   </ul>
 <div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://drtreimer.com/local_to_global_mariculture_modelling"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
 </div>
@@ -111,7 +112,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">1 August 2025</p>
+      <p class="date">4 August 2025</p>
     </div>
   </div>
   
@@ -170,7 +171,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">"feed"</span>, <span class="at">values_to =</span> <span class="st">"proportion"</span>, <span class="at">cols =</span> <span class="sc">!</span><span class="fu">contains</span>(<span class="fu">c</span>(<span class="st">"ingredient"</span>, <span class="st">"category"</span>))) <span class="sc">%&gt;%</span> </span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">as.factor</span>(feed),</span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">ingredient =</span> <span class="fu">as.factor</span>(ingredient)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(ingreds, <span class="at">by =</span> <span class="st">"ingredient"</span>, <span class="at">all =</span> T)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(ingreds, <span class="at">by =</span> <span class="st">"ingredient"</span>)</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>feed_types <span class="ot">&lt;-</span> <span class="fu">levels</span>(feed_inputs<span class="sc">$</span>feed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -206,6 +207,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(feed_params, <span class="fu">file.path</span>(output_species_data_path, <span class="st">"feed_params.qs"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="similarity" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Similarity</h1>
+<p>For later - how similar are the diets?</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>feed_simil <span class="ot">&lt;-</span> feed_inputs <span class="sc">%&gt;%</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ingredient, feed, proportion) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> feed,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> proportion,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">id_cols =</span> ingredient,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_fn =</span> as.numeric</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">diff_PD_MD =</span> <span class="fu">abs</span>(marine_dominant <span class="sc">-</span> plant_dominant),</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">diff_PD_NI =</span> <span class="fu">abs</span>(novel_inclusive <span class="sc">-</span> plant_dominant)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="sc">-</span> <span class="fu">sum</span>(feed_simil<span class="sc">$</span>diff_PD_MD, <span class="at">na.rm =</span> T)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="sc">-</span> <span class="fu">sum</span>(feed_simil<span class="sc">$</span>diff_PD_NI, <span class="at">na.rm =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 

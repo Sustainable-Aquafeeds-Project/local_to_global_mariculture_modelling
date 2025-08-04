@@ -42,8 +42,8 @@ The extra scripts for this project involved some exploration into potential impa
 
 | Page | Description |
 |---------|:-------------------------------------------------|
-| **[Species Layers](07_species_layers.html)** | Spatial analysis of species distribution layers |
-| **[Relative N Inputs](08_relative_N_inputs.html)** | Analysis of nitrogen input patterns and their relative impacts |
+| **[Species Layers](07_species_layers.html)** | Spatial analysis of species distribution layers, to try and acertain impacts on vulnerable species |
+| **[Relative N Inputs](08_relative_N_inputs.html)** | Analysis of nitrogen input (runoff) patterns and the relative impacts of farm nutrients |
 
 ```{r setup}
 #| cache: false
@@ -102,6 +102,32 @@ install_unit("t_fish", "1000 kg_fish")
 
 species_params <- find_read(output_species_data_path, "species_params")
 pop_params <- find_read(output_species_data_path, "pop_params")
+
+farm_locs <- find_read(output_farm_data_path, "geometry") %>% 
+  rename(farm_ID = farm_id) %>% 
+  mutate(country = as.factor(country))
+countries_long <- farm_locs %>%
+  mutate(
+    longitude = map_dbl(geometry, ~st_coordinates(.x)[1]),
+    latitude = map_dbl(geometry, ~st_coordinates(.x)[2])
+  ) %>% 
+  st_drop_geometry() %>% 
+  group_by(country) %>% 
+  reframe(latitude = mean(latitude)) %>% 
+  arrange(-latitude) %>% 
+  pull(country) %>% 
+  as.character() 
+countries_short <- countries_long %>% 
+  str_replace("United States of America", "USA") %>% 
+  str_replace("Russian Federation", "Russia") %>% 
+  str_replace("United States of America", "USA")
+farm_locs <- farm_locs %>% 
+  mutate(
+    country = factor(
+      country, 
+      levels = countries_long,
+      labels = countries_short
+    ))
   
 long_feeds <- c("marine_dominant", "plant_dominant", "novel_inclusive")
 short_feeds <- c("MD", "PD", "NI")
@@ -292,40 +318,43 @@ nit2 <- find_read(comparisons_path, "N_total_farm_summed.qs") %>%
   pivot_wider(names_from = feed, values_from = diff)
 ```
 
-
 @tbl-results-summary is a summary of all the results I've processed so far, basically trying to acertain all the major differences in inputs between the feeds.
+
+The NI diet was more efficient than the PD diet. When farms were fed the NI diet they had an average FCE* of `r fpr_pb1$NI`, compared to the average FCE of `r fpr_pb1$PD` when farms were fed the PD diet, and feeding the NI diet resulted in `r bpr2$NI`% more biomass produced with the same population compared to the PD diet.
+
+::: {.aside}
+*Note that when I refer to "FCE" here I'm talking about the "PLC weight" (weight of protein + lipid + carbohydrate) of feed, which may differ from its actual weight because of the inclusion of minerals and non-digestible material.
+:::
+
+Despite this, nutrients lost to the environment were generally highest in the NI diet and lowest in the MD diet. 
+In terms of total waste, the NI and PD diets were very similar. I initially thought that this was because the NI and PD diets are more similar than the MD and PD diets, but this doesn't match up with the numbers (PD and NI diets are 63.3% the same, while the PD and MD diets are 54.3% the same). 
+The MD diet had markedly lower total waste than either the PD or NI diets.
+
+However, the composition of waste lost to the environment was very different between the diets, particularly in terms of proteins and carbohydrates (@fig-PLC-waste-comparison). The PD diet had the lowest protein waste output and the NI diet had the highest, while the MD diet had the lowest carbohydrate and lipid waste outputs and the PD diet the highest. Overall, changing from the PD diet to the NI diet would result in a `r abs(plc3$NI_P)`% increase in protein waste but a `r abs(plc3$NI_C)`% and `r abs(plc3$NI_L)`% reduction in carbohydrates and lipids respectively, while changing to the MD diet would result in a `r abs(plc3$MD_P)`% increase in protein waste but a `r abs(plc3$NI_C)`% and `r abs(plc3$NI_L)`% reduction in carbohydrates and lipids respectively.
+
+Consequently, while total waste was only `r tow2$NI`% higher when farms were fed the NI diet, protein waste was `r plc3$NI_P`% higher and nitrogen waste was `r nit2$NI`% higher relative to when farms were fed the PD diet. 
+
+Proteins in the NI diet were only slightly less digestible than those used in the PD diet (@tbl-modelled-feeds), but this difference, combined with the higher protein content in the NI diet, resulted in the large difference in nitrogen lost to the environment. 
 
 | Description | Plant-dominant | Marine-dominant | Novel-inclusive | Change from PD to MD (%) | Change from PD to NI (%) |
 |:--------------------------|:----------:|:----------:|:----------:|:----------:|:----------:|
-| Salmon biomass produced (t) | `r bpr1$PD` | `r bpr1$MD` | `r bpr1$NI` | `r bpr2$MD` | `r bpr2$NI` |
-| Feed provided (t) | `r fpr1$PD` | `r fpr1$MD` | `r fpr1$NI` | `r fpr2$MD` | `r fpr2$NI` |
-| Feed provided (kg/kg salmon) | `r fpr_pb1$PD` | `r fpr_pb1$MD` | `r fpr_pb1$NI` | `r fpr_pb2$MD` | `r fpr_pb2$NI` |
-| Uneaten feed (t) | `r tuf1$PD` | `r tuf1$MD` | `r tuf1$NI` | `r tuf2$MD` | `r tuf2$NI` |
-| Excreted waste (t) | `r tew1$PD` | `r tew1$MD` | `r tew1$NI` | `r tew2$MD` | `r tew2$NI` |
-| Total waste (E+U, t) | `r tow1$PD` | `r tow1$MD` | `r tow1$NI` | `r tow2$MD` | `r tow2$NI` |
-| Proportion of total waste composed of excretion (%) | `r epw$PD` | `r epw$MD` | `r epw$NI` |  |  |
-| Total protein waste (t) | `r sum(plc1$PD_P)` | `r sum(plc1$MD_P)` | `r sum(plc1$NI_P)` | `r plc3$MD_P` | `r plc3$NI_P` |
-| Total carbohydrate waste (t) | `r sum(plc1$PD_C)` | `r sum(plc1$MD_C)` | `r sum(plc1$NI_C)` | `r plc3$MD_C` | `r plc3$NI_C` |
-| Total lipid waste (t) | `r sum(plc1$PD_L)` | `r sum(plc1$MD_L)` | `r sum(plc1$NI_L)` | `r plc3$MD_L` | `r plc3$NI_L` |
-| Proportion of protein waste from excretion (%) | `r plc2$PD_P` | `r plc2$MD_P` | `r plc2$NI_P` |  |  |
-| Proportion of carbohydrate waste from excretion (%) | `r plc2$PD_C` | `r plc2$MD_C` | `r plc2$NI_C` |  |  |
-| Proportion of lipid waste from excretion (%) | `r plc2$PD_L` | `r plc2$MD_L` | `r plc2$NI_L` |  |  |
-| Total N from uneaten feed (t) | `r niu1$PD` | `r niu1$MD` | `r niu1$NI` | `r niu2$MD` | `r niu2$NI` |
-| Total N from excreted waste (t) | `r nie1$PD` | `r nie1$MD` | `r nie1$NI` | `r nie2$MD` | `r nie2$NI` |
-| Total N inputs (E+U, t) | `r nit1$PD` | `r nit1$MD` | `r nit1$NI` | `r nit2$MD` | `r nit2$NI` |
-: Summary of all results. Unless otherwise specified, values presented are means across all farms, summed across a single production period. Some cells of this table are blank - sometimes that means it doesn't make sense to fill that cell, but sometimes it means I haven't got to it yet. {#tbl-results-summary}
-
-So here are the major themes I'm getting from @tbl-results-summary:
-
-::: {.aside}
-*Note that when I refer to "FCE" here I'm talking about the PLC weight (protein + lipid + carbohydrate) weight of feed, which may differ from its actual weight because of the inclusion of minerals and non-digestible material.
-:::
-
-1. The NI diet was more efficient than the PD diet. When farms were fed the NI diet they had an average FCE* of `r fpr_pb1$NI`, compared to the average FCE of `r fpr_pb1$PD` when farms were fed the PD diet, and feeding the NI diet resulted in `r bpr2$NI`% more biomass produced with the same population compared to the PD diet.
-2. Despite this, nutrients lost to the environment were generally highest in the NI diet and lowest in the MD diet. 
-  * In terms of total waste inputs (bulk mass), the NI and PD diets were very similar (probably due to their very similar ingredient compositions). The MD diet had markedly lower total waste inputs than either the PD or NI diets.
-3. However, the PLC composition of nutrients was very different between the diets (@fig-PLC-waste-comparison). The PD diet had the lowest protein waste output and the NI diet had the highest, while the MD diet had the lowest carbohydrate and lipid waste outputs and the PD diet the highest. Overall, changing from the PD diet to the NI diet would result in a `r abs(plc3$NI_P)`% increase in protein waste but a `r abs(plc3$NI_C)`% and `r abs(plc3$NI_L)`% reduction in carbohydrates and lipids respectively, while changing to the MD diet would result in a `r abs(plc3$MD_P)`% increase in protein waste but a `r abs(plc3$NI_C)`% and `r abs(plc3$NI_L)`% reduction in carbohydrates and lipids respectively.
-4. Overall, nitrogen inputs were `r nit2$NI`% higher in the NI diet and `r nit2$MD`% higher in the MD diet.
+| Salmon biomass produced (t)                         | `r bpr1$PD`        | `r bpr1$MD`        | `r bpr1$NI`        | `r coln(bpr2$MD)`    | `r coln(bpr2$NI)`    |
+| Feed provided (t)                                   | `r fpr1$PD`        | `r fpr1$MD`        | `r fpr1$NI`        | `r coln(fpr2$MD)`    | `r coln(fpr2$NI)`    |
+| Feed provided (kg/kg salmon)                        | `r fpr_pb1$PD`     | `r fpr_pb1$MD`     | `r fpr_pb1$NI`     | `r coln(fpr_pb2$MD)` | `r coln(fpr_pb2$NI)` |
+| Uneaten feed (t)                                    | `r tuf1$PD`        | `r tuf1$MD`        | `r tuf1$NI`        | `r coln(tuf2$MD)`    | `r coln(tuf2$NI)`    |
+| Excreted waste (t)                                  | `r tew1$PD`        | `r tew1$MD`        | `r tew1$NI`        | `r coln(tew2$MD)`    | `r coln(tew2$NI)`    |
+| Total waste (E+U, t)                                | `r tow1$PD`        | `r tow1$MD`        | `r tow1$NI`        | `r coln(tow2$MD)`    | `r coln(tow2$NI)`    |
+| Proportion of total waste composed of excretion (%) | `r epw$PD`         | `r epw$MD`         | `r epw$NI`         |                      |                      |
+| Total protein waste (t)                             | `r sum(plc1$PD_P)` | `r sum(plc1$MD_P)` | `r sum(plc1$NI_P)` | `r coln(plc3$MD_P)`  | `r coln(plc3$NI_P)`  |
+| Total carbohydrate waste (t)                        | `r sum(plc1$PD_C)` | `r sum(plc1$MD_C)` | `r sum(plc1$NI_C)` | `r coln(plc3$MD_C)`  | `r coln(plc3$NI_C)`  |
+| Total lipid waste (t)                               | `r sum(plc1$PD_L)` | `r sum(plc1$MD_L)` | `r sum(plc1$NI_L)` | `r coln(plc3$MD_L)`  | `r coln(plc3$NI_L)`  |
+| Proportion of protein waste from excretion (%)      | `r plc2$PD_P`      | `r plc2$MD_P`      | `r plc2$NI_P`      |                      |                      |
+| Proportion of carbohydrate waste from excretion (%) | `r plc2$PD_C`      | `r plc2$MD_C`      | `r plc2$NI_C`      |                      |                      |
+| Proportion of lipid waste from excretion (%)        | `r plc2$PD_L`      | `r plc2$MD_L`      | `r plc2$NI_L`      |                      |                      |
+| Total N from uneaten feed (t)                       | `r niu1$PD`        | `r niu1$MD`        | `r niu1$NI`        | `r coln(niu2$MD)`    | `r coln(niu2$NI)`    |
+| Total N from excreted waste (t)                     | `r nie1$PD`        | `r nie1$MD`        | `r nie1$NI`        | `r coln(nie2$MD)`    | `r coln(nie2$NI)`    |
+| Total N inputs (E+U, t)                             | `r nit1$PD`        | `r nit1$MD`        | `r nit1$NI`        | `r coln(nit2$MD)`    | `r coln(nit2$NI)`    |
+: Summary of all results. Unless otherwise specified, values presented are means across all farms, summed across a single production period. In the % change columns, the colour of the text indicates whether there is an increase (red) or a decrease (green). Some cells of this table are blank - sometimes that means it doesn't make sense to fill that cell, but sometimes it means I haven't got to it yet. {#tbl-results-summary}
 
 ```{r}
 #| label: PLC-waste-comparison
@@ -357,6 +386,10 @@ tukey_results <- pairs(emm, adjust = "tukey")
 # print(tukey_results)
 ```
 
+::: {.aside}
+I accidentally used raw total waste in @fig-PLC-waste-comparison instead of waste per kg of biomass
+:::
+
 ```{r}
 #| label: fig-PLC-waste-comparison
 #| fig-cap: Mean waste lost to the environment in a complete production cycle when farms are fed the MD (blue), PD (green) or NI (red) diet. Errorbars show SD across all farms.
@@ -375,8 +408,8 @@ plc1 %>%
     ),
     measure = factor(
       measure,
-      levels = c("excr", "uneat"),
-      labels = c("Excreted", "Uneaten")
+      levels = c("uneat", "excr"),
+      labels = c("Uneaten", "Excreted")
     )
   ) %>% 
   ggplot(aes(
@@ -393,6 +426,28 @@ plc1 %>%
   labs(y = "Mean total waste (t)", x = "Source")
 ```
 
+# N inputs only
+
+```{r}
+#| label: N-inputs-comparisons
+
+N_uneat <- find_read(comparisons_path, "N_uneat_farm_per_biom_summed")
+N_excr <- find_read(comparisons_path, "N_excr_farm_per_biom_summed")
+
+N_all <- rbind(N_uneat, N_excr) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    measure = droplevels(measure),
+    country = factor(country,
+                   levels = countries_long,
+                   labels = countries_short)
+  )
+
+# ggplot(N_all, aes(x = country, y = mean_biom, fill = feed)) +
+#   geom_boxplot() +
+#   facet_grid(cols = vars(measure)) +
+#   scale_fill_manual(values = feed_pal)
+```
 
 # Spatially
 
@@ -613,7 +668,7 @@ By this method, farm biomass as predicted by the model predicted farm tonnage re
 #| fig-cap: Temperature changes in potential ingestion (solid line) and amount of food provided (dotted line), relative to maximum potential ingestion. The vertical dotted lines show the actual minimum and maximum daily temperatures experienced by farms represented in the model.
 
 Sys.setenv(TAR_PROJECT = "project_farmruns")
-tar_load(farm_ts_data)
+farm_ts_data <- tar_read(farm_ts_data_chunked) %>% bind_rows()
 min_T <- min(farm_ts_data$temp_c)
 max_T <- max(farm_ts_data$temp_c)
 
@@ -719,7 +774,7 @@ feed_summary <- map_dfr(names(feed_params), function(feed) {
 | Plant-dominant | `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "P")$total, 1)`% (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "P")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "L")$total, 1)`% (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "L")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "C")$total, 1)`% (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "C")$digest, 1)`%) |
 | Marine-dominant | `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "P")$total, 1)`% (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "P")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "L")$total, 1)`% (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "L")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "C")$total, 1)`% (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "C")$digest, 1)`%) |
 | Novel-inclusive | `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "P")$total, 1)`% (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "P")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "L")$total, 1)`% (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "L")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "C")$total, 1)`% (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "C")$digest, 1)`%) |
-: Feed macronutrient details (composition in feed, digestibility).
+: Feed macronutrient details (composition in feed, digestibility). {#tbl-modelled-feeds}
 
 ## Model sensitivity to parameter changes {#sec-param-sensitivity}
 
