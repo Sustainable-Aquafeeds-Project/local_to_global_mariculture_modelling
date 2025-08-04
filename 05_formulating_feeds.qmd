@@ -60,7 +60,7 @@ feed_inputs <- feed_input_file %>%
   pivot_longer(names_to = "feed", values_to = "proportion", cols = !contains(c("ingredient", "category"))) %>% 
   mutate(feed = as.factor(feed),
          ingredient = as.factor(ingredient)) %>% 
-  merge(ingreds, by = "ingredient", all = T)
+  merge(ingreds, by = "ingredient")
 
 feed_types <- levels(feed_inputs$feed)
 ```
@@ -107,3 +107,27 @@ feed_params <- purrr::map(feed_types, function(ft) {
 qsave(feed_params, file.path(output_species_data_path, "feed_params.qs"))
 ```
 
+# Similarity
+
+For later - how similar are the diets?
+
+```{r}
+#| label: diet-similarity
+
+feed_simil <- feed_inputs %>% 
+  select(ingredient, feed, proportion) %>% 
+  as.data.frame() %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = proportion,
+    id_cols = ingredient,
+    values_fn = as.numeric
+  ) %>% 
+  mutate(
+    diff_PD_MD = abs(marine_dominant - plant_dominant),
+    diff_PD_NI = abs(novel_inclusive - plant_dominant)
+  )
+
+1 - sum(feed_simil$diff_PD_MD, na.rm = T)
+1 - sum(feed_simil$diff_PD_NI, na.rm = T)
+```
