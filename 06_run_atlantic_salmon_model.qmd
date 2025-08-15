@@ -184,6 +184,7 @@ targets::tar_make(
   seconds_meta_append = 120,
   callr_function = NULL
   )
+tar_prune()
 ```
 
 ## Process sensitivity results
@@ -231,7 +232,6 @@ Sys.setenv(TAR_PROJECT = "project_farmruns")
 
 targets::tar_validate()
 targets::tar_outdated()
-targets::tar_prune()
 
 # Pre-run to reduce load
 targets::tar_make(
@@ -246,9 +246,11 @@ targets::tar_make(
   shortcut = T
 )
 
-meta <- targets::tar_meta() %>% 
-  filter(grepl("farm_run", name))
-meta$seconds %>% mean()/60 # average minutes per target
+tar_prune()
+
+# meta <- targets::tar_meta() %>% 
+#   filter(grepl("farm_run", name))
+# meta$seconds %>% mean()/60 # average minutes per target
 ```
 
 Load objects from the targets pipeline and save them as .qs files, which are much quicker to load down the line. This takes a few minutes to gather all the targets.

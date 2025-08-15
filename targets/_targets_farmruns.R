@@ -30,7 +30,7 @@ list(
       qs::qread(farm_ts_data_file) %>% 
         filter(farm_ID != 2703) %>% # The only Russian farm
         distinct(farm_ID) %>% 
-        pull(farm_ID) #%>% sample(112)
+        pull(farm_ID)
     }
   ),
 
@@ -55,7 +55,8 @@ list(
   tar_target(
     feed_names,
     command = {
-      qs::qread(feed_params_file) %>% names()
+      # qs::qread(feed_params_file) %>% names() # Take all names from the feeds file
+      c("marine_dominant", "plant_dominant") # OR specify only certain names
     }
   ),
   tar_target(
