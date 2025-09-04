@@ -1,0 +1,248 @@
+---
+title: "08_relative_N_inputs"
+author: Tormey Reimer
+date: today
+editor: source
+---
+
+# Introduction
+
+The purpose of this markdown is to:
+
+1. Import and clean up background nitrogen data
+2. Overlay background nitrogen and Atlantic salmon farm locations
+3. Compare annual inputs from the different sources
+
+```{r setup}
+#| code-summary: R setup
+
+library(tidyr)
+library(dplyr)
+library(magrittr)
+library(stringr)
+library(here)
+library(terra)
+library(sf)
+library(qs)
+library(ggplot2)
+library(tidyterra)
+library(cowplot)
+library(rnaturalearth)
+library(purrr)
+
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+feed_pal <- c("past" = "#E41A1C", "reference" = "#377EB8", "future" = "#4DAF4A")  
+
+prettyplot <- function() {
+  theme_classic() +
+    theme(legend.position = "none",
+          text = element_text(family = "serif", size = 12, colour = "black"),
+          axis.title.x = element_text(vjust = 0.5),
+          axis.title.y = element_text(hjust = 0.5))
+}
+```
+
+# Base rasters for resolution
+
+```{r base-raster}
+#| code-summary: Create some blank rasters with parameters to be used going forward
+
+inset_boxes <- list(
+  CAN1 = c(-132, -122, 47.75, 54.25),
+  CAN2 = c(-70, -54, 43, 48.5),
+  EUR = c(-26, 30, 51, 72),
+  CHI = c(-77.5, -62.5, -56, -25),
+  AUS = c(144, 149.5, -44, -39.75)
+)
+
+base_wgs84 <- rast(res = c(0.008333333, 0.008333333), extent = ext(c(-180, 180, -90, 90)), crs = "EPSG:4326")
+base_molle <- rast(res = c(1000, 1000), extent = ext(c(-18040096, 18040096, -9020048, 9020048)), crs = "ESRI:54009")
+
+wgs84_insets <- inset_boxes %>% 
+  lapply(function(bx) {crop(base_wgs84, ext(bx))}) 
+
+molle_insets <- wgs84_insets %>% 
+  lapply(function(rs) {project(rs, crs(base_molle))}) %>% 
+  lapply(function(rs) {ext(rs)}) %>% 
+  lapply(function(ex) {crop(base_molle, ex)})
+```
+
+# Raw background nitrogen
+
+Data for nutrient runoff from agriculture fertilisers and pesticides was downloaded from @halpern_recent_2019-1 [dataset here: @halpern_recent_2019]. The data is in annual tonnes N.
+
+```{r raw-back-N-halpern}
+#| code-summary: Import data from @halpern_recent_2019 and crop/reproject for the 5 insets being used
+#| eval: false
+
+halpern_N_rast <- file.path(input_Ndata_path, "halpern_2019", "nutrient_pollution_2013_raw.tif") %>%
+  rast()
+
+halpern_insets <- molle_insets %>% 
+  lapply(function(ins) {project(halpern_N_rast, ins, method = "cubic")})
+```
+
+Data for inputs of human sewage in coastal ecosystems was sourced from @tuholske_global_2021 [dataset here: @tuholske_mapping_2021]. The data is in annual g N.
+
+```{r raw-back-N-tuholske}
+#| code-summary: Import data from @tuholske_global_2021 and crop/reproject for the 5 insets being used
+#| eval: false
+
+tuholske_N_rast <- file.path(input_Ndata_path, "tuholske_2021", "global_effluent_2015_tot_N.tif") %>%
+  rast() 
+tuholske_N_rast <- tuholske_N_rast * 10^-6 # Change from g to t
+
+# Change to the Molleweide projection with insets
+tuholske_insets <- molle_insets %>% 
+  lapply(function(ins) {project(tuholske_N_rast, ins, method = "cubic")})
+
+# The halpern data has NA values for land but the tuholske data does not, so mask
+tuholske_insets <- map2(tuholske_insets, halpern_insets, function(rast, mask) {
+  mask(rast, mask)
+})
+```
+
+```{r save-back-N}
+#| code-summary: Combine and save background N data
+#| eval: false
+
+background_N_insets <- map2(
+  halpern_insets, 
+  tuholske_insets, 
+  function(halpern, tuholske) {
+    halpern + tuholske
+  })
+
+map2(names(halpern_insets), background_N_insets, function(nm, rast) {
+  writeRaster(rast, 
+              file.path(input_Ndata_path, str_c("background_N_inset_", nm, ".tif")), 
+              overwrite = T)
+})
+```
+
+The code above was only run once, background N rasters can now be loaded.
+
+```{r load-background-data}
+#| code-summary: Load previously saved inset rasters
+
+background_N_insets <- lapply(names(inset_boxes), function(nm) {
+  file.path(input_Ndata_path, str_c("background_N_inset_", nm, ".tif")) %>% rast()
+})
+```
+
+# Combine modelled N data with background N
+
+```{r farm locations}
+#| code-summary: Bring in modelled salmon inputs data
+
+farm_locs <- file.path(output_farm_data_path, "farm_geometry.qs") %>% qs::qread()
+farm_sfs <- st_sf(farm_id = farm_locs$farm_id, geometry = farm_locs$geometry) %>% 
+  st_transform(crs = crs(base_molle))
+farm_id_insets <- background_N_insets %>% 
+  lapply(function(ins) {rasterize(farm_sfs, ins, field = "farm_id")})
+```
+
+```{r matching cells}
+#| code-summary: Get background nitrogen data for farm cells
+
+farm_cells <- map(background_N_insets, function(back_N_rast) {
+  # Get cell numbers for each farm point
+  farm_cells <- cellFromXY(back_N_rast, st_coordinates(farm_sfs))
+  farm_cells <- farm_locs %>% 
+    mutate(cell = farm_cells) %>% 
+    filter(!is.na(cell))
+  
+  # Extract nutrient values and combine with cell_ids
+  farm_cells$back_N <- terra::extract(back_N_rast$nutrient_pollution_2013_raw,
+                                      farm_cells$cell)$nutrient_pollution_2013_raw
+  
+  # Fill gaps from original data with 8 neighbours
+  farm_cells_gaps <- farm_cells %>% filter(is.na(back_N))
+  for (i in 1:nrow(farm_cells_gaps)) {
+    adj_cells <- adjacent(back_N_rast$nutrient_pollution_2013_raw, 
+                          cells = farm_cells_gaps$cell[i], directions = 8)
+    adj_cells_N <- back_N_rast$nutrient_pollution_2013_raw[adj_cells[1,]] %>% 
+      pull(nutrient_pollution_2013_raw) %>% 
+      mean(na.rm = T)
+    farm_cells_gaps$back_N[i] <- adj_cells_N
+  }
+  farm_cells <- farm_cells %>% 
+    filter(!is.na(back_N)) %>% 
+    rbind(farm_cells_gaps)
+
+  # Fill gaps from original data with 16 neighbours
+  farm_cells_gaps <- farm_cells %>% filter(is.na(back_N))
+  if (nrow(farm_cells_gaps) != 0) {
+      for (i in 1:nrow(farm_cells_gaps)) {
+      adj_cells <- adjacent(back_N_rast$nutrient_pollution_2013_raw, 
+                            cells = farm_cells_gaps$cell[i], directions = 16)
+      adj_cells_N <- back_N_rast$nutrient_pollution_2013_raw[adj_cells[1,]] %>% 
+        pull(nutrient_pollution_2013_raw) %>% 
+        mean(na.rm = T)
+      farm_cells_gaps$back_N[i] <- adj_cells_N
+    }
+    farm_cells <- farm_cells %>% 
+      filter(!is.na(back_N)) %>% 
+      rbind(farm_cells_gaps)
+  }
+  
+  default_val <- exp(median(log(farm_cells$back_N), na.rm = T))
+  farm_cells$back_N[is.na(farm_cells$back_N)] <- default_val
+  farm_cells$back_N[farm_cells$back_N < 0] <- default_val
+  farm_cells
+}) %>% 
+  bind_rows()
+```
+
+```{r combine with N input from farms}
+
+N_input <- per_biomass_cohort_path %>% 
+  list.files(full.names = T) %>% 
+  str_subset("allfarms") %>% 
+  str_subset("P_excr") %>% 
+  qs::qread() %>% 
+  mutate(mean = mean * 6.25) %>% 
+  group_by(farm_ID, feed) %>% 
+  reframe(mean = sum(mean) * 10^-6) %>% 
+  pivot_wider(names_from = feed, values_from = mean)
+
+N_comp <- merge(farm_cells, N_input, by.y = "farm_ID", by.x = "farm_id", all = T) %>% 
+  select(-cell) %>% 
+  mutate(reference = reference/back_N,
+         past = past/back_N,
+         future = future/back_N) %>% 
+  pivot_longer(names_to = "feed", names_transform = list(feed = as.factor),
+               values_to = "ratio", cols = c("reference", "past", "future")) %>% 
+  mutate(feed = factor(feed, levels = c("reference", "past", "future")))
+```
+
+# Analyse
+
+```{r summary-plots}
+
+N_comp %>%
+  group_by(country, farm_id, feed) %>% 
+  reframe(mean = mean(ratio, na.rm = T)) %>% 
+  pivot_wider(names_from = feed, values_from = mean) %>% 
+  mutate(past = (past-reference)/reference,
+         future = (future-reference)/reference) %>% 
+  select(-reference) %>% 
+  pivot_longer(names_to = "feed", values_to = "mean_ratio", cols = c(past, future)) %>% 
+  ggplot(aes(x = country, y = mean_ratio, fill = feed)) +
+  geom_boxplot() +
+  prettyplot() +
+  scale_y_continuous(breaks = seq(0,1,0.2), labels = seq(0,100,20), limits = c(0,0.6)) +
+  scale_fill_manual(values = feed_pal) +
+  labs(y = "Mean change in N input ratio", x = "Country")
+
+N_comp %>% 
+  filter(log(ratio) < 20) %>%
+  ggplot(aes(x = country, y = log(ratio), fill = feed)) +
+  geom_boxplot() +
+  prettyplot() +
+  # scale_y_continuous(breaks = seq(0,1,0.2), labels = seq(0,100,20), limits = c(0,0.6)) +
+  scale_fill_manual(values = feed_pal) +
+  labs(y = "Mean change in N input ratio", x = "Country")
+```
+
+

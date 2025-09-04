@@ -1,9 +1,9 @@
+# Targets projects management ensures that targets can always find scripts/output files no matter where they're run from
 
-project_individual:
-  script: targets/_targets_individual.R
-  store: targets/_targets_individual
+project_sensitivities:
+  script: targets/_targets_sensitivities.R
+  store: targets/_targets_sensitivities
   
-project_farm:
-  script: targets/_targets_farm.R
-  store: targets/_targets_farm
-
+project_farmruns:
+  script: targets/_targets_farmruns.R
+  store: targets/_targets_farmruns

@@ -1,0 +1,133 @@
+---
+title: "Formulating experimental feeds"
+author: Tormey Reimer
+date: today
+editor: source
+---
+
+# Introduction
+
+The purpose of this markdown is to:
+
+```{r setup}
+#| code-summary: R setup
+
+library(arrow)
+library(sf)
+library(dplyr)
+library(tidyr)
+library(terra)
+library(magrittr)
+library(furrr)
+library(future)
+library(tictoc)
+library(ggplot2)
+library(fs)
+library(conflicted)
+library(stringr)
+library(readxl)
+library(units)
+library(qs)
+library(here)
+conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+
+here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% purrr::walk(source)
+
+ingred_inputs_file <- file.path(input_feed_profile_path, "all_ingredients.csv")
+feed_input_file <- file.path(input_feed_profile_path, "all_feeds.xlsx")
+```
+
+# Import ingredients
+
+There is no check or correction here to ensure that protein+lipid+ash+carb = 1 in the incoming data. This was checked manually prior to import. 
+
+``` {r import-ingredients}
+#| code-summary: Ingredient details
+
+ingreds <- ingred_inputs_file %>% 
+  read.csv() %>% 
+  mutate(ingredient = as.factor(ingredient))
+ingred_nms <- levels(ingreds$ingredient)
+```
+
+# Import feeds
+
+``` {r import-feeds}
+#| code-summary: Feed compositions
+
+feed_inputs <- feed_input_file %>% 
+  read_excel(sheet = "all_feeds") %>% 
+  pivot_longer(names_to = "feed", values_to = "proportion", cols = !contains(c("ingredient", "category"))) %>% 
+  mutate(feed = as.factor(feed),
+         ingredient = as.factor(ingredient)) %>% 
+  merge(ingreds, by = "ingredient")
+
+feed_types <- levels(feed_inputs$feed)
+```
+
+Check that ingredient proportions sum to 1.
+
+```{r check-proportions}
+#| code-summary: Composition proportions
+
+feed_inputs <- feed_inputs %>% 
+  filter(!is.na(proportion) & proportion != 0) %>% 
+  group_by(feed) %>% 
+  mutate(
+    sum = sum(proportion),
+    proportion = proportion/sum
+  ) %>% 
+    ungroup()
+```
+
+The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. 
+
+```{r formulate feeds}
+#| code-summary: Format feeds as lists to feed into targets
+
+feed_params <- purrr::map(feed_types, function(ft) {
+  df <- feed_inputs %>% 
+    filter(feed == ft) 
+  list(
+    Proteins = df %>% 
+      select(ingredient, proportion, contains("protein"), -contains("feed")) %>%
+      rename(macro = protein, digest = protein_digestibility),
+    Carbohydrates = df %>% 
+      select(ingredient, proportion, contains("carb"), -contains("feed")) %>%
+      rename(macro = carb, digest = carb_digestibility),
+    Lipids = df %>% 
+      select(ingredient, proportion, contains("lipid"), -contains("feed")) %>%
+      rename(macro = lipid, digest = lipid_digestibility)
+  )
+}) %>% 
+  setNames(feed_types)
+```
+
+```{r save}
+qsave(feed_params, file.path(output_species_data_path, "feed_params.qs"))
+```
+
+# Similarity
+
+For later - how similar are the diets?
+
+```{r}
+#| label: diet-similarity
+
+feed_simil <- feed_inputs %>% 
+  select(ingredient, feed, proportion) %>% 
+  as.data.frame() %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = proportion,
+    id_cols = ingredient,
+    values_fn = as.numeric
+  ) %>% 
+  mutate(
+    diff_PD_MD = abs(marine_dominant - plant_dominant),
+    diff_PD_NI = abs(novel_inclusive - plant_dominant)
+  )
+
+1 - sum(feed_simil$diff_PD_MD, na.rm = T)
+1 - sum(feed_simil$diff_PD_NI, na.rm = T)
+```

@@ -1,0 +1,8 @@
+# For managing big data files
+all_outputs_farm/*
+all_outputs_cohort/*
+
+farm_data/farm_circles*
+farm_data/farm_ts_data*
+
+data_analysis/*

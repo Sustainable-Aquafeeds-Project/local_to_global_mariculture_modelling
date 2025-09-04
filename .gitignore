@@ -40,20 +40,18 @@ vignettes/*.pdf
 .Renviron
 .Rprofile
 
-# pkgdown site
-docs/
-
 # translation temp files
 po/*~
 
 # RStudio Connect folder
 rsconnect/
 
-# Atlantic salmon parameters
-data/atlantic_salmon
-data/_general_data/species_layers
+# Confidential data
+XX_confidential/*
 
-# Processed outputs
-data_processed/example_individual
-data_processed/farm_growth
+# Quarto temporary files
+/.quarto/
 
+# Raw data
+data/raw/*
+data/atlantic_salmon/production/*

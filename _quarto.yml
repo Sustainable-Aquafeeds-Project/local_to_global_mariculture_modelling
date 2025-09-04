@@ -1,0 +1,58 @@
+project:
+  title: "myproject"
+  type: default
+  output-dir: docs
+  render:
+    - index.qmd
+    - 01_tidying_data.qmd
+    - 02_extracting_production_locations.qmd
+    - 03_assessing_species_potential.qmd
+    - 04_extracting_temperatures.qmd
+    - 05_formulating_feeds.qmd
+    - 06_run_atlantic_salmon_model.qmd
+    - 07_species_layers.qmd
+    - 08_relative_N_inputs.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: "extra.css"
+    code-fold: false
+    code-overflow: wrap
+    toc: true
+    toc-expand: true
+    toc-location: left
+    number-sections: true
+    lang: en-GB
+    code-links:
+      - text: Github
+        icon: file-code
+        href: https://github.com/stormeyseas/local_to_global_mariculture_modelling
+    other-links:
+      - text: Back to main
+        href: https://drtreimer.com/local_to_global_mariculture_modelling
+    grid:
+      sidebar-width: 250px
+      body-width: 1200px
+      margin-width: 250px
+      gutter-width: 2em
+  
+execute:
+  eval: false
+  freeze: false
+
+bibliography: 
+  - "refs.bib"
+  - "manual-refs.bib"
+
+# acronyms:
+#   insert_loa: false
+#   keys:
+#     - shortname: IMTA
+#       longname: Integrated Multi-Trophic Aquaculture
+#     - shortname: SHOC
+#       longname: Sparse Hydrodynamic Ocean Code
+#     - shortname: CONNIE3
+#       longname: CONNectivity InterfacE, version 3
+  
+notebook-links: false
