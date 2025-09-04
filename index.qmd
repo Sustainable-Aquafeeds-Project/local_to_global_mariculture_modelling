@@ -330,7 +330,7 @@ The NI diet was more efficient than the PD diet. When farms were fed the NI diet
 
 Despite this, nutrients lost to the environment were generally highest in the NI diet and lowest in the MD diet. 
 In terms of total waste, the NI and PD diets were very similar. I initially thought that this was because the NI and PD diets are more similar than the MD and PD diets, but this doesn't match up with the numbers (PD and NI diets are 63.3% the same, while the PD and MD diets are 54.3% the same). 
-The MD diet had markedly lower total waste than either the PD or NI diets.
+The MD diet had markedly lower total waste than either the PD or NI diets. 
 
 However, the composition of waste lost to the environment was very different between the diets, particularly in terms of proteins and carbohydrates (@fig-PLC-waste-comparison). The PD diet had the lowest protein waste output and the NI diet had the highest, while the MD diet had the lowest carbohydrate and lipid waste outputs and the PD diet the highest. Overall, changing from the PD diet to the NI diet would result in a `r abs(plc3$NI_P)`% increase in protein waste but a `r abs(plc3$NI_C)`% and `r abs(plc3$NI_L)`% reduction in carbohydrates and lipids respectively, while changing to the MD diet would result in a `r abs(plc3$MD_P)`% increase in protein waste but a `r abs(plc3$NI_C)`% and `r abs(plc3$NI_L)`% reduction in carbohydrates and lipids respectively.
 
@@ -529,6 +529,109 @@ ins[[2]] + facet_grid(rows = vars(feed))
 ins[[3]] + facet_grid(cols = vars(feed))
 ins[[4]] + facet_grid(cols = vars(feed))
 ins[[5]] + facet_grid(cols = vars(feed))
+```
+
+```{r}
+#| label: fig-spatial-N-inputs-change
+#| fig-height: 12
+#| fig-cap: Change in total N inputs per unit biomass of salmon produced when farms are fed the MD feed (top), or the NI feed (bottom) compared to when farms are fed the PD feed.
+
+N_ins_comp <- rbind(
+  find_read(data_analysis_path, "P_excr_farm_per_biom_summed"),
+  find_read(data_analysis_path, "P_uneat_farm_per_biom_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  select(-sd_biom) %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = mean_biom,
+    values_fn = drop_units
+  ) %>% 
+  group_by(country, farm_ID) %>% 
+  reframe(
+    PD = sum(PD),
+    MD = sum(MD), 
+    NI = sum(NI)
+  ) %>% 
+  mutate(MD = (MD-PD),
+         NI = (NI-PD)) %>% 
+  select(-PD) %>% 
+  pivot_longer(
+    names_to = "feed",
+    values_to = "diff",
+    cols = c(MD, NI)
+  ) %>% 
+  mutate(
+    feed = factor(feed, levels = short_feeds),
+    feed = droplevels(feed),
+    diff = diff %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+  
+p_bigmap_robinson +
+  geom_sf(
+    data = N_ins_comp, 
+    aes(colour = diff, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(10, 35, 5), limits = c(10,36)) + 
+  guides(col = guide_colourbar(
+    title = expression("Difference in N inputs (kg/t salmon)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  facet_grid(rows = vars(feed)) +
+  # prettyplot() +
+  theme(strip.background = element_blank(), strip.text = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "bottom")
+```
+
+```{r}
+#| label: N-inputs-change-patchwork-map
+#| fig-cap: Change in total N inputs per unit biomass of salmon produced when farms are fed the MD feed (A), or the NI feed (B) compared to when farms are fed the PD feed.
+
+p_mercator <- p_bigmap_mercator +
+  geom_sf(
+    data = N_ins_comp,
+    aes(colour = diff, geometry = geometry), 
+    size = 2.5
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(10, 35, 5), limits = c(10,36)) + 
+  guides(col = guide_colourbar(
+    title = expression("Difference in N inputs (kg/t salmon)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  prettyplot() +
+  theme(
+    strip.background = element_blank(), strip.text = element_blank(),
+    legend.position = "bottom"
+  ) +
+  labs(y = "Latitude", x = "Longitude")
+
+facet_labels <- c(
+  "MD" = "A",
+  "NI" = "B"
+)
+
+ins <- get_insets_mercator(p_mercator)
+
+ins[[1]] + facet_grid(cols = vars(feed), labeller = as_labeller(facet_labels))
+ins[[2]] + facet_grid(rows = vars(feed), labeller = as_labeller(facet_labels))
+ins[[3]] + facet_grid(cols = vars(feed), labeller = as_labeller(facet_labels))
+ins[[4]] + facet_grid(cols = vars(feed), labeller = as_labeller(facet_labels))
+ins[[5]] + facet_grid(cols = vars(feed), labeller = as_labeller(facet_labels))
 ```
 
 # Supplemental methods {#sec-supp-methods}

@@ -1,6 +1,6 @@
 library(targets)
 library(crew)
-library(parallelly)
+library(magrittr)
 
 tar_option_set(
   packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "tibble"), 
@@ -9,7 +9,8 @@ tar_option_set(
   workspace_on_error = TRUE
 )
 
-tar_source(files = list.files("src", pattern = "\\.R$", full.names = TRUE))
+tar_source(files = list.files("src", pattern = "\\.R$", full.names = TRUE) %>% 
+    setdiff("src/map_templates.R"))
 
 list(
   # Load previously saved data --------------------------------------------------------------------------------
