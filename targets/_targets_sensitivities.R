@@ -333,7 +333,7 @@ list(
         feed_params = reference_feed,
         times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
         N_pop = rep(1, nrow(ts)),
-        nruns = 2000
+        nruns = 500
       )
       
       data.frame(

@@ -194,7 +194,7 @@ list(
           feed_params = feed_params,
           times = c(t_start = static$t_start, t_end = static$t_end, dt = 1),
           N_pop = ts$Npop,
-          nruns = 5000
+          nruns = 500
         )
         fg %>% 
           purrr::map_dfr(function(mat) {
