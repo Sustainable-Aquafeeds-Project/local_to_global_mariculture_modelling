@@ -182,3 +182,40 @@ per_biom <- function(path, pattern) {
       sd_biom = ratio_sd(mean, sd, biom_mean, biom_sd)
     )
 }
+
+# Convert daily values to total values per biomass
+sum_per_biom <- function(data) {
+  sp <- data %>% 
+    group_by(farm_ID, feed, measure) %>% 
+    reframe(
+      days = n(),
+      total = sum(mean),
+      sd = sqrt(sumna(sd^2)),
+    ) %>% 
+    select(farm_ID, feed, measure, total, sd)
+  
+  prepped_biomass <- biomass_produced %>% 
+    select(-measure) %>% 
+    rename(biom_mean = mean,
+           biom_sd = sd) %>% 
+    select(farm_ID, feed, biom_mean, biom_sd)
+  
+  sp %>% 
+    merge(
+      prepped_biomass, 
+      by = c("farm_ID", "feed")
+    ) %>% 
+    mutate(
+      mean_biom = (total/biom_mean),
+      sd_biom = ratio_sd(total, sd, biom_mean, biom_sd)
+    ) %>% 
+    select(-c(total, sd, biom_mean, biom_sd))
+}
+
+coln <- function(x, pos_color = "red", neg_color = "green") {
+  if (x >= 0) {
+    paste0('<span style="color: ', pos_color, ';">', x, '</span>')
+  } else {
+    paste0('<span style="color: ', neg_color, ';">', x, '</span>')
+  }
+}

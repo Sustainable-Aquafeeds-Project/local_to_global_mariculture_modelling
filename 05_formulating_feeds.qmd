@@ -131,3 +131,8 @@ feed_simil <- feed_inputs %>%
 1 - sum(feed_simil$diff_PD_MD, na.rm = T)
 1 - sum(feed_simil$diff_PD_NI, na.rm = T)
 ```
+
+
+```{r}
+
+```
