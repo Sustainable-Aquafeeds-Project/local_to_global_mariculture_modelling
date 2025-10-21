@@ -33,7 +33,7 @@ conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
 here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% purrr::walk(source)
 
-ingred_inputs_file <- file.path(input_feed_profile_path, "all_ingredients.csv")
+ingred_inputs_file <- file.path(input_feed_profile_path, "all_ingredients.xlsx")
 feed_input_file <- file.path(input_feed_profile_path, "all_feeds.xlsx")
 ```
 
@@ -45,7 +45,7 @@ There is no check or correction here to ensure that protein+lipid+ash+carb = 1 i
 #| code-summary: Ingredient details
 
 ingreds <- ingred_inputs_file %>% 
-  read.csv() %>% 
+  read_excel(sheet = "all_ingredients") %>% 
   mutate(ingredient = as.factor(ingredient))
 ingred_nms <- levels(ingreds$ingredient)
 ```

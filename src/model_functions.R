@@ -278,6 +278,11 @@ farm_to_cohort <- function(df, time_offset = 0) {
     mutate(t = t + time_offset)
 }
 
+farm_to_cohort_2 <- function(df, time_offset = 0) {
+  df %>% 
+    mutate(prod_t = prod_t + time_offset)
+}
+
 # Process each time period (current, +365 days, +730 days)
 combine_cohorts <- function(lst) {
   bind_rows(farm_to_cohort(lst[[i]], 0),

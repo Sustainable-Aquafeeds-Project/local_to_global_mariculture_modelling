@@ -348,7 +348,7 @@ ggplot(
   theme_classic()
 ```
 
-This number of runs results in a total mis-estimation of max 2% (fig-nruns-weight-500-diff), so I'd called that good enough.
+This number of runs results in a total mis-estimation of max 2% (@fig-nruns-weight-500-diff), so I'd called that good enough.
 
 ```{r fig-nruns-weight-500-diff}
 #| fig-width: 8.5

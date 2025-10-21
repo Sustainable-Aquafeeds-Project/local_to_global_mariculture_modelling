@@ -30,6 +30,7 @@ list(
       qs::qread(farm_ts_data_file) %>% 
         filter(farm_ID != 2703) %>% # The only Russian farm
         distinct(farm_ID) %>% 
+        # slice_head(n = 24) %>% 
         pull(farm_ID)
     }
   ),
@@ -103,7 +104,7 @@ list(
 
   tar_target(all_params, c(qs::qread(species_params_file), qs::qread(pop_params_file))),
 
-  # Calculate harvest size for each farm
+# Prepare parameters and farm data --------------------------------------------------------------------------------
   tar_target(
     harvest_size_chunked,
     command = {
@@ -129,10 +130,6 @@ list(
     pattern = farm_temp_data_chunked
   ),
 
-# Prepare parameters ----------------------------------------------------------------------------------------------
-  tar_target(stat_names, levels(farm_run_chunked$measure)),
-
-# Run growth ------------------------------------------------------------------------------------------------------
   tar_target(
     farm_static_data_chunked,
     command = {
@@ -180,7 +177,7 @@ list(
     pattern = map(farm_static_data_chunked, harvest_size_chunked, farm_temp_data_chunked)
   ),
 
-
+# Run growth ------------------------------------------------------------------------------------------------------
   tar_target(
     farm_run_chunked,
     command = {
@@ -213,7 +210,6 @@ list(
     pattern = cross(map(farm_ts_data_chunked,farm_static_data_chunked), map(feed_params, feed_names))
   ),
 
-# Process growth ------------------------------------------------------------------------------------------------------
   tar_target(
     farm_results_chunked,
     command = {
@@ -225,6 +221,7 @@ list(
     pattern = cross(farm_run_chunked, stat_names)
   ),
 
+# Process results ------------------------------------------------------------------------------------------------------
   tar_target(
     biomass_produced_chunked,
     command = {

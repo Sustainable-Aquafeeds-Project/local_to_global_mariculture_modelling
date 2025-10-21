@@ -243,7 +243,7 @@ targets::tar_make(
 targets::tar_make(
   names = c("farm_run_chunked", "stat_names", "farm_results_chunked", "biomass_produced_chunked", "cohort_results_chunked" ), 
   seconds_meta_append = 90,
-  shortcut = T
+  shortcut = T # only if you've done the pre-run
 )
 
 tar_prune()
