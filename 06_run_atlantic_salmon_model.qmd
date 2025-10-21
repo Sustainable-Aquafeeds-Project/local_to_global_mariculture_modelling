@@ -148,11 +148,12 @@ Calculations of expected harvest sizes for each farm (using default feed and no 
 #| label: farm-harvest-size
 
 Sys.setenv(TAR_PROJECT = "project_farmruns")
+tar_prune() # will remove any targets objects no longer in pipeline
 
 # Check that the feed will actually work
 targets::tar_make(test_reference_feed)
 targets::tar_load(test_reference_feed)
-test_reference_feed # if weight = 0 then the feeds aren't processing properly
+test_reference_feed # if weight ~ 0 then the feeds aren't processing properly
 
 # Get harvest sizes for all farms
 targets::tar_make(names = contains(c("harvest_size", "feed_params")))
@@ -169,7 +170,7 @@ qsave(harvest_size, farm_harvest_file)
 
 Run the sensitivity runs using the targets pipeline. 
 Note that this can take a long time. 
-The species parameters (19) are run for a single fish in each farm (2721) and factor (3), which takes ~30 minutes.
+The species parameters (19) are run for a single fish in each farm (2721) and factor (3), which takes ~30 minutes. 
 The population parameters (6) are run for a smaller number of farms (271) and each factor (3) with a simulated population of 500 fish, which takes ~30 hours.
 
 ```{r}
@@ -180,6 +181,7 @@ Sys.setenv(TAR_PROJECT = "project_sensitivities")
 targets::tar_validate()
 # targets::tar_visnetwork(targets_only = T)
 # targets::tar_outdated()
+
 targets::tar_make(
   seconds_meta_append = 120,
   callr_function = NULL
@@ -223,8 +225,6 @@ for (sm in seq_along(sens_measures)) {
 
 # Run farms
 
-Note that this takes a long time - each branch of farmrun takes ~5.3 minutes, and a maximum of ~12 workers can run at a time. The total therefore takes ~17 hours. 
-
 ```{r}
 #| label: run-farms-pipeline
 
@@ -235,15 +235,15 @@ targets::tar_outdated()
 
 # Pre-run to reduce load
 targets::tar_make(
-  names = c("farm_IDs_chunked", "farm_ts_data_chunked", "farm_IDs", "test_reference_feed", "farm_temp_data_chunked", "harvest_size_chunked", "farm_static_data_chunked"), 
-  seconds_meta_append = 90#, callr_function = NULL
+  names = c("farm_static_data_chunked", "farm_temp_data_chunked", "farm_ts_data_chunked"), 
+  seconds_meta_append = 90
 )
 
 # Run results
 targets::tar_make(
-  names = c("farm_run_chunked", "stat_names", "farm_results_chunked", "biomass_produced_chunked", "cohort_results_chunked" ), 
+  names = c("farm_run_chunked", "farm_full_results"), 
   seconds_meta_append = 90,
-  shortcut = T # only if you've done the pre-run
+  shortcut = T # only if you've done the pre-run, above
 )
 
 tar_prune()

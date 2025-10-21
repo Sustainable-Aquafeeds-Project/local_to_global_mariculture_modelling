@@ -1,11 +1,17 @@
-library(targets)
-# library(crew)
-library(magrittr)
+suppressPackageStartupMessages(suppressWarnings({
+  library(targets)
+  library(crew)
+  library(magrittr)
+  library(qs)
+  library(tidyverse)
+  library(arrow)
+}))
+
 
 tar_option_set(
-  packages = c("stringr", "magrittr", "tidyr", "arrow", "dplyr", "tibble", "qs"), 
+  # packages = c("arrow"), 
   format = "qs", 
-  controller = crew::crew_controller_local(workers = 12, seconds_idle = 300),
+  controller = crew::crew_controller_local(workers = 5, seconds_idle = 300),
   workspace_on_error = TRUE
 )
 
@@ -37,7 +43,7 @@ list(
 
   tar_target(
     farm_IDs_chunked,
-    split(farm_IDs, ceiling(seq_along(farm_IDs)/20))
+    split(farm_IDs, ceiling(seq_along(farm_IDs)/10))
   ),
 
   tar_target(
@@ -55,17 +61,13 @@ list(
 
   tar_target(
     feed_names,
-    command = {
-      # qs::qread(feed_params_file) %>% names() # Take all names from the feeds file
-      c("marine_dominant", "plant_dominant") # OR specify only certain names
-    }
+    command = {names(qs::qread(feed_params_file))}
   ),
   tar_target(
     feed_params,
     qs::qread(feed_params_file)[[feed_names]],
     pattern = feed_names
   ),
-
   tar_target(
     reference_feed,
     qs::qread(feed_params_file)[["plant_dominant"]]
@@ -207,54 +209,82 @@ list(
           mutate(measure = as.factor(measure))
       })
     },
-    pattern = cross(map(farm_ts_data_chunked,farm_static_data_chunked), map(feed_params, feed_names))
-  ),
-
-  tar_target(
-    farm_results_chunked,
-    command = {
-      farm_run_chunked %>% 
-        filter(measure == stat_names) %>% 
-        mutate(prod_t = t-min(t)+1) %>% 
-        filter(t != max(t))
-    },
-    pattern = cross(farm_run_chunked, stat_names)
+    pattern = cross(map(farm_ts_data_chunked, farm_static_data_chunked), map(feed_params, feed_names))
   ),
 
 # Process results ------------------------------------------------------------------------------------------------------
   tar_target(
-    biomass_produced_chunked,
+    farm_full_results,
     command = {
-      farm_run_chunked %>% 
-        filter(measure == "biomass_stat") %>% 
-        mutate(prod_t = t-min(t)+1) %>% 
-        filter(t == max(t))
-    },
-    pattern = farm_run_chunked
-  ),
+      farm_results <- farm_run_chunked %>% 
+        mutate(prod_t = t-min(t)+1)
 
-  tar_target(
-    cohort_results_chunked,
-    command = {
-      farm_run <- split(farm_run_chunked, farm_run_chunked$farm_ID)
-      purrr::map(farm_run, function(run) {
-        cohort_1 <- run %>% filter(measure == stat_names & t != max(t)) # Fish are given no food on harvest day
-        cohort_2 <- farm_to_cohort(cohort_1, time_offset = 365)
-        cohort_3 <- farm_to_cohort(cohort_1, time_offset = 730)
-        cohort_1 <- farm_to_cohort(cohort_1, time_offset = 0)
+      total_ends <- rbind(
+        farm_results %>% 
+          filter(measure == "biomass_stat" & t == max(t)) %>% 
+          select(-t, -prod_t), 
+        farm_results %>% 
+          filter(measure %in% c("food_prov_stat", "total_uneat_stat", "total_excr_stat", "L_excr_stat", "L_uneat_stat", "P_excr_stat", "P_uneat_stat", "C_excr_stat", "C_uneat_stat")) %>% 
+          group_by(farm_ID, feed, measure) %>% 
+          reframe(
+            mean = sum(mean),
+            sd = sqrt(sumna(sd^2))
+          )
+      )
+      total_ends <- merge(
+        total_ends %>% filter(measure != "biomass_stat"),
+        total_ends %>% filter(measure == "biomass_stat") %>% select(-measure),
+        by = c("farm_ID", "feed")
+        ) %>% 
+        rename(
+          mean = mean.x, sd = sd.x,
+          mean_biomass = mean.y, sd_biomass = sd.y
+        ) %>% 
+        mutate(
+          mean_per_biom = mean/mean_biomass,
+          sd_per_biom = (mean/mean_biomass) * sqrt((sd_biomass/mean_biomass)^2 + (sd/mean)^2)
+        )
+
+      # Calculate stats based on daily values across cohorts
+      cohort_results_daily <- farm_results %>% 
+        filter(prod_t != max(prod_t) & !measure %in% c("anab_stat", "catab_stat", "dw_stat", "E_assim_stat", "E_somat_stat", "food_enc_stat", "ing_act_stat", "ing_pot_stat", "metab_stat", "NH4_stat", "O2_stat", "rel_feeding_stat", "T_response_stat", "water_temp_stat", "weight_stat"))
+      cohort_results_daily <- split(cohort_results_daily, cohort_results_daily$farm_ID)
+      cohort_results_daily <- purrr::map(cohort_results_daily, function(crd) {
+        cohort_1 <- farm_to_cohort(crd, time_offset = 0)
+        cohort_2 <- farm_to_cohort(crd, time_offset = 365)
+        cohort_3 <- farm_to_cohort(crd, time_offset = 730)
         lims <- min(cohort_2$t):(min(cohort_2$t)+365*2) # Two years after start of cohort 2
-
-        tmp <- rbind(cohort_1, cohort_2, cohort_3) %>% 
+        rbind(cohort_1, cohort_2, cohort_3) %>% 
           filter(t %in% lims) %>% 
-          group_by(farm_ID, feed, t) %>%
+          group_by(farm_ID, feed, measure, t) %>%
           reframe(
             mean = sumna(mean),
-            sd = sqrt(sumna(sd^2)),
-            measure = as.factor(stat_names)
+            sd = sqrt(sumna(sd^2))
           ) %>% 
           mutate(prod_t = t-min(lims)+1)
-      })
+      }) %>% 
+        bind_rows()
+
+      cohort_results_daily <- merge(
+        cohort_results_daily %>% filter(measure != "biomass_stat"),
+        cohort_results_daily %>% filter(measure == "biomass_stat") %>% select(-measure),
+        by = c("farm_ID", "feed", "t", "prod_t")
+        ) %>% 
+        rename(
+          mean = mean.x, sd = sd.x,
+          mean_biomass = mean.y, sd_biomass = sd.y
+        ) %>% 
+        mutate(
+          mean_per_biom = mean/mean_biomass,
+          sd_per_biom = (mean/mean_biomass) * sqrt((sd_biomass/mean_biomass)^2 + (sd/mean)^2)
+        )
+      
+      list(
+        total_ends = total_ends,
+        cohort_results_daily = cohort_results_daily
+      )
     },
-    pattern = cross(farm_run_chunked, stat_names)
+    pattern = farm_run_chunked
   )
+
 )

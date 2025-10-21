@@ -21,7 +21,7 @@ library(tidyterra)
 library(cowplot)
 library(furrr)
 library(rnaturalearth)
-library(aquamapsdata) # https://raquamaps.github.io/aquamapsdata/articles/intro.html
+# library(aquamapsdata) # https://raquamaps.github.io/aquamapsdata/articles/intro.html
 library(worrms)
 library(grid)
 

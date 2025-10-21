@@ -7,7 +7,11 @@ editor: source
 
 # Introduction
 
-The purpose of this markdown is to:
+The purpose of this markdown is to formulate all the feeds that will be used in the analysis. These feeds are:
+- marine_dominant: a "past" salmonid diet where most protein is sourced from marine-based ingredients.
+- plant_dominant: a "current" salmonid diet where most protein is sourced from land-based ingredients.
+- novel_inclusive_2: a potential future salmonid diet which includes some novel ingredients. This formulation uses maximal digestibility values.
+- novel_inclusive_1: a potential future salmonid diet which includes some novel ingredients. This formulation uses the same formulation as novel_inclusive_2, but with minimal digestibility values.
 
 ```{r setup}
 #| code-summary: R setup
@@ -32,21 +36,19 @@ library(here)
 conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
 here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% purrr::walk(source)
-
-ingred_inputs_file <- file.path(input_feed_profile_path, "all_ingredients.xlsx")
-feed_input_file <- file.path(input_feed_profile_path, "all_feeds.xlsx")
 ```
 
 # Import ingredients
 
-There is no check or correction here to ensure that protein+lipid+ash+carb = 1 in the incoming data. This was checked manually prior to import. 
+There is no check or correction here to ensure that protein + lipid + ash + carb = 1 in the incoming data. This was checked manually prior to import. 
 
 ``` {r import-ingredients}
-#| code-summary: Ingredient details
+#| code-summary: Get ingredient details (PLC composition, digestibility)
 
-ingreds <- ingred_inputs_file %>% 
+ingreds <- file.path(input_feed_profile_path, "all_ingredients.xlsx") %>% 
   read_excel(sheet = "all_ingredients") %>% 
   mutate(ingredient = as.factor(ingredient))
+
 ingred_nms <- levels(ingreds$ingredient)
 ```
 
@@ -55,12 +57,41 @@ ingred_nms <- levels(ingreds$ingredient)
 ``` {r import-feeds}
 #| code-summary: Feed compositions
 
-feed_inputs <- feed_input_file %>% 
+feed_inputs <- file.path(input_feed_profile_path, "all_feeds.xlsx") %>% 
   read_excel(sheet = "all_feeds") %>% 
+  rename(novel_inclusive_1 = novel_inclusive)
+feed_inputs$novel_inclusive_2 <- feed_inputs$novel_inclusive_1 # same composition
+  
+feed_inputs <- feed_inputs %>% 
   pivot_longer(names_to = "feed", values_to = "proportion", cols = !contains(c("ingredient", "category"))) %>% 
-  mutate(feed = as.factor(feed),
-         ingredient = as.factor(ingredient)) %>% 
-  merge(ingreds, by = "ingredient")
+  mutate(
+    feed = as.factor(feed),
+    ingredient = as.factor(ingredient),
+    proportion = case_when(is.na(proportion) ~ 0, T ~ proportion)
+  ) %>% 
+  left_join(ingreds, by = "ingredient") %>% 
+  select(-prop_P, -P_digestibility)
+
+# Novel feeds use the minimum and maximum digestibility values
+feed_inputs <- feed_inputs %>% 
+  mutate(
+    protein_digestibility = case_when(
+      feed == "novel_inclusive_1" & !is.na(max_protein_digestibility) ~ max_protein_digestibility,
+      feed == "novel_inclusive_2" & !is.na(min_protein_digestibility) ~ min_protein_digestibility,
+      T ~ mean_protein_digestibility,
+    ),
+    carb_digestibility = case_when(
+      feed == "novel_inclusive_1" & !is.na(max_carb_digestibility) ~ max_carb_digestibility,
+      feed == "novel_inclusive_2" & !is.na(min_carb_digestibility) ~ min_carb_digestibility,
+      T ~ mean_carb_digestibility,
+    ),
+    lipid_digestibility = case_when(
+      feed == "novel_inclusive_1" & !is.na(max_lipid_digestibility) ~ max_lipid_digestibility,
+      feed == "novel_inclusive_2" & !is.na(min_lipid_digestibility) ~ min_lipid_digestibility,
+      T ~ mean_lipid_digestibility,
+    )
+  ) %>% 
+  select(-contains(c("min", "max", "mean"))) 
 
 feed_types <- levels(feed_inputs$feed)
 ```
@@ -77,7 +108,8 @@ feed_inputs <- feed_inputs %>%
     sum = sum(proportion),
     proportion = proportion/sum
   ) %>% 
-    ungroup()
+  ungroup() %>% 
+  select(-sum, -ash)
 ```
 
 The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. 
@@ -90,13 +122,13 @@ feed_params <- purrr::map(feed_types, function(ft) {
     filter(feed == ft) 
   list(
     Proteins = df %>% 
-      select(ingredient, proportion, contains("protein"), -contains("feed")) %>%
+      select(ingredient, proportion, contains("protein")) %>% 
       rename(macro = protein, digest = protein_digestibility),
     Carbohydrates = df %>% 
-      select(ingredient, proportion, contains("carb"), -contains("feed")) %>%
+      select(ingredient, proportion, contains("carb")) %>% 
       rename(macro = carb, digest = carb_digestibility),
     Lipids = df %>% 
-      select(ingredient, proportion, contains("lipid"), -contains("feed")) %>%
+      select(ingredient, proportion, contains("lipid")) %>% 
       rename(macro = lipid, digest = lipid_digestibility)
   )
 }) %>% 
