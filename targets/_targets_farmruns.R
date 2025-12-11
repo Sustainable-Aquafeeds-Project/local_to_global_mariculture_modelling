@@ -4,21 +4,25 @@ suppressPackageStartupMessages(suppressWarnings({
   library(magrittr)
   library(qs)
   library(tidyverse)
-  library(arrow)
+  # library(arrow)
 }))
 
-
 tar_option_set(
-  # packages = c("arrow"), 
   format = "qs", 
-  controller = crew::crew_controller_local(workers = 5, seconds_idle = 300),
-  workspace_on_error = TRUE
+  controller = crew::crew_controller_local(workers = 15, seconds_idle = 120),
+  workspace_on_error = TRUE,
+  garbage_collection = 10
 )
 
 tar_source(
   files = list.files("src", pattern = "\\.R$", full.names = TRUE) %>% 
     setdiff("src/map_templates.R")
 )
+
+# Globals
+farm_chunk_size <- 20
+inds_per_farm <- 1000
+farm_sample <- 2720 # For only runing a subset of farms (maximum 2720)
 
 list(
 # Get previously saved data ---------------------------------------------------------------------------------------
@@ -29,27 +33,27 @@ list(
   tar_target(feed_params_file, file.path(output_species_data_path, "feed_params.qs"), format = "file"),
   tar_target(farm_production_file, file.path(input_farm_coords_path, "atlantic_salmon_locations_w_temps.qs"), format = "file"),
 
-  tar_target(farm_coords, qs::qread(farm_coords_file)),
+  tar_target(farm_coords, qread(farm_coords_file)),
   tar_target(
     farm_IDs,
     command = {
-      qs::qread(farm_ts_data_file) %>% 
-        filter(farm_ID != 2703) %>% # The only Russian farm
+      qread(farm_ts_data_file) %>% 
+        filter(farm_ID != 2703) %>% # The only Russian farm?
         distinct(farm_ID) %>% 
-        # slice_head(n = 24) %>% 
+        slice_head(n = farm_sample) %>% 
         pull(farm_ID)
     }
   ),
 
   tar_target(
     farm_IDs_chunked,
-    split(farm_IDs, ceiling(seq_along(farm_IDs)/10))
+    split(farm_IDs, ceiling(seq_along(farm_IDs)/farm_chunk_size))
   ),
 
   tar_target(
     farm_temp_data_chunked, 
     command = {
-      qs::qread(farm_ts_data_file) %>% 
+      qread(farm_ts_data_file) %>% 
         filter(farm_ID %in% farm_IDs_chunked[[1]]) %>%
         merge(farm_coords, by = "farm_ID") %>%
         mutate(keep = case_when(day >= t_start & day <= t_end ~ T, T ~ F)) %>% 
@@ -60,17 +64,46 @@ list(
   ),
 
   tar_target(
-    feed_names,
-    command = {names(qs::qread(feed_params_file))}
-  ),
-  tar_target(
     feed_params,
-    qs::qread(feed_params_file)[[feed_names]],
-    pattern = feed_names
+    command = {
+      list(
+        "marine_dominant_biomar" = qread(feed_params_file)[["marine_dominant_biomar"]],
+        "animal_inclusive_biomar_min" = qread(feed_params_file)[["animal_inclusive_biomar"]] %>% 
+          lapply(function(el) {
+            el %>% 
+              mutate(digest = min_digest) %>% 
+              select(ingredient, proportion, macro, digest)
+          }),
+        "animal_inclusive_biomar_max" = qread(feed_params_file)[["animal_inclusive_biomar"]] %>% 
+          lapply(function(el) {
+            el %>% 
+              mutate(digest = max_digest) %>% 
+              select(ingredient, proportion, macro, digest)
+          }),
+        "novel_inclusive_biomar_min" = qread(feed_params_file)[["novel_inclusive_biomar"]] %>% 
+          lapply(function(el) {
+            el %>% 
+              mutate(digest = min_digest) %>% 
+              select(ingredient, proportion, macro, digest)
+          }),
+        "novel_inclusive_biomar_max" = qread(feed_params_file)[["novel_inclusive_biomar"]] %>% 
+          lapply(function(el) {
+            el %>% 
+              mutate(digest = max_digest) %>% 
+              select(ingredient, proportion, macro, digest)
+          })
+      )
+    }
   ),
+
+  tar_target(
+    feed_names,
+    command = {names(feed_params)}
+  ),
+
   tar_target(
     reference_feed,
-    qs::qread(feed_params_file)[["plant_dominant"]]
+    feed_params[["marine_dominant_biomar"]]
   ),
 
   tar_target(
@@ -104,7 +137,7 @@ list(
     }
   ),
 
-  tar_target(all_params, c(qs::qread(species_params_file), qs::qread(pop_params_file))),
+  tar_target(all_params, c(qread(species_params_file), qread(pop_params_file))),
 
 # Prepare parameters and farm data --------------------------------------------------------------------------------
   tar_target(
@@ -135,7 +168,7 @@ list(
   tar_target(
     farm_static_data_chunked,
     command = {
-      ts <- qs::qread(farm_ts_data_file) %>% 
+      ts <- qread(farm_ts_data_file) %>% 
         filter(farm_ID %in% farm_IDs_chunked[[1]]) %>% 
         merge(farm_coords, by = "farm_ID") %>%
         mutate(keep = case_when(day >= t_start & day <= t_end ~ T, T ~ F)) %>% 
@@ -147,7 +180,7 @@ list(
           t_end = max(day)
         )
       farm_production_file %>% 
-        qs::qread() %>% 
+        qread() %>% 
         dplyr::select(farm_id, tonnes_per_farm) %>% 
         filter(farm_id %in% farm_IDs_chunked[[1]]) %>% 
         rename(farm_ID = farm_id) %>%
@@ -193,7 +226,7 @@ list(
           feed_params = feed_params,
           times = c(t_start = static$t_start, t_end = static$t_end, dt = 1),
           N_pop = ts$Npop,
-          nruns = 500
+          nruns = inds_per_farm
         )
         fg %>% 
           purrr::map_dfr(function(mat) {

@@ -3,15 +3,12 @@
 ### https://github.com/cran/RAC/tree/master/R
 
 suppressPackageStartupMessages(suppressWarnings({
-library(qs)
-library(qs2)
-library(terra)
-library(readxl)
-library(matrixStats)
-library(furrr)
-library(future)
-library(dplyr)
-library(msm)
+  library(qs)
+  library(terra)
+  library(readxl)
+  library(matrixStats)
+  library(dplyr)
+  library(msm)
 }))
 
 # Parameters definitions
@@ -179,7 +176,7 @@ farm_growth <- function(pop_params, species_params, feed_params, water_temp, tim
   ingmaxes <- rnorm(nruns, mean = pop_params['meanImax'], sd = pop_params['deltaImax'])
   
   # Run parallel simulation for individuals
-  mc_results <- furrr::future_map2(init_weights, ingmaxes, function(init_w, ing_m) {
+  mc_results <- purrr::map2(init_weights, ingmaxes, function(init_w, ing_m) {
     mat <- fish_growth(
       pop_params = pop_params,
       species_params = species_params,
@@ -189,7 +186,7 @@ farm_growth <- function(pop_params, species_params, feed_params, water_temp, tim
       init_weight = init_w,
       ingmax = ing_m
     ) %>% unname()
-  }, .options = furrr::furrr_options(seed = TRUE))
+  })
   
   stat_names <- c("days", "weight", "dw", "water_temp", "T_response", "P_excr", "L_excr", "C_excr", "P_uneat", 
                   "L_uneat", "C_uneat", "food_prov", "food_enc", "rel_feeding", "ing_pot", "ing_act", "E_assim", 

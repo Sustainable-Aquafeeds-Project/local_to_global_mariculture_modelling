@@ -1,4 +1,6 @@
 # Targets projects management ensures that targets can always find scripts/output files no matter where they're run from
+# To select a project:
+# Sys.setenv(TAR_PROJECT = "project_farmruns")
 
 project_sensitivities:
   script: targets/_targets_sensitivities.R
