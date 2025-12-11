@@ -11,6 +11,7 @@ this_species <- "atlantic_salmon"
 output_path <- here() %>% file.path("outputs")
 gendata_path <- here() %>% file.path("data", "_general_data")
 rawdata_path <- here() %>% file.path("data", "raw")
+bigdata_path <- "D:/local_to_global_mariculture_modelling_data"
 rdsi_dir <- "/mnt/rdsi"
 species_path <- here() %>% file.path("data", this_species)
 species_fig_path <- file.path(species_path, "figures")
@@ -47,7 +48,3 @@ dir.create(output_model_cohort_path, showWarnings = F)
 dir.create(data_analysis_path, showWarnings = F)
 dir.create(comparisons_path, showWarnings = F)
 dir.create(impacts_path, showWarnings = F)
-
-# From extracting_temperature
-# this_path <- file.path("data", this_species) # now call species_path
-

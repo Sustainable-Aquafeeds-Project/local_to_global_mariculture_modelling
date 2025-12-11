@@ -1,23 +1,26 @@
 project:
   title: "myproject"
   type: default
-  output-dir: docs
+  output-dir: docs-rendered
   render:
-    - index.qmd
-    - 01_tidying_data.qmd
-    - 02_extracting_production_locations.qmd
-    - 03_assessing_species_potential.qmd
-    - 04_extracting_temperatures.qmd
-    - 05_formulating_feeds.qmd
+    - docs-working/index.qmd
+    - docs-working/01_tidying_data.qmd
+    - docs-working/02_extracting_production_locations.qmd
+    - docs-working/03_assessing_species_potential.qmd
+    - docs-working/04_extracting_temperatures.qmd
+    - docs-working/05_formulating_feeds.qmd
     - 06_run_atlantic_salmon_model.qmd
-    - 07_species_layers.qmd
-    - 08_relative_N_inputs.qmd
+    # - 07_species_layers.qmd
+    # - 08_relative_N_inputs.qmd
+
+editor: source
 
 format:
   html:
     theme: cosmo
-    css: "extra.css"
-    code-fold: false
+    css: "docs-working/extra.css"
+    embed-resources: true
+    code-fold: true
     code-overflow: wrap
     toc: true
     toc-expand: true
@@ -31,6 +34,9 @@ format:
     other-links:
       - text: Back to main
         href: https://drtreimer.com/local_to_global_mariculture_modelling
+    fig-width: 8
+    fig-height: 6
+    fig-align: center
     grid:
       sidebar-width: 250px
       body-width: 1200px
@@ -38,12 +44,13 @@ format:
       gutter-width: 2em
   
 execute:
-  eval: false
-  freeze: false
+  eval: true
+  freeze: auto
+  cache: true
 
 bibliography: 
-  - "refs.bib"
-  - "manual-refs.bib"
+  - "docs-working/refs.bib"
+  - "docs-working/manual-refs.bib"
 
 # acronyms:
 #   insert_loa: false
@@ -55,4 +62,4 @@ bibliography:
 #     - shortname: CONNIE3
 #       longname: CONNectivity InterfacE, version 3
   
-notebook-links: false
+notebook-links: global
