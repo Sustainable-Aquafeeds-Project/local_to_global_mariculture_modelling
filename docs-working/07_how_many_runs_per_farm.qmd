@@ -69,7 +69,7 @@ ts_means <- farm_ts_data %>%
   }) %>% 
     bind_rows()
 
-# Get a small but representative sample
+# Get a small sample
 samp <- ts_means %>%
   mutate(temp_bin = ntile(mean, 15)) %>%
   group_by(temp_bin) %>%

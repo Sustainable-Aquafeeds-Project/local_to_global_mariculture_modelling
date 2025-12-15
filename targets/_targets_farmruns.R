@@ -22,7 +22,8 @@ tar_source(
 # Globals
 farm_chunk_size <- 20
 inds_per_farm <- 1000
-farm_sample <- 2720 # For only runing a subset of farms (maximum 2720)
+farm_sample <- 1000 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
+reference_feed_name <- "marine_dominant_biomar"
 
 list(
 # Get previously saved data ---------------------------------------------------------------------------------------
@@ -102,11 +103,6 @@ list(
   ),
 
   tar_target(
-    reference_feed,
-    feed_params[["marine_dominant_biomar"]]
-  ),
-
-  tar_target(
     test_reference_feed,
     command = {
       fi <- sample(farm_IDs, 1)
@@ -114,7 +110,7 @@ list(
         pop_params = all_params,
         species_params = all_params,
         water_temp = farm_temp_data_chunked$temp_c[farm_temp_data_chunked$farm_ID == fi],
-        feed_params = reference_feed,
+        feed_params = feed_params[[reference_feed_name]],
         times = c(
           t_start = min(farm_temp_data_chunked$day[farm_temp_data_chunked$farm_ID == fi]), 
           t_end = max(farm_temp_data_chunked$day[farm_temp_data_chunked$farm_ID == fi]), 
@@ -149,7 +145,7 @@ list(
           pop_params = all_params,
           species_params = all_params,
           water_temp = temp$temp_c,
-          feed_params = reference_feed,
+          feed_params = feed_params[[reference_feed_name]],
           times = c(t_start = min(temp$day), t_end = max(temp$day), dt = 1),
           init_weight = all_params["meanW"],
           ingmax = all_params["meanImax"]
@@ -317,7 +313,8 @@ list(
         cohort_results_daily = cohort_results_daily
       )
     },
-    pattern = farm_run_chunked
+    pattern = farm_run_chunked,
+    iteration = "list"
   )
 
 )

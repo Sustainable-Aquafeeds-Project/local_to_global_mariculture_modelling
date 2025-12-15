@@ -10,7 +10,7 @@ suppressPackageStartupMessages(suppressWarnings({
 
 tar_option_set(
   format = "qs", 
-  controller = crew_controller_local(workers = 15, seconds_timeout = 120),
+  controller = crew_controller_local(workers = 6, seconds_timeout = 120),
   workspace_on_error = TRUE,
   garbage_collection = 20
 )
@@ -19,9 +19,10 @@ tar_source(files = list.files("src", pattern = "\\.R$", full.names = TRUE) %>%
     setdiff("src/map_templates.R"))
 
 # Globals
-inds_per_farm <- 1000
+inds_per_farm <- 250
 farm_sample <- 272
-farm_chunk_size <- 10
+farm_chunk_size <- 25
+reference_feed_name <- "marine_dominant_biomar"
 
 list(
   # Load previously saved data --------------------------------------------------------------------------------
@@ -66,11 +67,6 @@ list(
     pattern = farm_IDs_chunked
   ),
 
-  tar_target(
-    reference_feed,
-    qread(feed_params_file)[["marine_dominant_biomar"]]
-  ),
-
     tar_target(
     test_reference_feed,
     command = {
@@ -79,7 +75,7 @@ list(
         pop_params = all_params,
         species_params = all_params,
         water_temp = farm_ts_data$temp_c[farm_ts_data$farm_ID == fi],
-        feed_params = reference_feed,
+        feed_params = qread(feed_params_file)[[reference_feed_name]],
         times = c(
           t_start = min(farm_ts_data$day[farm_ts_data$farm_ID == fi]), 
           t_end = max(farm_ts_data$day[farm_ts_data$farm_ID == fi]), 
@@ -123,7 +119,7 @@ list(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
-          feed_params = reference_feed,
+          feed_params = qread(feed_params_file)[[reference_feed_name]],
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
           N_pop = rep(1, nrow(ts))
         )
@@ -170,7 +166,7 @@ list(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
-          feed_params = reference_feed,
+          feed_params = qread(feed_params_file)[[reference_feed_name]],
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
           N_pop = rep(1, nrow(ts))
         )
@@ -217,7 +213,7 @@ list(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
-          feed_params = reference_feed,
+          feed_params = qread(feed_params_file)[[reference_feed_name]],
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
           N_pop = rep(1, nrow(ts))
         )
@@ -297,7 +293,7 @@ list(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
-          feed_params = reference_feed,
+          feed_params = qread(feed_params_file)[[reference_feed_name]],
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
           N_pop = rep(1, nrow(ts)),
           nruns = inds_per_farm
@@ -344,7 +340,7 @@ list(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
-          feed_params = reference_feed,
+          feed_params = qread(feed_params_file)[[reference_feed_name]],
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
           N_pop = rep(1, nrow(ts)),
           nruns = inds_per_farm
@@ -390,7 +386,7 @@ list(
           pop_params = adj_params,
           species_params = adj_params,
           water_temp = ts$temp_c,
-          feed_params = reference_feed,
+          feed_params = qread(feed_params_file)[[reference_feed_name]],
           times = c('t_start' = min(ts$day), 't_end' = max(ts$day), 'dt' = 1),
           N_pop = rep(1, nrow(ts)),
           nruns = inds_per_farm
