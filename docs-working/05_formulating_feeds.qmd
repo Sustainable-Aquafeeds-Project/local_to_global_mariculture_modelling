@@ -16,27 +16,24 @@ The purpose of this markdown is to formulate all the feeds that will be used in 
 ```{r setup, include=F, cache=F}
 #| code-summary: R setup
 
+library(tidyverse)
 library(arrow)
 library(sf)
-library(dplyr)
-library(tidyr)
 library(terra)
-library(magrittr)
-library(purrr)
 library(furrr)
 library(future)
 library(tictoc)
-library(ggplot2)
 library(fs)
 library(conflicted)
-library(stringr)
 library(readxl)
 library(units)
 library(qs)
 library(here)
 conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
-here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
 ```
 
 # Import ingredients

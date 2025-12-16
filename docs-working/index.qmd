@@ -33,16 +33,10 @@ The main scripts for this project focus on setting up the model to examine the d
 | **[Assessing Species Potential](03_assessing_species_potential.html)** | Evaluation of species suitability for different locations |
 | **[Extracting Temperatures](04_extracting_temperatures.html)** | SST data extraction and processing for model inputs |
 | **[Formulating Feeds](05_formulating_feeds.html)** | Feed composition formulation for model runs |
+| **[How many runs per farm?](06_how_man_runs_per_farm.html)** | Determining how many Monte-Carlo runs is enough |
 | **[Running Atlantic Salmon Model](06_run_atlantic_salmon_model.html)** | Atlantic salmon growth model execution |
-
-## Extra scripts
-
-The extra scripts for this project involved some exploration into potential impacts of nutrient losses. These will likely not make it into the final manuscript. 
-
-| Page | Description |
-|---------|:-------------------------------------------------|
-| **[Species Layers](07_species_layers.html)** | Spatial analysis of species distribution layers, to try and acertain impacts on vulnerable species |
-| **[Relative N Inputs](08_relative_N_inputs.html)** | Analysis of nitrogen input (runoff) patterns and the relative impacts of farm nutrients |
+| **[Data Analysis](08_data_analysis.html)** | Analysing the outputs of the Atlantic salmon growth model |
+| **[Figures for manuscript](09_figures_for_manuscript.html)** | Code used to generate the specific figures used in the manuscript |
 
 ```{r setup}
 #| cache: false

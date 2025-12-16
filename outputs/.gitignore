@@ -6,3 +6,5 @@ farm_data/farm_circles*
 farm_data/farm_ts_data*
 
 data_analysis/*
+
+outputs/sensitivity_data/res*

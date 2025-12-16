@@ -6,27 +6,22 @@ editor: source
 
 # Introduction
 
-The purpose of this script is to take the raw model outputs and save them as files which answer (or go towards answering) specific questions. These files can then be directly called by index.qmd to quickly create plots or text summaries.
+This script takes outputs from the targets pipeline.
 
-```{r}
-#| label: setup
+```{r setup}
 #| warning: false
 #| message: false
 
+library(tidyverse)
 library(arrow)
 library(sf)
-library(dplyr)
-library(tidyr)
 library(terra)
 library(magrittr)
-library(purrr)
 library(furrr)
 library(future)
 library(tictoc)
-library(ggplot2)
 library(fs)
 library(conflicted)
-library(stringr)
 library(readxl)
 library(units)
 library(qs)
@@ -77,6 +72,90 @@ total_uneat   | g | Total uneaten feed from the entire farm (P+L+C) | Farm |
 metab         |  |  | Individual |
 biomass       | g | Mean weight of all fish within a farm (i.e. weight * population) | Farm |
 : Summary of model outputs being used in this script. Note that all the outputs are daily values (i.e. value at day = t). None are summed across a production period.
+
+```{r filenames}
+#| code-summary: Set up global filenames
+
+# Filenames
+# species_params_excel <- c(file = file.path(input_species_param_path, "Species.xlsx"), sheet = "Atlantic salmon")
+# pop_params_excel <- c(file = file.path(input_species_param_path, "Population.xlsx"))
+# farm_locations_parquet <- file.path(input_farm_coords_path, "farm_coords.parquet")
+# farm_coords_file <- file.path(output_farm_data_path, "farm_coords.qs")
+# farm_geometry_file <- file.path(output_farm_data_path, "farm_geometry.qs")
+# farm_ts_data_file <- file.path(output_farm_data_path, "farm_ts_data.qs")
+# species_params_file <- file.path(output_species_data_path, "species_params.qs")
+# sens_params_file <- file.path(output_species_data_path, "sens_params.qs")
+# pop_params_file <- file.path(output_species_data_path, "pop_params.qs")
+# feed_params_file <- file.path(output_species_data_path, "feed_params.qs")
+# farm_harvest_file <- file.path(output_farm_data_path, "farm_harvest_size.qs")
+```
+
+# Look at raw outputs
+
+```{r raw-outputs}
+total_ends <- qread(file.path(output_model_farm_path, "total_ends.qs")) %>% 
+  mutate(
+    feed_group = as.factor(str_remove(feed, "_min|_max")),
+    feed_type = case_when(
+      str_detect(feed, "_min") ~ "min",
+      str_detect(feed, "_max") ~ "max",
+      T ~ "mean"
+    ) %>% as.factor(),
+    mean = set_units(mean, "g"),
+    sd = set_units(sd, "g"),
+    mean_biomass = set_units(mean, "g g_fish-1"),
+    sd_biomass = set_units(sd, "g g_fish-1")
+  )
+
+cohort_results <- qread(file.path(output_model_cohort_path, "cohort_results.qs")) %>% 
+  mutate(
+    feed_group = as.factor(str_remove(feed, "_min|_max")),
+    feed_type = case_when(
+      str_detect(feed, "_min") ~ "min",
+      str_detect(feed, "_max") ~ "max",
+      T ~ "mean"
+    ) %>% as.factor()
+  )
+```
+
+# Feed provided and lost
+
+```{r feed-prov-lost}
+#| code-summary: Show differences between diets in feed provided and lost
+#| fig-cap: Mean food provided and uneaten feed lost to the environment (g/g salmon)
+
+feed_end <- total_ends %>% 
+  filter(measure %in% c("total_uneat_stat", "food_prov_stat")) %>% 
+  mutate(measure = droplevels(measure))
+
+ggplot(
+    feed_end, 
+    aes(x = feed_group, y = mean_per_biom, fill = feed_type, group = feed)
+  ) +
+  geom_boxplot() +
+  facet_wrap(facets = vars(measure), scales = "free") +
+  prettyplot_300()
+```
+
+# Faeces excreted
+
+```{r feed-prov-lost}
+#| code-summary: Show differences between diets in feed provided and lost
+
+feed_end <- total_ends %>% 
+  filter(measure %in% c("total_uneat_stat", "food_prov_stat")) %>% 
+  mutate(measure = droplevels(measure))
+
+ggplot(
+    feed_end, 
+    aes(x = feed_group, y = mean_per_biom, fill = feed_type, group = feed)
+  ) +
+  geom_boxplot() +
+  facet_wrap(facets = vars(measure), scales = "free") +
+  prettyplot_300()
+```
+
+# Total waste
 
 # Raw output processing
 

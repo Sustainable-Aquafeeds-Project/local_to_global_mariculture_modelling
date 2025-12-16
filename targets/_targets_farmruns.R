@@ -69,6 +69,19 @@ list(
     command = {
       list(
         "marine_dominant_biomar" = qread(feed_params_file)[["marine_dominant_biomar"]],
+        "marine_dominant_biomar_min" = qread(feed_params_file)[["marine_dominant_biomar"]] %>% 
+          lapply(function(el) {
+            el %>% 
+              mutate(digest = min_digest) %>% 
+              select(ingredient, proportion, macro, digest)
+          }),
+        "marine_dominant_biomar_max" = qread(feed_params_file)[["marine_dominant_biomar"]] %>% 
+          lapply(function(el) {
+            el %>% 
+              mutate(digest = max_digest) %>% 
+              select(ingredient, proportion, macro, digest)
+          }),
+        "animal_inclusive_biomar" = qread(feed_params_file)[["animal_inclusive_biomar"]],
         "animal_inclusive_biomar_min" = qread(feed_params_file)[["animal_inclusive_biomar"]] %>% 
           lapply(function(el) {
             el %>% 
@@ -81,6 +94,7 @@ list(
               mutate(digest = max_digest) %>% 
               select(ingredient, proportion, macro, digest)
           }),
+        "novel_inclusive_biomar" = qread(feed_params_file)[["novel_inclusive_biomar"]],
         "novel_inclusive_biomar_min" = qread(feed_params_file)[["novel_inclusive_biomar"]] %>% 
           lapply(function(el) {
             el %>% 
@@ -212,6 +226,7 @@ list(
   tar_target(
     farm_run_chunked,
     command = {
+      # error == T
       farm_static_data <- split(farm_static_data_chunked, farm_static_data_chunked$farm_ID)
       farm_ts_data <- farm_ts_data_chunked
       purrr::map2_dfr(farm_ts_data, farm_static_data, function(ts, static) {
@@ -219,7 +234,7 @@ list(
           pop_params = all_params,
           species_params = all_params,
           water_temp = ts$temp_c,
-          feed_params = feed_params,
+          feed_params = purrr::flatten(feed_params),
           times = c(t_start = static$t_start, t_end = static$t_end, dt = 1),
           N_pop = ts$Npop,
           nruns = inds_per_farm
@@ -245,13 +260,18 @@ list(
   tar_target(
     farm_full_results,
     command = {
+      # error == T
       farm_results <- farm_run_chunked %>% 
         mutate(prod_t = t-min(t)+1)
 
-      total_ends <- rbind(
-        farm_results %>% 
+      # Get biomass only (is already cumulative)
+      biomass <- farm_results %>% 
           filter(measure == "biomass_stat" & t == max(t)) %>% 
-          select(-t, -prod_t), 
+          select(-t, -prod_t)
+      
+      total_ends <- rbind(
+        biomass, 
+        # These stats are daily, need to accumulate
         farm_results %>% 
           filter(measure %in% c("food_prov_stat", "total_uneat_stat", "total_excr_stat", "L_excr_stat", "L_uneat_stat", "P_excr_stat", "P_uneat_stat", "C_excr_stat", "C_uneat_stat")) %>% 
           group_by(farm_ID, feed, measure) %>% 
@@ -259,9 +279,12 @@ list(
             mean = sum(mean),
             sd = sqrt(sumna(sd^2))
           )
-      )
+      ) %>% 
+        mutate(measure = droplevels(measure))
+
+      # Calculate everything per biomass as well
       total_ends <- merge(
-        total_ends %>% filter(measure != "biomass_stat"),
+        total_ends,
         total_ends %>% filter(measure == "biomass_stat") %>% select(-measure),
         by = c("farm_ID", "feed")
         ) %>% 
@@ -276,7 +299,8 @@ list(
 
       # Calculate stats based on daily values across cohorts
       cohort_results_daily <- farm_results %>% 
-        filter(prod_t != max(prod_t) & !measure %in% c("anab_stat", "catab_stat", "dw_stat", "E_assim_stat", "E_somat_stat", "food_enc_stat", "ing_act_stat", "ing_pot_stat", "metab_stat", "NH4_stat", "O2_stat", "rel_feeding_stat", "T_response_stat", "water_temp_stat", "weight_stat"))
+        filter(prod_t != max(prod_t) & !measure %in% c("anab_stat", "catab_stat", "dw_stat", "E_assim_stat", "E_somat_stat", "food_enc_stat", "ing_act_stat", "ing_pot_stat", "metab_stat", "NH4_stat", "O2_stat", "rel_feeding_stat", "T_response_stat", "water_temp_stat", "weight_stat")) %>% 
+        mutate(measure = droplevels(measure))
       cohort_results_daily <- split(cohort_results_daily, cohort_results_daily$farm_ID)
       cohort_results_daily <- purrr::map(cohort_results_daily, function(crd) {
         cohort_1 <- farm_to_cohort(crd, time_offset = 0)
@@ -295,7 +319,7 @@ list(
         bind_rows()
 
       cohort_results_daily <- merge(
-        cohort_results_daily %>% filter(measure != "biomass_stat"),
+        cohort_results_daily,
         cohort_results_daily %>% filter(measure == "biomass_stat") %>% select(-measure),
         by = c("farm_ID", "feed", "t", "prod_t")
         ) %>% 
@@ -316,5 +340,4 @@ list(
     pattern = farm_run_chunked,
     iteration = "list"
   )
-
 )
