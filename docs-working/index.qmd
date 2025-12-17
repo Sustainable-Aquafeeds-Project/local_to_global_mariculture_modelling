@@ -1,14 +1,10 @@
 ---
 title: "Local-to-Global Mariculture Modelling"
-subtitle: "Project Documentation"
-author: "Dr Tormey Reimer"
+subtitle: "Project Documentation - Index of files"
+author: "Tormey Reimer"
 date: today
 execute:
-  # eval: true
-  echo: false
-  warning: false
-  message: false
-  cache: true # quarto render index.qmd --cache-refresh
+  eval: false
 knitr: 
   opts_chunk:
     fig.align: center
@@ -76,7 +72,9 @@ library(emmeans)
 conflicts_prefer(dplyr::select(), dplyr::filter(), dplyr::intersect())
 # This markdown uses TinyTex - install with tinytex::install_tinytex()
 
-here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
 
 packages <- c("magrittr", "dplyr", "tidyr", "stringr", "ggplot2", "arrow", "targets", "sf", "terra", "rnaturalearth", "furrr", "future", "units", "lubridate", "worrms", "aquamapsdata") %>% sort()
 ```
@@ -313,24 +311,7 @@ nit2 <- find_read(comparisons_path, "N_total_farm_summed.qs") %>%
   pivot_wider(names_from = feed, values_from = diff)
 ```
 
-@tbl-results-summary is a summary of all the results I've processed so far, basically trying to acertain all the major differences in inputs between the feeds.
-
-The NI diet was more efficient than the PD diet. When farms were fed the NI diet they had an average FCE* of `r fpr_pb1$NI`, compared to the average FCE of `r fpr_pb1$PD` when farms were fed the PD diet, and feeding the NI diet resulted in `r bpr2$NI`% more biomass produced with the same population compared to the PD diet.
-
-::: {.aside}
-*Note that when I refer to "FCE" here I'm talking about the "PLC weight" (weight of protein + lipid + carbohydrate) of feed, which may differ from its actual weight because of the inclusion of minerals and non-digestible material.
-:::
-
-Despite this, nutrients lost to the environment were generally highest in the NI diet and lowest in the MD diet. 
-In terms of total waste, the NI and PD diets were very similar. I initially thought that this was because the NI and PD diets are more similar than the MD and PD diets, but this doesn't match up with the numbers (PD and NI diets are 63.3% the same, while the PD and MD diets are 54.3% the same). 
-The MD diet had markedly lower total waste than either the PD or NI diets. 
-
-However, the composition of waste lost to the environment was very different between the diets, particularly in terms of proteins and carbohydrates (@fig-PLC-waste-comparison). The PD diet had the lowest protein waste output and the NI diet had the highest, while the MD diet had the lowest carbohydrate and lipid waste outputs and the PD diet the highest. Overall, changing from the PD diet to the NI diet would result in a `r abs(plc3$NI_P)`% increase in protein waste but a `r abs(plc3$NI_C)`% and `r abs(plc3$NI_L)`% reduction in carbohydrates and lipids respectively, while changing to the MD diet would result in a `r abs(plc3$MD_P)`% increase in protein waste but a `r abs(plc3$NI_C)`% and `r abs(plc3$NI_L)`% reduction in carbohydrates and lipids respectively.
-
-Consequently, while total waste was only `r tow2$NI`% higher when farms were fed the NI diet, protein waste was `r plc3$NI_P`% higher and nitrogen waste was `r nit2$NI`% higher relative to when farms were fed the PD diet. 
-
-Proteins in the NI diet were only slightly less digestible than those used in the PD diet (@tbl-modelled-feeds), but this difference, combined with the higher protein content in the NI diet, resulted in the large difference in nitrogen lost to the environment. 
-
+```{r not-in-use}
 | Description | Plant-dominant | Marine-dominant | Novel-inclusive | Change from PD to MD (%) | Change from PD to NI (%) |
 |:--------------------------|:----------:|:----------:|:----------:|:----------:|:----------:|
 | Salmon biomass produced (t)                         | `r bpr1$PD`        | `r bpr1$MD`        | `r bpr1$NI`        | `r coln(bpr2$MD)`    | `r coln(bpr2$NI)`    |
@@ -350,6 +331,7 @@ Proteins in the NI diet were only slightly less digestible than those used in th
 | Total N from excreted waste (t)                     | `r nie1$PD`        | `r nie1$MD`        | `r nie1$NI`        | `r coln(nie2$MD)`    | `r coln(nie2$NI)`    |
 | Total N inputs (E+U, t)                             | `r nit1$PD`        | `r nit1$MD`        | `r nit1$NI`        | `r coln(nit2$MD)`    | `r coln(nit2$NI)`    |
 : Summary of all results. Unless otherwise specified, values presented are means across all farms, summed across a single production period. In the % change columns, the colour of the text indicates whether there is an increase (red) or a decrease (green). Some cells of this table are blank - sometimes that means it doesn't make sense to fill that cell, but sometimes it means I haven't got to it yet. {#tbl-results-summary}
+```
 
 ```{r}
 #| label: PLC-waste-comparison
@@ -380,10 +362,6 @@ emm <- emmeans(lm_L, "feed", "measure")
 tukey_results <- pairs(emm, adjust = "tukey")
 # print(tukey_results)
 ```
-
-::: {.aside}
-I accidentally used raw total waste in @fig-PLC-waste-comparison instead of waste per kg of biomass
-:::
 
 ```{r}
 #| label: fig-PLC-waste-comparison
@@ -661,8 +639,6 @@ weight_cohort <- find_read(output_model_cohort_path, "weight_stat_all_farms")
 biomass_cohort <- find_read(output_model_cohort_path, "biomass_stat_all_farms")
 ```
 
-Each farm's final population was calculated by dividing the production tonnage required by the average modelled individual harvest size for each farm (when feed reference feed, @fig-harvest-size). A population timeseries was then generated using the standard mortality rate (`r round(unname(pop_params['mortmyt'])*100, 3)` % d$^{-1}$). 
-
 ```{r}
 #| label: fig-harvest-size
 #| fig-cap: |
@@ -682,7 +658,6 @@ harv_size %>%
   theme(aspect.ratio = 0.75)
 ```
 
-Using this method, a farm's 'population' is not a good representation of the actual number of individuals being farmed, but it ensures each farm location is producing the correct tonnage while allowing comparisons between the different feeds. 
 
 ```{r}
 #| label: fig-cohorts
@@ -754,11 +729,9 @@ production <- find_read(output_farm_data_path, "farm_static_data") %>%
   )
 ```
 
-By this method, farm biomass as predicted by the model predicted farm tonnage relatively accurately. Predicted farm biomass was within `r round(100*min(production$min_percdiff),1)`% -- `r round(100*max(production$max_percdiff),1)`% of tonnage produced.
 
 ## Feed provision and feeding response to temperature {#sec-model-feeding}
 
-@fig-functional-response-to-temperature shows the response of food ingested to temperature, and the food provided in response.
 
 ```{r}
 #| label: fig-functional-response-to-temperature
@@ -866,17 +839,7 @@ feed_summary <- map_dfr(names(feed_params), function(feed) {
          digest_r = digest * 100 %>% round(1))
 ```
 
-| Feed | Protein | Lipid | Carbohydrate |
-|------|:----------:|:----------:|:----------:|
-| Plant-dominant | `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "P")$total, 1)`% (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "P")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "L")$total, 1)`% (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "L")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "plant_dominant", macro == "C")$total, 1)`% (`r round(100*filter(feed_summary, feed == "plant_dominant", macro == "C")$digest, 1)`%) |
-| Marine-dominant | `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "P")$total, 1)`% (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "P")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "L")$total, 1)`% (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "L")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "marine_dominant", macro == "C")$total, 1)`% (`r round(100*filter(feed_summary, feed == "marine_dominant", macro == "C")$digest, 1)`%) |
-| Novel-inclusive | `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "P")$total, 1)`% (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "P")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "L")$total, 1)`% (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "L")$digest, 1)`%) | `r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "C")$total, 1)`% (`r round(100*filter(feed_summary, feed == "novel_inclusive", macro == "C")$digest, 1)`%) |
-: Feed macronutrient details (composition in feed, digestibility). {#tbl-modelled-feeds}
-
 ## Model sensitivity to parameter changes {#sec-param-sensitivity}
-
-Parameter sensitivity was tested by varying each parameter by $\pm 10$% and calculating sensitivity as $S_p = \frac{(P_{1.1} - P_{0.9})}{0.2 \times P_1}$, where $S$ is the sensitivity of the measured variable to changes in parameter $p$, and $P_{1.1}$, $P_{0.9}$, and $P_{1}$ are the value of the measured variable when the model is run with parameter $p$ at 110%, 90%, and 100% of its value respectively. 
-The population-level parameters ($\overline{W}$, $\Delta{W}$, $\overline{I_{max}}$, $\Delta{I_{max}}$, $\overline{F}$, $\Delta{F}$) were tested with a population of of 5000 on a random 10% of farms, while all other parameters were tested across all farms with a population of 10 (@fig-sensitivity-results).
 
 ```{r}
 #| label: salmon-param-names
@@ -935,8 +898,10 @@ sens_results %>%
 
 # Code and packages used {#sec-code}
 
-All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
-Major packages used include `r cite_packages(packages)`.
+```{r not-in-use-cite}
+# All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
+# Major packages used include `r cite_packages(packages)`.
 
-For a full list of R packages used see the lockfile on [Github](https://www.github.com).
-This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
+# For a full list of R packages used see the lockfile on [Github](https://www.github.com).
+# This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
+```

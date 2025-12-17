@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Tormey Reimer">
-<meta name="dcterms.date" content="2025-11-28">
+<meta name="dcterms.date" content="2025-12-17">
 
-<title>Formulating experimental feeds</title>
+<title>Local-to-Global Mariculture Modelling</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -2210,10 +2210,21 @@ vertical-align: -.125em;
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
-  <li><a href="#import-ingredients" id="toc-import-ingredients" class="nav-link" data-scroll-target="#import-ingredients"><span class="header-section-number">2</span> Import ingredients</a></li>
-  <li><a href="#import-feeds" id="toc-import-feeds" class="nav-link" data-scroll-target="#import-feeds"><span class="header-section-number">3</span> Import feeds</a></li>
-  <li><a href="#similarity" id="toc-similarity" class="nav-link" data-scroll-target="#similarity"><span class="header-section-number">4</span> Similarity</a></li>
+  <li><a href="#table-of-contents" id="toc-table-of-contents" class="nav-link active" data-scroll-target="#table-of-contents"><span class="header-section-number">1</span> Table of Contents</a>
+  <ul class="collapse">
+  <li><a href="#main-scripts" id="toc-main-scripts" class="nav-link" data-scroll-target="#main-scripts"><span class="header-section-number">1.1</span> Main scripts</a></li>
+  </ul></li>
+  <li><a href="#sec-results" id="toc-sec-results" class="nav-link" data-scroll-target="#sec-results"><span class="header-section-number">2</span> Results</a></li>
+  <li><a href="#n-inputs-only" id="toc-n-inputs-only" class="nav-link" data-scroll-target="#n-inputs-only"><span class="header-section-number">3</span> N inputs only</a></li>
+  <li><a href="#spatially" id="toc-spatially" class="nav-link" data-scroll-target="#spatially"><span class="header-section-number">4</span> Spatially</a></li>
+  <li><a href="#sec-supp-methods" id="toc-sec-supp-methods" class="nav-link" data-scroll-target="#sec-supp-methods"><span class="header-section-number">5</span> Supplemental methods</a>
+  <ul class="collapse">
+  <li><a href="#sec-population-biomass" id="toc-sec-population-biomass" class="nav-link" data-scroll-target="#sec-population-biomass"><span class="header-section-number">5.1</span> Population and biomass</a></li>
+  <li><a href="#sec-model-feeding" id="toc-sec-model-feeding" class="nav-link" data-scroll-target="#sec-model-feeding"><span class="header-section-number">5.2</span> Feed provision and feeding response to temperature</a></li>
+  <li><a href="#sec-feeds" id="toc-sec-feeds" class="nav-link" data-scroll-target="#sec-feeds"><span class="header-section-number">5.3</span> Modelled experimental feeds</a></li>
+  <li><a href="#sec-param-sensitivity" id="toc-sec-param-sensitivity" class="nav-link" data-scroll-target="#sec-param-sensitivity"><span class="header-section-number">5.4</span> Model sensitivity to parameter changes</a></li>
+  </ul></li>
+  <li><a href="#sec-code" id="toc-sec-code" class="nav-link" data-scroll-target="#sec-code"><span class="header-section-number">6</span> Code and packages used</a></li>
   </ul>
 <div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://drtreimer.com/local_to_global_mariculture_modelling"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
 </div>
@@ -2223,7 +2234,8 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Formulating experimental feeds</h1>
+<h1 class="title">Local-to-Global Mariculture Modelling</h1>
+<p class="subtitle lead">Project Documentation - Index of files</p>
 </div>
 
 
@@ -2240,7 +2252,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">28 November 2025</p>
+      <p class="date">17 December 2025</p>
     </div>
   </div>
   
@@ -2252,122 +2264,845 @@ vertical-align: -.125em;
 </header>
 
 
-<section id="introduction" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
-<p>The purpose of this markdown is to formulate all the feeds that will be used in the analysis. These feeds are: - marine_dominant: a “past” salmonid diet where most protein is sourced from marine-based ingredients. - plant_dominant: a “current” salmonid diet where most protein is sourced from land-based ingredients. - novel_inclusive_2: a potential future salmonid diet which includes some novel ingredients. This formulation uses maximal digestibility values. - novel_inclusive_1: a potential future salmonid diet which includes some novel ingredients. This formulation uses the same formulation as novel_inclusive_2, but with minimal digestibility values.</p>
-</section>
-<section id="import-ingredients" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Import ingredients</h1>
-<p>There is no check or correction here to ensure that protein + lipid + ash + carb = 1 in the incoming ingredient data. This was checked manually prior to import.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>ingreds <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_feed_profile_path, <span class="st">&quot;all_ingredients.xlsx&quot;</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel</span>(<span class="at">sheet =</span> <span class="st">&quot;all_ingredients&quot;</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ingredient =</span> <span class="fu">as.factor</span>(ingredient))</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>ingred_nms <span class="ot">&lt;-</span> <span class="fu">levels</span>(ingreds<span class="sc">$</span>ingredient)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="table-of-contents" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Table of Contents</h1>
+<p>All code and processes for this project are linked below. Note that some scripts require access to raw data which is not stored on Github.</p>
+<section id="main-scripts" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="main-scripts"><span class="header-section-number">1.1</span> Main scripts</h2>
+<p>The main scripts for this project focus on setting up the model to examine the differences in total protein, carbohydrate, lipid and nitrogen losses between feeds.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Page</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong><a href="01_tidying_data.html">Data Tidying</a></strong></td>
+<td style="text-align: left;">Initial data tidying and preparation</td>
+</tr>
+<tr class="even">
+<td><strong><a href="02_extracting_production_locations.html">Extracting Production Locations</a></strong></td>
+<td style="text-align: left;">Identification and processing of mariculture production site locations</td>
+</tr>
+<tr class="odd">
+<td><strong><a href="03_assessing_species_potential.html">Assessing Species Potential</a></strong></td>
+<td style="text-align: left;">Evaluation of species suitability for different locations</td>
+</tr>
+<tr class="even">
+<td><strong><a href="04_extracting_temperatures.html">Extracting Temperatures</a></strong></td>
+<td style="text-align: left;">SST data extraction and processing for model inputs</td>
+</tr>
+<tr class="odd">
+<td><strong><a href="05_formulating_feeds.html">Formulating Feeds</a></strong></td>
+<td style="text-align: left;">Feed composition formulation for model runs</td>
+</tr>
+<tr class="even">
+<td><strong><a href="06_how_man_runs_per_farm.html">How many runs per farm?</a></strong></td>
+<td style="text-align: left;">Determining how many Monte-Carlo runs is enough</td>
+</tr>
+<tr class="odd">
+<td><strong><a href="06_run_atlantic_salmon_model.html">Running Atlantic Salmon Model</a></strong></td>
+<td style="text-align: left;">Atlantic salmon growth model execution</td>
+</tr>
+<tr class="even">
+<td><strong><a href="08_data_analysis.html">Data Analysis</a></strong></td>
+<td style="text-align: left;">Analysing the outputs of the Atlantic salmon growth model</td>
+</tr>
+<tr class="odd">
+<td><strong><a href="09_figures_for_manuscript.html">Figures for manuscript</a></strong></td>
+<td style="text-align: left;">Code used to generate the specific figures used in the manuscript</td>
+</tr>
+</tbody>
+</table>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magrittr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(units)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggh4x)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggpubr)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(cowplot)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(qs)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(targets)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rnaturalearth)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rnaturalearthdata)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rnaturalearthhires)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dtplyr)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(furrr)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(future)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(conflicted)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(lubridate)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RColorBrewer)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># library(lme4)</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(car)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(emmeans)</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="fu">conflicts_prefer</span>(dplyr<span class="sc">::</span><span class="fu">select</span>(), dplyr<span class="sc">::</span><span class="fu">filter</span>(), dplyr<span class="sc">::</span><span class="fu">intersect</span>())</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="co"># This markdown uses TinyTex - install with tinytex::install_tinytex()</span></span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a><span class="fu">here</span>(<span class="st">&quot;src&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list.files</span>(<span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.R$&quot;</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">walk</span>(source)</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>packages <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;magrittr&quot;</span>, <span class="st">&quot;dplyr&quot;</span>, <span class="st">&quot;tidyr&quot;</span>, <span class="st">&quot;stringr&quot;</span>, <span class="st">&quot;ggplot2&quot;</span>, <span class="st">&quot;arrow&quot;</span>, <span class="st">&quot;targets&quot;</span>, <span class="st">&quot;sf&quot;</span>, <span class="st">&quot;terra&quot;</span>, <span class="st">&quot;rnaturalearth&quot;</span>, <span class="st">&quot;furrr&quot;</span>, <span class="st">&quot;future&quot;</span>, <span class="st">&quot;units&quot;</span>, <span class="st">&quot;lubridate&quot;</span>, <span class="st">&quot;worrms&quot;</span>, <span class="st">&quot;aquamapsdata&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">sort</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
-<section id="import-feeds" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Import feeds</h1>
-<p>Unlike ingredients, the feeds do not need to be checked for sum = 1 prior to import. That check is done here.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>feed_inputs <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_feed_profile_path, <span class="st">&quot;all_feeds.xlsx&quot;</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_excel</span>(<span class="at">sheet =</span> <span class="st">&quot;all_feeds&quot;</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>feed_inputs <span class="ot">&lt;-</span> feed_inputs <span class="sc">%&gt;%</span> </span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">names_to =</span> <span class="st">&quot;feed&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;proportion&quot;</span>, <span class="at">cols =</span> <span class="sc">!</span><span class="fu">contains</span>(<span class="fu">c</span>(<span class="st">&quot;ingredient&quot;</span>, <span class="st">&quot;category&quot;</span>))) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">feed =</span> <span class="fu">as.factor</span>(feed),</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">ingredient =</span> <span class="fu">as.factor</span>(ingredient),</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">proportion =</span> <span class="fu">case_when</span>(<span class="fu">is.na</span>(proportion) <span class="sc">~</span> <span class="dv">0</span>, T <span class="sc">~</span> proportion)</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ingreds, <span class="at">by =</span> <span class="st">&quot;ingredient&quot;</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>prop_P, <span class="sc">-</span>P_digestibility)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="sec-results" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Results</h1>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Biomass produced</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>bpr1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_model_farm_path, <span class="st">&quot;biomass_produced&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">mean =</span> <span class="fu">mean</span>(mean) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> mean)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>bpr2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;biomass_produced&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(mean)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Feed provided</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>fpr1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;food_prov_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> total)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>fpr2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;food_prov_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Feed provided per biomass</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>fpr_pb1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;food_prov_farm_per_biom_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">mean_biom =</span> <span class="fu">mean</span>(mean_biom) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g g_fish-1&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;kg kg_fish-1&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> mean_biom)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>fpr_pb2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;food_prov_farm_per_biom_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(mean_biom)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a><span class="co"># Uneaten feed</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>tuf1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;total_uneat_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> total)</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>tuf2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;total_uneat_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Excreted waste</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>tew1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;total_excr_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> total)</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>tew2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;total_excr_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a><span class="co"># Total waste</span></span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>tow1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;total_mass_inputs_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %&gt;% </span></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> total)</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>tow2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;total_mass_inputs_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a><span class="co"># Excretion proportion of waste</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>epw <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;excr_proportion_of_waste&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a><span class="co"># Protein, lipid, carbs</span></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>plc1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;PLC_uneat_excr_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %&gt;% </span></span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed, measure, macro) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="fu">c</span>(feed, macro), <span class="at">values_from =</span> total)</span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a><span class="co"># Proportion of PLC waste from excretion</span></span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>plc2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;PLC_uneat_excr_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %&gt;% </span></span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed, measure, macro) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="fu">c</span>(feed, macro, measure), <span class="at">values_from =</span> total) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>    <span class="at">MD_C =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>MD_C_excr<span class="sc">/</span>(MD_C_excr<span class="sc">+</span>MD_C_uneat),<span class="dv">1</span>),</span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>    <span class="at">MD_L =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>MD_L_excr<span class="sc">/</span>(MD_L_excr<span class="sc">+</span>MD_L_uneat),<span class="dv">1</span>),</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>    <span class="at">MD_P =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>MD_P_excr<span class="sc">/</span>(MD_P_excr<span class="sc">+</span>MD_P_uneat),<span class="dv">1</span>),</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>    <span class="at">NI_C =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>NI_C_excr<span class="sc">/</span>(NI_C_excr<span class="sc">+</span>NI_C_uneat),<span class="dv">1</span>),</span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>    <span class="at">NI_L =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>NI_L_excr<span class="sc">/</span>(NI_L_excr<span class="sc">+</span>NI_L_uneat),<span class="dv">1</span>),</span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>    <span class="at">NI_P =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>NI_P_excr<span class="sc">/</span>(NI_P_excr<span class="sc">+</span>NI_P_uneat),<span class="dv">1</span>),</span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>    <span class="at">PD_C =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>PD_C_excr<span class="sc">/</span>(PD_C_excr<span class="sc">+</span>PD_C_uneat),<span class="dv">1</span>),</span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>    <span class="at">PD_L =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>PD_L_excr<span class="sc">/</span>(PD_L_excr<span class="sc">+</span>PD_L_uneat),<span class="dv">1</span>),</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>    <span class="at">PD_P =</span> <span class="fu">round</span>(<span class="dv">100</span><span class="sc">*</span>PD_P_excr<span class="sc">/</span>(PD_P_excr<span class="sc">+</span>PD_P_uneat),<span class="dv">1</span>)</span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">contains</span>(<span class="fu">c</span>(<span class="st">&quot;excr&quot;</span>, <span class="st">&quot;uneat&quot;</span>)))</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a><span class="co"># % change in PLC waste</span></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a>plc3 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;PLC_uneat_excr_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-107"><a href="#cb2-107" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed, macro) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-108"><a href="#cb2-108" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-109"><a href="#cb2-109" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="fu">c</span>(feed, macro), <span class="at">values_from =</span> diff)</span>
+<span id="cb2-110"><a href="#cb2-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-111"><a href="#cb2-111" aria-hidden="true" tabindex="-1"></a><span class="co"># N inputs, uneaten</span></span>
+<span id="cb2-112"><a href="#cb2-112" aria-hidden="true" tabindex="-1"></a>niu1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;P_uneat_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-113"><a href="#cb2-113" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds),</span>
+<span id="cb2-114"><a href="#cb2-114" aria-hidden="true" tabindex="-1"></a>         <span class="at">total =</span> total <span class="sc">*</span> <span class="fl">6.25</span>,</span>
+<span id="cb2-115"><a href="#cb2-115" aria-hidden="true" tabindex="-1"></a>         <span class="at">sd =</span> sd <span class="sc">*</span> <span class="fl">6.25</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-116"><a href="#cb2-116" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-117"><a href="#cb2-117" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-118"><a href="#cb2-118" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> total)</span>
+<span id="cb2-119"><a href="#cb2-119" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-120"><a href="#cb2-120" aria-hidden="true" tabindex="-1"></a>niu2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;N_uneat_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-121"><a href="#cb2-121" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-122"><a href="#cb2-122" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-123"><a href="#cb2-123" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-124"><a href="#cb2-124" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-125"><a href="#cb2-125" aria-hidden="true" tabindex="-1"></a><span class="co"># N inputs, excreted</span></span>
+<span id="cb2-126"><a href="#cb2-126" aria-hidden="true" tabindex="-1"></a>nie1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;P_excr_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-127"><a href="#cb2-127" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds),</span>
+<span id="cb2-128"><a href="#cb2-128" aria-hidden="true" tabindex="-1"></a>         <span class="at">total =</span> total <span class="sc">*</span> <span class="fl">6.25</span>,</span>
+<span id="cb2-129"><a href="#cb2-129" aria-hidden="true" tabindex="-1"></a>         <span class="at">sd =</span> sd <span class="sc">*</span> <span class="fl">6.25</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-130"><a href="#cb2-130" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-131"><a href="#cb2-131" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-132"><a href="#cb2-132" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> total)</span>
+<span id="cb2-133"><a href="#cb2-133" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-134"><a href="#cb2-134" aria-hidden="true" tabindex="-1"></a>nie2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;N_excr_farm_summed&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-135"><a href="#cb2-135" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-136"><a href="#cb2-136" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-137"><a href="#cb2-137" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span>
+<span id="cb2-138"><a href="#cb2-138" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-139"><a href="#cb2-139" aria-hidden="true" tabindex="-1"></a><span class="co"># N inputs, total</span></span>
+<span id="cb2-140"><a href="#cb2-140" aria-hidden="true" tabindex="-1"></a>nit1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;N_total_farm_summed.qs&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-141"><a href="#cb2-141" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %&gt;% </span></span>
+<span id="cb2-142"><a href="#cb2-142" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-143"><a href="#cb2-143" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>() <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-144"><a href="#cb2-144" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> total)</span>
+<span id="cb2-145"><a href="#cb2-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-146"><a href="#cb2-146" aria-hidden="true" tabindex="-1"></a>nit2 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;N_total_farm_summed.qs&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-147"><a href="#cb2-147" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-148"><a href="#cb2-148" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">diff =</span> (<span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(total)) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-149"><a href="#cb2-149" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> feed, <span class="at">values_from =</span> diff)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-<p>Include the range of digestibility values so that feeds can be sampled (if required) within the targets pipeline.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>feed_inputs <span class="ot">&lt;-</span> feed_inputs <span class="sc">%&gt;%</span> </span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">protein_digestibility =</span> mean_protein_digestibility,</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">carb_digestibility =</span> mean_carb_digestibility,</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">lipid_digestibility =</span> mean_lipid_digestibility</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>feed_types <span class="ot">&lt;-</span> <span class="fu">levels</span>(feed_inputs<span class="sc">$</span>feed)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="sc">|</span> Description <span class="sc">|</span> Plant<span class="sc">-</span>dominant <span class="sc">|</span> Marine<span class="sc">-</span>dominant <span class="sc">|</span> Novel<span class="sc">-</span>inclusive <span class="sc">|</span> Change from PD to <span class="fu">MD</span> (<span class="sc">%) | Change from PD to NI (%</span>) <span class="sc">|</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="er">|:</span><span class="sc">--------------------------</span><span class="er">|:</span><span class="sc">----------</span><span class="er">:|:</span><span class="sc">----------</span><span class="er">:|:</span><span class="sc">----------</span><span class="er">:|:</span><span class="sc">----------</span><span class="er">:|:</span><span class="sc">----------</span><span class="er">:|</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Salmon biomass <span class="fu">produced</span> (t)                         <span class="sc">|</span> <span class="st">`</span><span class="at">r bpr1$PD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r bpr1$MD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r bpr1$NI</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(bpr2$MD)</span><span class="st">`</span>    <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(bpr2$NI)</span><span class="st">`</span>    <span class="sc">|</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Feed <span class="fu">provided</span> (t)                                   <span class="sc">|</span> <span class="st">`</span><span class="at">r fpr1$PD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r fpr1$MD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r fpr1$NI</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(fpr2$MD)</span><span class="st">`</span>    <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(fpr2$NI)</span><span class="st">`</span>    <span class="sc">|</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Feed <span class="fu">provided</span> (kg<span class="sc">/</span>kg salmon)                        <span class="sc">|</span> <span class="st">`</span><span class="at">r fpr_pb1$PD</span><span class="st">`</span>     <span class="sc">|</span> <span class="st">`</span><span class="at">r fpr_pb1$MD</span><span class="st">`</span>     <span class="sc">|</span> <span class="st">`</span><span class="at">r fpr_pb1$NI</span><span class="st">`</span>     <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(fpr_pb2$MD)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(fpr_pb2$NI)</span><span class="st">`</span> <span class="sc">|</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Uneaten <span class="fu">feed</span> (t)                                    <span class="sc">|</span> <span class="st">`</span><span class="at">r tuf1$PD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r tuf1$MD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r tuf1$NI</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(tuf2$MD)</span><span class="st">`</span>    <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(tuf2$NI)</span><span class="st">`</span>    <span class="sc">|</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Excreted <span class="fu">waste</span> (t)                                  <span class="sc">|</span> <span class="st">`</span><span class="at">r tew1$PD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r tew1$MD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r tew1$NI</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(tew2$MD)</span><span class="st">`</span>    <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(tew2$NI)</span><span class="st">`</span>    <span class="sc">|</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Total <span class="fu">waste</span> (E<span class="sc">+</span>U, t)                                <span class="sc">|</span> <span class="st">`</span><span class="at">r tow1$PD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r tow1$MD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r tow1$NI</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(tow2$MD)</span><span class="st">`</span>    <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(tow2$NI)</span><span class="st">`</span>    <span class="sc">|</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Proportion of total waste composed of <span class="fu">excretion</span> (%) <span class="sc">|</span> <span class="st">`</span><span class="at">r epw$PD</span><span class="st">`</span>         <span class="sc">|</span> <span class="st">`</span><span class="at">r epw$MD</span><span class="st">`</span>         <span class="sc">|</span> <span class="st">`</span><span class="at">r epw$NI</span><span class="st">`</span>         <span class="sc">|</span>                      <span class="er">|</span>                      <span class="er">|</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Total protein <span class="fu">waste</span> (t)                             <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$PD_P)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$MD_P)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$NI_P)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(plc3$MD_P)</span><span class="st">`</span>  <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(plc3$NI_P)</span><span class="st">`</span>  <span class="sc">|</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Total carbohydrate <span class="fu">waste</span> (t)                        <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$PD_C)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$MD_C)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$NI_C)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(plc3$MD_C)</span><span class="st">`</span>  <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(plc3$NI_C)</span><span class="st">`</span>  <span class="sc">|</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Total lipid <span class="fu">waste</span> (t)                               <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$PD_L)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$MD_L)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r sum(plc1$NI_L)</span><span class="st">`</span> <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(plc3$MD_L)</span><span class="st">`</span>  <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(plc3$NI_L)</span><span class="st">`</span>  <span class="sc">|</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Proportion of protein waste from <span class="fu">excretion</span> (%)      <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$PD_P</span><span class="st">`</span>      <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$MD_P</span><span class="st">`</span>      <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$NI_P</span><span class="st">`</span>      <span class="sc">|</span>                      <span class="er">|</span>                      <span class="er">|</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Proportion of carbohydrate waste from <span class="fu">excretion</span> (%) <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$PD_C</span><span class="st">`</span>      <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$MD_C</span><span class="st">`</span>      <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$NI_C</span><span class="st">`</span>      <span class="sc">|</span>                      <span class="er">|</span>                      <span class="er">|</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Proportion of lipid waste from <span class="fu">excretion</span> (%)        <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$PD_L</span><span class="st">`</span>      <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$MD_L</span><span class="st">`</span>      <span class="sc">|</span> <span class="st">`</span><span class="at">r plc2$NI_L</span><span class="st">`</span>      <span class="sc">|</span>                      <span class="er">|</span>                      <span class="er">|</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Total N from uneaten <span class="fu">feed</span> (t)                       <span class="sc">|</span> <span class="st">`</span><span class="at">r niu1$PD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r niu1$MD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r niu1$NI</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(niu2$MD)</span><span class="st">`</span>    <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(niu2$NI)</span><span class="st">`</span>    <span class="sc">|</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Total N from excreted <span class="fu">waste</span> (t)                     <span class="sc">|</span> <span class="st">`</span><span class="at">r nie1$PD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r nie1$MD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r nie1$NI</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(nie2$MD)</span><span class="st">`</span>    <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(nie2$NI)</span><span class="st">`</span>    <span class="sc">|</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="er">|</span> Total N <span class="fu">inputs</span> (E<span class="sc">+</span>U, t)                             <span class="sc">|</span> <span class="st">`</span><span class="at">r nit1$PD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r nit1$MD</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r nit1$NI</span><span class="st">`</span>        <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(nit2$MD)</span><span class="st">`</span>    <span class="sc">|</span> <span class="st">`</span><span class="at">r coln(nit2$NI)</span><span class="st">`</span>    <span class="sc">|</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="er">:</span> Summary of all results. Unless otherwise specified, values presented are means across all farms, summed across a single production period. In the % change columns, the colour of the text indicates whether there is an <span class="fu">increase</span> (red) or a <span class="fu">decrease</span> (green). Some cells of this table are blank <span class="sc">-</span> sometimes that means it doesn<span class="st">&#39;t make sense to fill that cell, but sometimes it means I haven&#39;</span>t got to it yet. {<span class="co">#tbl-results-summary}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-<p>Check that ingredient proportions sum to 1.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>feed_inputs <span class="ot">&lt;-</span> feed_inputs <span class="sc">%&gt;%</span> </span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(proportion) <span class="sc">&amp;</span> proportion <span class="sc">!=</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(feed) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">sum =</span> <span class="fu">sum</span>(proportion),</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">proportion =</span> proportion<span class="sc">/</span>sum</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>sum, <span class="sc">-</span>ash)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>plc1 <span class="ot">&lt;-</span> <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;PLC_uneat_excr_farm_summed&quot;</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>lm_P <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">drop_units</span>(total) <span class="sc">~</span> feed <span class="sc">*</span> measure, <span class="at">data =</span> <span class="fu">filter</span>(plc1, macro <span class="sc">==</span> <span class="st">&quot;P&quot;</span>))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>aov_P <span class="ot">&lt;-</span> <span class="fu">aov</span>(lm_P)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># summary(aov_P)</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>emm <span class="ot">&lt;-</span> <span class="fu">emmeans</span>(lm_P, <span class="st">&quot;feed&quot;</span>, <span class="st">&quot;measure&quot;</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>tukey_results <span class="ot">&lt;-</span> <span class="fu">pairs</span>(emm, <span class="at">adjust =</span> <span class="st">&quot;tukey&quot;</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># print(tukey_results)</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>lm_C <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">drop_units</span>(total) <span class="sc">~</span> feed <span class="sc">*</span> measure, <span class="at">data =</span> <span class="fu">filter</span>(plc1, macro <span class="sc">==</span> <span class="st">&quot;C&quot;</span>))</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>aov_C <span class="ot">&lt;-</span> <span class="fu">aov</span>(lm_C)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># summary(aov_C)</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>emm <span class="ot">&lt;-</span> <span class="fu">emmeans</span>(lm_C, <span class="st">&quot;feed&quot;</span>, <span class="st">&quot;measure&quot;</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>tukey_results <span class="ot">&lt;-</span> <span class="fu">pairs</span>(emm, <span class="at">adjust =</span> <span class="st">&quot;tukey&quot;</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># print(tukey_results)</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>lm_L <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">drop_units</span>(total) <span class="sc">~</span> feed <span class="sc">*</span> measure, <span class="at">data =</span> <span class="fu">filter</span>(plc1, macro <span class="sc">==</span> <span class="st">&quot;L&quot;</span>))</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>aov_L <span class="ot">&lt;-</span> <span class="fu">aov</span>(lm_L)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># summary(aov_L)</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>emm <span class="ot">&lt;-</span> <span class="fu">emmeans</span>(lm_L, <span class="st">&quot;feed&quot;</span>, <span class="st">&quot;measure&quot;</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>tukey_results <span class="ot">&lt;-</span> <span class="fu">pairs</span>(emm, <span class="at">adjust =</span> <span class="st">&quot;tukey&quot;</span>)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co"># print(tukey_results)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-<p>The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the <code>targets</code> pipelines can use.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>feed_types <span class="ot">&lt;-</span> <span class="fu">levels</span>(feed_inputs<span class="sc">$</span>feed)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>feed_params <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">map</span>(feed_types, <span class="cf">function</span>(ft) {</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Filter by specified feed</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">&lt;-</span> feed_inputs <span class="sc">%&gt;%</span> <span class="fu">filter</span>(feed <span class="sc">==</span> ft) </span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">Proteins =</span> df <span class="sc">%&gt;%</span> </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(ingredient, proportion, <span class="fu">contains</span>(<span class="st">&quot;protein&quot;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">macro =</span> protein, </span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">digest =</span> protein_digestibility,</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">min_digest =</span> min_protein_digestibility,</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">max_digest =</span> max_protein_digestibility</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">Carbohydrates =</span> df <span class="sc">%&gt;%</span> </span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(ingredient, proportion, <span class="fu">contains</span>(<span class="st">&quot;carb&quot;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">macro =</span> carb, </span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        <span class="at">digest =</span> carb_digestibility,</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">min_digest =</span> min_carb_digestibility,</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">max_digest =</span> max_carb_digestibility</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>      ),</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">Lipids =</span> df <span class="sc">%&gt;%</span> </span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(ingredient, proportion, <span class="fu">contains</span>(<span class="st">&quot;lipid&quot;</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">rename</span>(</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>        <span class="at">macro =</span> lipid, </span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>        <span class="at">digest =</span> lipid_digestibility,</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>        <span class="at">min_digest =</span> min_lipid_digestibility,</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">max_digest =</span> max_lipid_digestibility</span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(feed_types)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(feed_params, <span class="fu">file.path</span>(output_species_data_path, <span class="st">&quot;feed_params.qs&quot;</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>plc1 <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(measure, macro, feed) <span class="sc">%&gt;%</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd =</span> <span class="fu">sd</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>(),</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">total =</span> <span class="fu">mean</span>(total) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>(), </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">macro =</span> <span class="fu">factor</span>(</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      macro, </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;P&quot;</span>, <span class="st">&quot;C&quot;</span>, <span class="st">&quot;L&quot;</span>),</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&quot;Protein&quot;</span>, <span class="st">&quot;Carbohydrate&quot;</span>, <span class="st">&quot;Lipid&quot;</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">measure =</span> <span class="fu">factor</span>(</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      measure,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;uneat&quot;</span>, <span class="st">&quot;excr&quot;</span>),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&quot;Uneaten&quot;</span>, <span class="st">&quot;Excreted&quot;</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> measure, </span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> total, </span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">ymin =</span> total<span class="sc">-</span>sd, <span class="at">ymax =</span> total<span class="sc">+</span>sd,</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> feed</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="fu">position_dodge</span>(), <span class="at">width =</span> <span class="fl">0.95</span>, <span class="at">colour =</span> <span class="st">&quot;black&quot;</span>) <span class="sc">+</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.95</span>), <span class="at">width =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(macro)) <span class="sc">+</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot</span>() <span class="sc">+</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> feed_pal) <span class="sc">+</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Mean total waste (t)&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Source&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
-<section id="similarity" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Similarity</h1>
-<p>For later - how similar are the diets?</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>feed_simil <span class="ot">&lt;-</span> feed_inputs <span class="sc">%&gt;%</span> </span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ingredient, feed, proportion) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as.data.frame</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> feed,</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> proportion,</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">id_cols =</span> ingredient,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_fn =</span> as.numeric</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">diff_PD_MD =</span> <span class="fu">abs</span>(marine_dominant <span class="sc">-</span> plant_dominant),</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">diff_PD_NI =</span> <span class="fu">abs</span>(novel_inclusive <span class="sc">-</span> plant_dominant)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="sc">-</span> <span class="fu">sum</span>(feed_simil<span class="sc">$</span>diff_PD_MD, <span class="at">na.rm =</span> T)</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="sc">-</span> <span class="fu">sum</span>(feed_simil<span class="sc">$</span>diff_PD_NI, <span class="at">na.rm =</span> T)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="n-inputs-only" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> N inputs only</h1>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>N_uneat <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;N_uneat_farm_per_biom_summed&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>N_excr <span class="ot">&lt;-</span> <span class="fu">find_read</span>(comparisons_path, <span class="st">&quot;N_excr_farm_per_biom_summed&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>N_all <span class="ot">&lt;-</span> <span class="fu">rbind</span>(N_uneat, N_excr) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">measure =</span> <span class="fu">droplevels</span>(measure),</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">country =</span> <span class="fu">factor</span>(country,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">levels =</span> countries_long,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                   <span class="at">labels =</span> countries_short)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co"># ggplot(N_all, aes(x = country, y = mean_biom, fill = feed)) +</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#   geom_boxplot() +</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#   facet_grid(cols = vars(measure)) +</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#   scale_fill_manual(values = feed_pal)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="spatially" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Spatially</h1>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>N_ins <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;P_excr_farm_per_biom_summed&quot;</span>),</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;P_uneat_farm_per_biom_summed&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds)) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country, farm_ID, feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_biom =</span> <span class="fu">sum</span>(mean_biom) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;kg t_fish-1&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>(), </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_biom =</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(sd_biom<span class="sc">^</span><span class="dv">2</span>)) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g g_fish-1&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;kg t_fish-1&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>()</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(farm_locs, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;country&quot;</span>, <span class="st">&quot;farm_ID&quot;</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>()</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>p_bigmap_robinson <span class="sc">+</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> N_ins, </span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">colour =</span> mean_biom, <span class="at">geometry =</span> geometry), </span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">2</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_sf</span>() <span class="sc">+</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">option =</span> <span class="st">&quot;turbo&quot;</span>, <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">120</span>, <span class="dv">10</span>)) <span class="sc">+</span> </span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colourbar</span>(</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">expression</span>(<span class="st">&quot;Total N inputs (kg/t salmon)&quot;</span>),</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">direction =</span> <span class="st">&quot;horizontal&quot;</span>, <span class="at">position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.position =</span> <span class="st">&quot;bottom&quot;</span>, <span class="at">title.position =</span> <span class="st">&quot;top&quot;</span>,</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">title.vjust =</span> <span class="dv">1</span>, <span class="at">title.hjust =</span> <span class="fl">0.5</span>,</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">frame.colour =</span> <span class="st">&quot;black&quot;</span>, <span class="at">ticks.colour =</span> <span class="st">&quot;black&quot;</span>,<span class="at">ticks.linewidth =</span> <span class="dv">1</span>,</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">barheight =</span> <span class="fl">1.5</span>, <span class="at">barwidth =</span> <span class="dv">20</span>,</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(<span class="at">rows =</span> <span class="fu">vars</span>(feed)) <span class="sc">+</span></span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># prettyplot() +</span></span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.background =</span> <span class="fu">element_blank</span>(), <span class="at">strip.text =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>p_mercator <span class="ot">&lt;-</span> p_bigmap_mercator <span class="sc">+</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> N_ins,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">colour =</span> mean_biom, <span class="at">geometry =</span> geometry), </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="fl">2.5</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_sf</span>() <span class="sc">+</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">option =</span> <span class="st">&quot;turbo&quot;</span>, <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">120</span>, <span class="dv">10</span>)) <span class="sc">+</span> <span class="co">#, limits = c(-30, 10)</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colourbar</span>(</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">expression</span>(<span class="st">&quot;Total N inputs (kg/t salmon)&quot;</span>),</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">direction =</span> <span class="st">&quot;horizontal&quot;</span>, <span class="at">position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.position =</span> <span class="st">&quot;bottom&quot;</span>, <span class="at">title.position =</span> <span class="st">&quot;top&quot;</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title.vjust =</span> <span class="dv">1</span>, <span class="at">title.hjust =</span> <span class="fl">0.5</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">frame.colour =</span> <span class="st">&quot;black&quot;</span>, <span class="at">ticks.colour =</span> <span class="st">&quot;black&quot;</span>,<span class="at">ticks.linewidth =</span> <span class="dv">1</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">barheight =</span> <span class="fl">1.5</span>, <span class="at">barwidth =</span> <span class="dv">20</span>,</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># facet_wrap(facets = vars(feed), nrow = 2, ncol = 2) +</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot</span>() <span class="sc">+</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># strip.background = element_blank(), strip.text = element_blank(),</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Latitude&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Longitude&quot;</span>)</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>ins <span class="ot">&lt;-</span> <span class="fu">get_insets_mercator</span>(p_mercator)</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">1</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(feed))</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">2</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">rows =</span> <span class="fu">vars</span>(feed))</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">3</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(feed))</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">4</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(feed))</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">5</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(feed))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>N_ins_comp <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;P_excr_farm_per_biom_summed&quot;</span>),</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">find_read</span>(data_analysis_path, <span class="st">&quot;P_uneat_farm_per_biom_summed&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>sd_biom) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> long_feeds, <span class="at">labels =</span> short_feeds)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> feed,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> mean_biom,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_fn =</span> drop_units</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country, farm_ID) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">PD =</span> <span class="fu">sum</span>(PD),</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">MD =</span> <span class="fu">sum</span>(MD), </span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">NI =</span> <span class="fu">sum</span>(NI)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">MD =</span> (MD<span class="sc">-</span>PD),</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">NI =</span> (NI<span class="sc">-</span>PD)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>PD) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">&quot;feed&quot;</span>,</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">&quot;diff&quot;</span>,</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(MD, NI)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">feed =</span> <span class="fu">factor</span>(feed, <span class="at">levels =</span> short_feeds),</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">feed =</span> <span class="fu">droplevels</span>(feed),</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">diff =</span> diff <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g g_fish-1&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;kg t_fish-1&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>()</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(farm_locs, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;country&quot;</span>, <span class="st">&quot;farm_ID&quot;</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>()</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>p_bigmap_robinson <span class="sc">+</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> N_ins_comp, </span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">colour =</span> diff, <span class="at">geometry =</span> geometry), </span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="dv">2</span></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_sf</span>() <span class="sc">+</span></span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">option =</span> <span class="st">&quot;turbo&quot;</span>, <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">10</span>, <span class="dv">35</span>, <span class="dv">5</span>), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">10</span>,<span class="dv">36</span>)) <span class="sc">+</span> </span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colourbar</span>(</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">expression</span>(<span class="st">&quot;Difference in N inputs (kg/t salmon)&quot;</span>),</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">direction =</span> <span class="st">&quot;horizontal&quot;</span>, <span class="at">position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.position =</span> <span class="st">&quot;bottom&quot;</span>, <span class="at">title.position =</span> <span class="st">&quot;top&quot;</span>,</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>    <span class="at">title.vjust =</span> <span class="dv">1</span>, <span class="at">title.hjust =</span> <span class="fl">0.5</span>,</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">frame.colour =</span> <span class="st">&quot;black&quot;</span>, <span class="at">ticks.colour =</span> <span class="st">&quot;black&quot;</span>,<span class="at">ticks.linewidth =</span> <span class="dv">1</span>,</span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">barheight =</span> <span class="fl">1.5</span>, <span class="at">barwidth =</span> <span class="dv">20</span>,</span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(<span class="at">rows =</span> <span class="fu">vars</span>(feed)) <span class="sc">+</span></span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>  <span class="co"># prettyplot() +</span></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.background =</span> <span class="fu">element_blank</span>(), <span class="at">strip.text =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.title =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>p_mercator <span class="ot">&lt;-</span> p_bigmap_mercator <span class="sc">+</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> N_ins_comp,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">colour =</span> diff, <span class="at">geometry =</span> geometry), </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">size =</span> <span class="fl">2.5</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_sf</span>() <span class="sc">+</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">option =</span> <span class="st">&quot;turbo&quot;</span>, <span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">10</span>, <span class="dv">35</span>, <span class="dv">5</span>), <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">10</span>,<span class="dv">36</span>)) <span class="sc">+</span> </span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colourbar</span>(</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">expression</span>(<span class="st">&quot;Difference in N inputs (kg/t salmon)&quot;</span>),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">direction =</span> <span class="st">&quot;horizontal&quot;</span>, <span class="at">position =</span> <span class="st">&quot;bottom&quot;</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.position =</span> <span class="st">&quot;bottom&quot;</span>, <span class="at">title.position =</span> <span class="st">&quot;top&quot;</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title.vjust =</span> <span class="dv">1</span>, <span class="at">title.hjust =</span> <span class="fl">0.5</span>,</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">frame.colour =</span> <span class="st">&quot;black&quot;</span>, <span class="at">ticks.colour =</span> <span class="st">&quot;black&quot;</span>,<span class="at">ticks.linewidth =</span> <span class="dv">1</span>,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">barheight =</span> <span class="fl">1.5</span>, <span class="at">barwidth =</span> <span class="dv">20</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot</span>() <span class="sc">+</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.background =</span> <span class="fu">element_blank</span>(), <span class="at">strip.text =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position =</span> <span class="st">&quot;bottom&quot;</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Latitude&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Longitude&quot;</span>)</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>facet_labels <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;MD&quot;</span> <span class="ot">=</span> <span class="st">&quot;A&quot;</span>,</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;NI&quot;</span> <span class="ot">=</span> <span class="st">&quot;B&quot;</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>ins <span class="ot">&lt;-</span> <span class="fu">get_insets_mercator</span>(p_mercator)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">1</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(feed), <span class="at">labeller =</span> <span class="fu">as_labeller</span>(facet_labels))</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">2</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">rows =</span> <span class="fu">vars</span>(feed), <span class="at">labeller =</span> <span class="fu">as_labeller</span>(facet_labels))</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">3</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(feed), <span class="at">labeller =</span> <span class="fu">as_labeller</span>(facet_labels))</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">4</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(feed), <span class="at">labeller =</span> <span class="fu">as_labeller</span>(facet_labels))</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>ins[[<span class="dv">5</span>]] <span class="sc">+</span> <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(feed), <span class="at">labeller =</span> <span class="fu">as_labeller</span>(facet_labels))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="sec-supp-methods" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Supplemental methods</h1>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>farm_locs <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_farm_data_path, <span class="st">&quot;geometry&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">farm_ID =</span> farm_id)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>farm_mean_lat <span class="ot">&lt;-</span> farm_locs <span class="sc">%&gt;%</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_centroid</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">latitude =</span> <span class="fu">st_coordinates</span>(.)[, <span class="st">&quot;Y&quot;</span>]) <span class="sc">%&gt;%</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_drop_geometry</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country) <span class="sc">%&gt;%</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">mean_latitude =</span> <span class="fu">mean</span>(latitude, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>mean_latitude)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>countries <span class="ot">&lt;-</span> farm_mean_lat<span class="sc">$</span>country</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>countries[<span class="fu">str_detect</span>(countries, <span class="st">&quot;United States of America&quot;</span>)] <span class="ot">&lt;-</span> <span class="st">&quot;USA&quot;</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>countries[<span class="fu">str_detect</span>(countries, <span class="st">&quot;United Kingdom&quot;</span>)] <span class="ot">&lt;-</span> <span class="st">&quot;UK&quot;</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>countries[<span class="fu">str_detect</span>(countries, <span class="st">&quot;Russian Federation&quot;</span>)] <span class="ot">&lt;-</span> <span class="st">&quot;Russia&quot;</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>farm_locs <span class="ot">&lt;-</span> farm_locs <span class="sc">%&gt;%</span> </span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">country =</span> <span class="fu">factor</span>(country, <span class="at">levels =</span> farm_mean_lat<span class="sc">$</span>country, <span class="at">labels =</span> countries))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="sec-population-biomass" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="sec-population-biomass"><span class="header-section-number">5.1</span> Population and biomass</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>weight_cohort <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_model_cohort_path, <span class="st">&quot;weight_stat_all_farms&quot;</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>biomass_cohort <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_model_cohort_path, <span class="st">&quot;biomass_stat_all_farms&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>harv_size <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_farm_data_path, <span class="st">&quot;farm_harvest_size&quot;</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>harv_size <span class="sc">%&gt;%</span> </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">weight =</span> weight <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;kg&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">drop_units</span>()) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(farm_ID, weight)) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> weight)) <span class="sc">+</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="fl">0.25</span>, <span class="at">colour =</span> <span class="st">&quot;black&quot;</span>, <span class="at">fill =</span> <span class="st">&quot;salmon&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.75</span>) <span class="sc">+</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">500</span>)) <span class="sc">+</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">7</span>,<span class="fl">0.5</span>)) <span class="sc">+</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Frequency&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Harvest weight (kg)&quot;</span>) <span class="sc">+</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot</span>() <span class="sc">+</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">aspect.ratio =</span> <span class="fl">0.75</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>farm_biomass <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_model_farm_path, <span class="st">&quot;biomass_stat&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(farm_ID <span class="sc">==</span> <span class="dv">722</span> <span class="sc">&amp;</span> feed <span class="sc">==</span> <span class="st">&quot;plant_dominant&quot;</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>cohort_biomass_split <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  farm_biomass <span class="sc">%&gt;%</span> </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">farm_to_cohort</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="dv">1</span>),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  farm_biomass <span class="sc">%&gt;%</span> </span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">farm_to_cohort</span>(<span class="at">time_offset =</span> <span class="dv">365</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="dv">2</span>),</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  farm_biomass <span class="sc">%&gt;%</span> </span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">farm_to_cohort</span>(<span class="at">time_offset =</span> <span class="dv">730</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="dv">3</span>)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">split =</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(farm_ID, <span class="at">.before =</span> t) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(feed, <span class="at">.before =</span> t)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>cohort_biomass <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_model_cohort_path, <span class="st">&quot;biomass_stat&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(farm_ID <span class="sc">==</span> <span class="dv">722</span> <span class="sc">&amp;</span> feed <span class="sc">==</span> <span class="st">&quot;plant_dominant&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cohort =</span> <span class="st">&quot;all&quot;</span>, <span class="at">split =</span> <span class="dv">1</span>)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="fu">rbind</span>(</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  cohort_biomass_split,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>  cohort_biomass</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">t =</span> t<span class="sc">-</span><span class="fu">min</span>(t)<span class="sc">+</span><span class="dv">1</span>,</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean =</span> mean <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>),</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd =</span> sd <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;g&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">&quot;t&quot;</span>)</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> t, <span class="at">y =</span> mean, <span class="at">ymin =</span> mean<span class="sc">-</span>sd, <span class="at">ymax =</span> mean<span class="sc">+</span>sd, <span class="at">colour =</span> <span class="fu">as.factor</span>(cohort))) <span class="sc">+</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.75</span>) <span class="sc">+</span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_ribbon</span>(<span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>, <span class="at">alpha =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(<span class="at">cols =</span> <span class="fu">vars</span>(split)) <span class="sc">+</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">seq</span>(<span class="dv">0</span>, <span class="dv">1600</span>, <span class="dv">120</span>)) <span class="sc">+</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> cohort_pal) <span class="sc">+</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot</span>() <span class="sc">+</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.background =</span> <span class="fu">element_blank</span>(), <span class="at">strip.text =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Farm biomass&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Day of production&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>biomass_farm <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_model_farm_path, <span class="st">&quot;biomass_stat&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(farm_ID, feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(t) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>production <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_farm_data_path, <span class="st">&quot;farm_static_data&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">merge</span>(biomass_farm, <span class="at">by =</span> <span class="st">&quot;farm_ID&quot;</span>, <span class="at">all.x =</span> F) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean =</span> <span class="fu">set_units</span>(mean, <span class="st">&quot;g&quot;</span>),</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">diff =</span> <span class="fu">set_units</span>(mean <span class="sc">-</span> tonnes_per_farm, <span class="st">&quot;t&quot;</span>),</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">perc_diff =</span> diff<span class="sc">/</span>tonnes_per_farm</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country, feed) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_percdiff =</span> <span class="fu">min</span>(perc_diff),</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_percdiff =</span> <span class="fu">max</span>(perc_diff),</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_percdiff =</span> <span class="fu">mean</span>(perc_diff)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="sec-model-feeding" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="sec-model-feeding"><span class="header-section-number">5.2</span> Feed provision and feeding response to temperature</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">TAR_PROJECT =</span> <span class="st">&quot;project_farmruns&quot;</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>farm_ts_data <span class="ot">&lt;-</span> <span class="fu">tar_read</span>(farm_ts_data_chunked) <span class="sc">%&gt;%</span> <span class="fu">bind_rows</span>()</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>min_T <span class="ot">&lt;-</span> <span class="fu">min</span>(farm_ts_data<span class="sc">$</span>temp_c)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>max_T <span class="ot">&lt;-</span> <span class="fu">max</span>(farm_ts_data<span class="sc">$</span>temp_c)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>all_params <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">find_read</span>(output_species_data_path, <span class="st">&quot;species_params&quot;</span>),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">find_read</span>(output_species_data_path, <span class="st">&quot;pop_params&quot;</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>func_T_resp <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">water_temp =</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">5</span>, <span class="dv">26</span>, <span class="fl">0.25</span>))</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>weight <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Relative feeding rate with temperature</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>func_T_resp<span class="sc">$</span>feeding_rate <span class="ot">&lt;-</span> <span class="fu">sapply</span>(</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">FUN =</span> feeding_rate, </span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">X =</span> func_T_resp<span class="sc">$</span>water_temp, </span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">species_params =</span> all_params</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Maximum potential ingestion (g) at temperature</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>func_T_resp<span class="sc">$</span>ing_pot <span class="ot">&lt;-</span> all_params[<span class="st">&#39;meanImax&#39;</span>] <span class="sc">*</span> (weight<span class="sc">^</span>all_params[<span class="st">&#39;m&#39;</span>]) <span class="sc">*</span> func_T_resp<span class="sc">$</span>feeding_rate</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Food provided is based on calculated potential ingestion BUT if temperature is too low they are still provided with the food that would be required at lowest temperature (when feeding rate is ~18.3%)</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>func_T_resp<span class="sc">$</span>food_prov <span class="ot">&lt;-</span> <span class="fu">food_prov_rate</span>(</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">water_temp =</span> func_T_resp<span class="sc">$</span>water_temp, </span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">ing_pot =</span> func_T_resp<span class="sc">$</span>ing_pot,</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">ing_pot_min =</span> all_params[<span class="st">&#39;meanImax&#39;</span>] <span class="sc">*</span> (weight<span class="sc">^</span>all_params[<span class="st">&#39;m&#39;</span>]) <span class="sc">*</span> <span class="fu">feeding_rate</span>(all_params[<span class="st">&#39;Taa&#39;</span>], all_params),</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">species_params =</span> all_params,</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>  <span class="at">pop_params =</span> all_params</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>func_T_resp<span class="sc">$</span>food_enc <span class="ot">&lt;-</span> all_params[<span class="st">&#39;eff&#39;</span>] <span class="sc">*</span> func_T_resp<span class="sc">$</span>food_prov</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>func_T_resp <span class="ot">&lt;-</span> func_T_resp <span class="sc">%&gt;%</span> </span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ing_act =</span> <span class="fu">pmin</span>(food_enc, ing_pot))</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>max_ing <span class="ot">&lt;-</span> <span class="fu">max</span>(func_T_resp<span class="sc">$</span>ing_act)</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>func_T_resp <span class="sc">%&gt;%</span> </span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> water_temp, <span class="at">y =</span> ing_act<span class="sc">/</span>max_ing)) <span class="sc">+</span></span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="fl">0.75</span>) <span class="sc">+</span></span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="fu">aes</span>(<span class="at">y =</span> food_prov<span class="sc">/</span>max_ing), <span class="at">linewidth =</span> <span class="fl">0.75</span>, <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> min_T, <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> max_T, <span class="at">linetype =</span> <span class="st">&quot;dotted&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>  <span class="co"># scale_y_continuous(breaks = seq(0,1.5,0.25)) +</span></span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">5</span>,<span class="dv">30</span>,<span class="dv">5</span>), <span class="at">limits =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>,<span class="dv">26</span>)) <span class="sc">+</span></span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="fu">expression</span>(<span class="st">&quot;Water temperature (&quot;</span><span class="sc">*</span>degree<span class="sc">*</span><span class="st">&quot;C)&quot;</span>), <span class="at">y =</span> <span class="st">&quot;Feedd ingested/provided&quot;</span>) <span class="sc">+</span></span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>p_bigmap_feeding <span class="ot">&lt;-</span> p_bigmap_mercator <span class="sc">+</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="at">data =</span> feeding, <span class="fu">aes</span>(<span class="at">color =</span> prop_feed_eaten, <span class="at">geometry =</span> geometry), <span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">option =</span> <span class="st">&quot;turbo&quot;</span>) <span class="sc">+</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">col =</span> <span class="fu">guide_colourbar</span>(</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">&quot;Proportion of provided feed eaten&quot;</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">direction =</span> <span class="st">&quot;vertical&quot;</span>, <span class="at">position =</span> <span class="st">&quot;right&quot;</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">label.position =</span> <span class="st">&quot;right&quot;</span>, <span class="at">title.position =</span> <span class="st">&quot;top&quot;</span>, </span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">title.vjust =</span> <span class="dv">1</span>, <span class="at">title.hjust =</span> <span class="fl">0.5</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">frame.colour =</span> <span class="st">&quot;black&quot;</span>, <span class="at">ticks.colour =</span> <span class="st">&quot;black&quot;</span>,<span class="at">ticks.linewidth =</span> <span class="dv">2</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">barwidth =</span> <span class="fl">1.5</span>, <span class="at">barheight =</span> <span class="dv">20</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot</span>() <span class="sc">+</span></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Latitude&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Longitude&quot;</span>)</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">patchwork_mercator</span>(p_bigmap_feeding)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="sec-feeds" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="sec-feeds"><span class="header-section-number">5.3</span> Modelled experimental feeds</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>feed_params <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_species_data_path, <span class="st">&quot;feed_params&quot;</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>feed_summary <span class="ot">&lt;-</span> <span class="fu">map_dfr</span>(<span class="fu">names</span>(feed_params), <span class="cf">function</span>(feed) {</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">&lt;-</span> feed_params[[feed]]</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(<span class="fu">c</span>(<span class="st">&quot;Proteins&quot;</span>, <span class="st">&quot;Lipids&quot;</span>, <span class="st">&quot;Carbohydrates&quot;</span>), <span class="cf">function</span>(macro) {</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    contrib <span class="ot">&lt;-</span> df[[macro]]<span class="sc">$</span>proportion <span class="sc">*</span> df[[macro]]<span class="sc">$</span>macro</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    total <span class="ot">&lt;-</span> <span class="fu">sum</span>(contrib)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    digest <span class="ot">&lt;-</span> <span class="fu">sum</span>(df[[macro]]<span class="sc">$</span>digest <span class="sc">*</span> contrib) <span class="sc">/</span> total</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">tibble</span>(</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">feed =</span> feed,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">macro =</span> macro,</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>      <span class="at">total =</span> total,</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>      <span class="at">digest =</span> digest</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">macro =</span> <span class="fu">factor</span>(macro, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">&quot;Proteins&quot;</span>, <span class="st">&quot;Lipids&quot;</span>, <span class="st">&quot;Carbohydrates&quot;</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">&quot;P&quot;</span>, <span class="st">&quot;L&quot;</span>, <span class="st">&quot;C&quot;</span>)),</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">feed =</span> <span class="fu">as.factor</span>(feed),</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>         <span class="at">total_r =</span> total <span class="sc">*</span> <span class="dv">100</span> <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>),</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">digest_r =</span> digest <span class="sc">*</span> <span class="dv">100</span> <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">1</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="sec-param-sensitivity" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="sec-param-sensitivity"><span class="header-section-number">5.4</span> Model sensitivity to parameter changes</h2>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>params <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_species_data_path, <span class="st">&quot;sens_params&quot;</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>param_names <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tribble</span>(</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>name,        <span class="sc">~</span>lab,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;alpha&quot;</span>,      <span class="fu">bquote</span>(alpha),</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;epsprot&quot;</span>,    <span class="fu">bquote</span>(epsilon[<span class="st">&quot;P&quot;</span>]),</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;epslip&quot;</span>,     <span class="fu">bquote</span>(epsilon[<span class="st">&quot;L&quot;</span>]),</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;epscarb&quot;</span>,    <span class="fu">bquote</span>(epsilon[<span class="st">&quot;C&quot;</span>]),</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;epsO2&quot;</span>,      <span class="fu">bquote</span>(epsilon[<span class="st">&quot;O&quot;</span>[<span class="dv">2</span>]]),</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;pk&quot;</span>,         <span class="fu">bquote</span>(<span class="st">&quot;pk&quot;</span>),</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;k0&quot;</span>,         <span class="fu">bquote</span>(<span class="st">&quot;k&quot;</span>[<span class="dv">0</span>]),</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;m&quot;</span>,          <span class="fu">bquote</span>(<span class="st">&quot;m&quot;</span>),</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;n&quot;</span>,          <span class="fu">bquote</span>(<span class="st">&quot;n&quot;</span>),</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;betac&quot;</span>,      <span class="fu">bquote</span>(beta<span class="sc">*</span><span class="st">&quot;C&quot;</span>),</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Tma&quot;</span>,        <span class="fu">bquote</span>(<span class="st">&quot;T&quot;</span>[<span class="st">&quot;max&quot;</span>]),</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Toa&quot;</span>,        <span class="fu">bquote</span>(<span class="st">&quot;T&quot;</span>[<span class="st">&quot;opt&quot;</span>]),</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Taa&quot;</span>,        <span class="fu">bquote</span>(<span class="st">&quot;T&quot;</span>[<span class="st">&quot;min&quot;</span>]),</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;omega&quot;</span>,      <span class="fu">bquote</span>(omega),</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;a&quot;</span>,          <span class="fu">bquote</span>(<span class="st">&quot;a&quot;</span>),</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;k&quot;</span>,          <span class="fu">bquote</span>(<span class="st">&quot;k&quot;</span>),</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;eff&quot;</span>,        <span class="fu">bquote</span>(<span class="st">&quot;eff&quot;</span>),</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;meanW&quot;</span>,      <span class="fu">bquote</span>(<span class="fu">bar</span>(<span class="st">&quot;W&quot;</span>)),</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;deltaW&quot;</span>,     <span class="fu">bquote</span>(Delta<span class="sc">*</span><span class="st">&quot;W&quot;</span>), </span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;meanImax&quot;</span>,   <span class="fu">bquote</span>(<span class="fu">bar</span>(<span class="st">&quot;I&quot;</span>[<span class="st">&quot;max&quot;</span>])),</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;deltaImax&quot;</span>,  <span class="fu">bquote</span>(Delta<span class="sc">*</span><span class="st">&quot;I&quot;</span>[<span class="st">&quot;max&quot;</span>]),</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;overFmean&quot;</span>,  <span class="fu">bquote</span>(<span class="fu">bar</span>(<span class="st">&quot;F&quot;</span>)),</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;overFdelta&quot;</span>, <span class="fu">bquote</span>(Delta<span class="sc">*</span><span class="st">&quot;F&quot;</span>),</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;mortmyt&quot;</span>,    <span class="fu">bquote</span>(<span class="st">&quot;mort&quot;</span>)</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>sens_results <span class="ot">&lt;-</span> <span class="fu">find_read</span>(output_sens_data_path, <span class="st">&quot;sens_results&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(measure <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;total_excr&quot;</span>, <span class="st">&quot;weight&quot;</span>) <span class="sc">&amp;</span> adj_param <span class="sc">!=</span> <span class="st">&quot;nruns&quot;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">measure =</span> <span class="fu">droplevels</span>(measure))</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>sens_results <span class="sc">%&gt;%</span> </span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> adj_param, <span class="at">y =</span> mean_sens, <span class="at">ymin =</span> mean_sens<span class="sc">-</span>sd_sens, <span class="at">ymax =</span> mean_sens<span class="sc">+</span>sd_sens, <span class="at">fill =</span> measure)) <span class="sc">+</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="fu">position_dodge</span>(), <span class="at">width =</span> <span class="fl">0.95</span>, <span class="at">alpha =</span> <span class="fl">0.65</span>, <span class="at">colour =</span> <span class="st">&quot;black&quot;</span>) <span class="sc">+</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.95</span>), <span class="at">width =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot</span>() <span class="sc">+</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">breaks =</span> param_names<span class="sc">$</span>name, <span class="at">labels =</span> param_names<span class="sc">$</span>lab) <span class="sc">+</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">breaks =</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">10</span>, <span class="dv">30</span>, <span class="dv">5</span>)) <span class="sc">+</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">&quot;Set1&quot;</span>) <span class="sc">+</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y =</span> <span class="st">&quot;Sensitivity&quot;</span>, <span class="at">x =</span> <span class="st">&quot;Adjusted parameter&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+</section>
+<section id="sec-code" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Code and packages used</h1>
+<div class="cell" data-layout-align="center">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># All analysis was conducted in R version `r R.version[[&#39;major&#39;]]`.`r R.version[[&#39;minor&#39;]]` &quot;`r R.version[[&#39;nickname&#39;]]`&quot; [@R_base]. </span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Major packages used include `r cite_packages(packages)`.</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># For a full list of R packages used see the lockfile on [Github](https://www.github.com).</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co"># This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. </span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 

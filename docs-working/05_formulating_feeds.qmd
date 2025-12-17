@@ -7,11 +7,7 @@ editor: source
 
 # Introduction
 
-The purpose of this markdown is to formulate all the feeds that will be used in the analysis. These feeds are:
-- marine_dominant: a "past" salmonid diet where most protein is sourced from marine-based ingredients.
-- plant_dominant: a "current" salmonid diet where most protein is sourced from land-based ingredients.
-- novel_inclusive_2: a potential future salmonid diet which includes some novel ingredients. This formulation uses maximal digestibility values.
-- novel_inclusive_1: a potential future salmonid diet which includes some novel ingredients. This formulation uses the same formulation as novel_inclusive_2, but with minimal digestibility values.
+The purpose of this markdown is to formulate all the feeds that will be used in the analysis.
 
 ```{r setup, include=F, cache=F}
 #| code-summary: R setup
@@ -103,7 +99,7 @@ feed_inputs <- feed_inputs %>%
 
 # Prepare for pipeline
 
-The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. 
+The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. This code does not create the "min" and "max" deigestibility versions of the feeds, they are created in the targets pipeline. 
 
 ```{r formulate-feeds}
 #| code-summary: Format feeds as lists to feed into targets
