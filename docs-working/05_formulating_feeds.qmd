@@ -43,7 +43,7 @@ There is no check or correction here to ensure that protein + lipid + ash + carb
 ``` {r import-ingredients}
 #| code-summary: Get ingredient details (PLC composition, digestibility)
 
-ingreds <- file.path(input_feed_profile_path, "all_ingredients.xlsx") %>% 
+ingreds <- file.path(bigdata_path, "all_ingredients.xlsx") %>% 
   read_excel(sheet = "all_ingredients") %>% 
   mutate(ingredient = as.factor(ingredient))
 
