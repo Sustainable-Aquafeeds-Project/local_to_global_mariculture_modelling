@@ -1,7 +1,8 @@
 # This sets up all the directories for the project so that all scripts use the same directory names
 suppressPackageStartupMessages(suppressWarnings({
-library(here)
-library(stringr)
+  library(tidyverse)
+  library(here)
+  library(stringr)
 }))
 
 # From run_individual
@@ -38,13 +39,13 @@ comparisons_path <- file.path(data_analysis_path, "feed_comparisons")
 impacts_path <- file.path(output_path, "nutrient_impacts")
 
 # Create output directories
-dir.create(output_species_data_path, showWarnings = F)
-dir.create(output_sens_data_path, showWarnings = F)
-dir.create(output_farm_data_path, showWarnings = F)
-dir.create(per_biomass_farm_path, showWarnings = F)
-dir.create(per_biomass_cohort_path, showWarnings = F)
-dir.create(output_model_farm_path, showWarnings = F)
-dir.create(output_model_cohort_path, showWarnings = F)
-dir.create(data_analysis_path, showWarnings = F)
-dir.create(comparisons_path, showWarnings = F)
-dir.create(impacts_path, showWarnings = F)
+# dir.create(output_species_data_path, showWarnings = F)
+# dir.create(output_sens_data_path, showWarnings = F)
+# dir.create(output_farm_data_path, showWarnings = F)
+# dir.create(per_biomass_farm_path, showWarnings = F)
+# dir.create(per_biomass_cohort_path, showWarnings = F)
+# dir.create(output_model_farm_path, showWarnings = F)
+# dir.create(output_model_cohort_path, showWarnings = F)
+# dir.create(data_analysis_path, showWarnings = F)
+# dir.create(comparisons_path, showWarnings = F)
+# dir.create(impacts_path, showWarnings = F)

@@ -1,28 +1,36 @@
 suppressPackageStartupMessages(suppressWarnings({
   library(targets)
   library(crew)
-  library(magrittr)
   library(qs)
   library(tidyverse)
-  # library(arrow)
 }))
 
 tar_option_set(
   format = "qs", 
-  controller = crew::crew_controller_local(workers = 15, seconds_idle = 120),
+  controller = crew::crew_controller_local(
+    workers = parallelly::availableCores()-1, 
+    seconds_idle = 120
+    ),
   workspace_on_error = TRUE,
   garbage_collection = 10
 )
 
 tar_source(
-  files = list.files("src", pattern = "\\.R$", full.names = TRUE) %>% 
-    setdiff("src/map_templates.R")
+  files = c(
+    "/home/treimer/local_to_global_mariculture_modelling/src/dirs.R",
+    "/home/treimer/local_to_global_mariculture_modelling/src/functions.R",
+    "/home/treimer/local_to_global_mariculture_modelling/src/model_functions.R"
+  )
 )
+
+# Dirs
+output_path <- here() %>% file.path("outputs")
+output_farm_data_path <- file.path(output_path, "farm_data")
 
 # Globals
 farm_chunk_size <- 20
 inds_per_farm <- 1000
-farm_sample <- 1000 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
+farm_sample <- 2720 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
 reference_feed_name <- "marine_dominant_biomar"
 
 list(

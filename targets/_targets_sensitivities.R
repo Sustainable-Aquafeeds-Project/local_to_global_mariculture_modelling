@@ -10,13 +10,25 @@ suppressPackageStartupMessages(suppressWarnings({
 
 tar_option_set(
   format = "qs", 
-  controller = crew_controller_local(workers = 6, seconds_timeout = 120),
+  controller = crew::crew_controller_local(
+    workers = parallelly::availableCores()-1, 
+    seconds_idle = 120
+  ),
   workspace_on_error = TRUE,
-  garbage_collection = 20
+  garbage_collection = 10
 )
 
-tar_source(files = list.files("src", pattern = "\\.R$", full.names = TRUE) %>% 
-    setdiff("src/map_templates.R"))
+tar_source(
+  files = c(
+    "/home/treimer/local_to_global_mariculture_modelling/src/dirs.R",
+    "/home/treimer/local_to_global_mariculture_modelling/src/functions.R",
+    "/home/treimer/local_to_global_mariculture_modelling/src/model_functions.R"
+  )
+)
+
+# Dirs
+output_path <- here() %>% file.path("outputs")
+output_species_data_path <- file.path(output_path, "species_data")
 
 # Globals
 inds_per_farm <- 250
