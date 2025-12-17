@@ -9,5 +9,5 @@ Intermediate and final datasets are available here at <link>.
 Folder/file name |  Description    
 -----------------|--------------------------------------------
 _quarto.yml      | 
-renv             | project package library
-
+renv             | Project package library
+docs-working     | Documentation files (.qmd) in progress
