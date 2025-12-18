@@ -1,0 +1,866 @@
+---
+title: "Local-to-Global Mariculture Modelling"
+subtitle: "Project Documentation - Index of files"
+author: "Tormey Reimer"
+date: today
+execute:
+  eval: false
+---
+
+# Table of Contents
+
+All code and processes for this project are linked below. Note that some scripts require access to raw data which is not stored on Github. 
+
+## Main scripts
+
+The main scripts for this project focus on setting up the model to examine the differences in total protein, carbohydrate, lipid and nitrogen losses between feeds. 
+
+| Page | Description |
+|---------|:-------------------------------------------------|
+| **[Data Tidying](01_tidying_data.html)** | Initial data tidying and preparation |
+| **[Extracting Production Locations](02_extracting_production_locations.html)** | Identification and processing of mariculture production site locations |
+| **[Assessing Species Potential](03_assessing_species_potential.html)** | Evaluation of species suitability for different locations |
+| **[Extracting Temperatures](04_extracting_temperatures.html)** | SST data extraction and processing for model inputs |
+| **[Formulating Feeds](05_formulating_feeds.html)** | Feed composition formulation for model runs |
+| **[How many runs per farm?](06_how_man_runs_per_farm.html)** | Determining how many Monte-Carlo runs is enough |
+| **[Running Atlantic Salmon Model](06_run_atlantic_salmon_model.html)** | Atlantic salmon growth model execution |
+| **[Data Analysis](08_data_analysis.html)** | Analysing the outputs of the Atlantic salmon growth model |
+| **[Figures for manuscript](09_figures_for_manuscript.html)** | Code used to generate the specific figures used in the manuscript |
+
+```{r setup}
+#| cache: false
+#| message: false
+
+library(magrittr)
+library(units)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+library(ggh4x)
+library(here)
+library(ggpubr)
+library(cowplot)
+library(patchwork)
+library(qs)
+library(arrow)
+library(targets)
+library(sf)
+library(terra)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(rnaturalearthhires)
+library(dtplyr)
+library(furrr)
+library(purrr)
+library(future)
+library(readxl)
+library(conflicted)
+library(lubridate)
+library(RColorBrewer)
+# library(lme4)
+library(car)
+library(emmeans)
+
+conflicts_prefer(dplyr::select(), dplyr::filter(), dplyr::intersect())
+# This markdown uses TinyTex - install with tinytex::install_tinytex()
+
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
+
+packages <- c("magrittr", "dplyr", "tidyr", "stringr", "ggplot2", "arrow", "targets", "sf", "terra", "rnaturalearth", "furrr", "future", "units", "lubridate", "worrms", "aquamapsdata") %>% sort()
+```
+
+```{r}
+#| label: global-variables
+#| include: false
+#| cache: false
+
+remove_unit("g_fish")
+remove_unit("kg_fish")
+remove_unit("t_fish")
+install_unit("g_fish")
+install_unit("kg_fish", "1000 g_fish")
+install_unit("t_fish", "1000 kg_fish")
+
+species_params <- find_read(output_species_data_path, "species_params")
+pop_params <- find_read(output_species_data_path, "pop_params")
+
+farm_locs <- find_read(output_farm_data_path, "geometry") %>% 
+  rename(farm_ID = farm_id) %>% 
+  mutate(country = as.factor(country))
+countries_long <- farm_locs %>%
+  mutate(
+    longitude = map_dbl(geometry, ~st_coordinates(.x)[1]),
+    latitude = map_dbl(geometry, ~st_coordinates(.x)[2])
+  ) %>% 
+  st_drop_geometry() %>% 
+  group_by(country) %>% 
+  reframe(latitude = mean(latitude)) %>% 
+  arrange(-latitude) %>% 
+  pull(country) %>% 
+  as.character() 
+countries_short <- countries_long %>% 
+  str_replace("United States of America", "USA") %>% 
+  str_replace("Russian Federation", "Russia") %>% 
+  str_replace("United States of America", "USA")
+farm_locs <- farm_locs %>% 
+  mutate(
+    country = factor(
+      country, 
+      levels = countries_long,
+      labels = countries_short
+    ))
+```
+
+# Results {#sec-results}
+
+```{r}
+#| label: load-all-data-analysis
+
+# Biomass produced
+bpr1 <- find_read(output_model_farm_path, "biomass_produced") %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed) %>% 
+  reframe(mean = mean(mean) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = mean)
+
+bpr2 <- find_read(comparisons_path, "biomass_produced") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(mean)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# Feed provided
+fpr1 <- find_read(data_analysis_path, "food_prov_farm_summed") %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = total)
+
+fpr2 <- find_read(comparisons_path, "food_prov_farm_summed") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# Feed provided per biomass
+fpr_pb1 <- find_read(data_analysis_path, "food_prov_farm_per_biom_summed") %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed) %>% 
+  reframe(mean_biom = mean(mean_biom) %>% set_units("g g_fish-1") %>% set_units("kg kg_fish-1") %>% drop_units() %>% round(2)) %>% 
+  pivot_wider(names_from = feed, values_from = mean_biom)
+
+fpr_pb2 <- find_read(comparisons_path, "food_prov_farm_per_biom_summed") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(mean_biom)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# Uneaten feed
+tuf1 <- find_read(data_analysis_path, "total_uneat_farm_summed") %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = total)
+
+tuf2 <- find_read(comparisons_path, "total_uneat_farm_summed") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# Excreted waste
+tew1 <- find_read(data_analysis_path, "total_excr_farm_summed") %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = total)
+
+tew2 <- find_read(comparisons_path, "total_excr_farm_summed") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# Total waste
+tow1 <- find_read(data_analysis_path, "total_mass_inputs_farm_summed") %>% 
+  # mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = total)
+
+tow2 <- find_read(comparisons_path, "total_mass_inputs_farm_summed") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# Excretion proportion of waste
+epw <- find_read(comparisons_path, "excr_proportion_of_waste") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# Protein, lipid, carbs
+plc1 <- find_read(data_analysis_path, "PLC_uneat_excr_farm_summed") %>% 
+  # mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed, measure, macro) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = c(feed, macro), values_from = total)
+
+# Proportion of PLC waste from excretion
+plc2 <- find_read(data_analysis_path, "PLC_uneat_excr_farm_summed") %>% 
+  # mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed, measure, macro) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = c(feed, macro, measure), values_from = total) %>% 
+  mutate(
+    MD_C = round(100*MD_C_excr/(MD_C_excr+MD_C_uneat),1),
+    MD_L = round(100*MD_L_excr/(MD_L_excr+MD_L_uneat),1),
+    MD_P = round(100*MD_P_excr/(MD_P_excr+MD_P_uneat),1),
+    NI_C = round(100*NI_C_excr/(NI_C_excr+NI_C_uneat),1),
+    NI_L = round(100*NI_L_excr/(NI_L_excr+NI_L_uneat),1),
+    NI_P = round(100*NI_P_excr/(NI_P_excr+NI_P_uneat),1),
+    PD_C = round(100*PD_C_excr/(PD_C_excr+PD_C_uneat),1),
+    PD_L = round(100*PD_L_excr/(PD_L_excr+PD_L_uneat),1),
+    PD_P = round(100*PD_P_excr/(PD_P_excr+PD_P_uneat),1)
+  ) %>% 
+  select(-contains(c("excr", "uneat")))
+
+# % change in PLC waste
+plc3 <- find_read(comparisons_path, "PLC_uneat_excr_farm_summed") %>% 
+  group_by(feed, macro) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = c(feed, macro), values_from = diff)
+
+# N inputs, uneaten
+niu1 <- find_read(data_analysis_path, "P_uneat_farm_summed") %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds),
+         total = total * 6.25,
+         sd = sd * 6.25) %>% 
+  group_by(feed) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = total)
+
+niu2 <- find_read(comparisons_path, "N_uneat_farm_summed") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# N inputs, excreted
+nie1 <- find_read(data_analysis_path, "P_excr_farm_summed") %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds),
+         total = total * 6.25,
+         sd = sd * 6.25) %>% 
+  group_by(feed) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = total)
+
+nie2 <- find_read(comparisons_path, "N_excr_farm_summed") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+
+# N inputs, total
+nit1 <- find_read(data_analysis_path, "N_total_farm_summed.qs") %>% 
+  # mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(feed) %>% 
+  reframe(total = mean(total) %>% set_units("g") %>% set_units("t") %>% drop_units() %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = total)
+
+nit2 <- find_read(comparisons_path, "N_total_farm_summed.qs") %>% 
+  group_by(feed) %>% 
+  reframe(diff = (100*mean(total)) %>% round(1)) %>% 
+  pivot_wider(names_from = feed, values_from = diff)
+```
+
+```{r not-in-use}
+| Description | Plant-dominant | Marine-dominant | Novel-inclusive | Change from PD to MD (%) | Change from PD to NI (%) |
+|:--------------------------|:----------:|:----------:|:----------:|:----------:|:----------:|
+| Salmon biomass produced (t)                         | `r bpr1$PD`        | `r bpr1$MD`        | `r bpr1$NI`        | `r coln(bpr2$MD)`    | `r coln(bpr2$NI)`    |
+| Feed provided (t)                                   | `r fpr1$PD`        | `r fpr1$MD`        | `r fpr1$NI`        | `r coln(fpr2$MD)`    | `r coln(fpr2$NI)`    |
+| Feed provided (kg/kg salmon)                        | `r fpr_pb1$PD`     | `r fpr_pb1$MD`     | `r fpr_pb1$NI`     | `r coln(fpr_pb2$MD)` | `r coln(fpr_pb2$NI)` |
+| Uneaten feed (t)                                    | `r tuf1$PD`        | `r tuf1$MD`        | `r tuf1$NI`        | `r coln(tuf2$MD)`    | `r coln(tuf2$NI)`    |
+| Excreted waste (t)                                  | `r tew1$PD`        | `r tew1$MD`        | `r tew1$NI`        | `r coln(tew2$MD)`    | `r coln(tew2$NI)`    |
+| Total waste (E+U, t)                                | `r tow1$PD`        | `r tow1$MD`        | `r tow1$NI`        | `r coln(tow2$MD)`    | `r coln(tow2$NI)`    |
+| Proportion of total waste composed of excretion (%) | `r epw$PD`         | `r epw$MD`         | `r epw$NI`         |                      |                      |
+| Total protein waste (t)                             | `r sum(plc1$PD_P)` | `r sum(plc1$MD_P)` | `r sum(plc1$NI_P)` | `r coln(plc3$MD_P)`  | `r coln(plc3$NI_P)`  |
+| Total carbohydrate waste (t)                        | `r sum(plc1$PD_C)` | `r sum(plc1$MD_C)` | `r sum(plc1$NI_C)` | `r coln(plc3$MD_C)`  | `r coln(plc3$NI_C)`  |
+| Total lipid waste (t)                               | `r sum(plc1$PD_L)` | `r sum(plc1$MD_L)` | `r sum(plc1$NI_L)` | `r coln(plc3$MD_L)`  | `r coln(plc3$NI_L)`  |
+| Proportion of protein waste from excretion (%)      | `r plc2$PD_P`      | `r plc2$MD_P`      | `r plc2$NI_P`      |                      |                      |
+| Proportion of carbohydrate waste from excretion (%) | `r plc2$PD_C`      | `r plc2$MD_C`      | `r plc2$NI_C`      |                      |                      |
+| Proportion of lipid waste from excretion (%)        | `r plc2$PD_L`      | `r plc2$MD_L`      | `r plc2$NI_L`      |                      |                      |
+| Total N from uneaten feed (t)                       | `r niu1$PD`        | `r niu1$MD`        | `r niu1$NI`        | `r coln(niu2$MD)`    | `r coln(niu2$NI)`    |
+| Total N from excreted waste (t)                     | `r nie1$PD`        | `r nie1$MD`        | `r nie1$NI`        | `r coln(nie2$MD)`    | `r coln(nie2$NI)`    |
+| Total N inputs (E+U, t)                             | `r nit1$PD`        | `r nit1$MD`        | `r nit1$NI`        | `r coln(nit2$MD)`    | `r coln(nit2$NI)`    |
+: Summary of all results. Unless otherwise specified, values presented are means across all farms, summed across a single production period. In the % change columns, the colour of the text indicates whether there is an increase (red) or a decrease (green). Some cells of this table are blank - sometimes that means it doesn't make sense to fill that cell, but sometimes it means I haven't got to it yet. {#tbl-results-summary}
+```
+
+```{r}
+#| label: PLC-waste-comparison
+
+plc1 <- find_read(data_analysis_path, "PLC_uneat_excr_farm_summed")
+
+lm_P <- lm(drop_units(total) ~ feed * measure, data = filter(plc1, macro == "P"))
+aov_P <- aov(lm_P)
+# summary(aov_P)
+
+emm <- emmeans(lm_P, "feed", "measure")
+tukey_results <- pairs(emm, adjust = "tukey")
+# print(tukey_results)
+
+lm_C <- lm(drop_units(total) ~ feed * measure, data = filter(plc1, macro == "C"))
+aov_C <- aov(lm_C)
+# summary(aov_C)
+
+emm <- emmeans(lm_C, "feed", "measure")
+tukey_results <- pairs(emm, adjust = "tukey")
+# print(tukey_results)
+
+lm_L <- lm(drop_units(total) ~ feed * measure, data = filter(plc1, macro == "L"))
+aov_L <- aov(lm_L)
+# summary(aov_L)
+
+emm <- emmeans(lm_L, "feed", "measure")
+tukey_results <- pairs(emm, adjust = "tukey")
+# print(tukey_results)
+```
+
+```{r}
+#| label: fig-PLC-waste-comparison
+#| fig-cap: Mean waste lost to the environment in a complete production cycle when farms are fed the MD (blue), PD (green) or NI (red) diet. Errorbars show SD across all farms.
+
+plc1 %>%
+  group_by(measure, macro, feed) %>%
+  reframe(
+    sd = sd(total) %>% set_units("g") %>% set_units("t") %>% drop_units(),
+    total = mean(total) %>% set_units("t") %>% drop_units(), 
+  ) %>% 
+  mutate(
+    macro = factor(
+      macro, 
+      levels = c("P", "C", "L"),
+      labels = c("Protein", "Carbohydrate", "Lipid")
+    ),
+    measure = factor(
+      measure,
+      levels = c("uneat", "excr"),
+      labels = c("Uneaten", "Excreted")
+    )
+  ) %>% 
+  ggplot(aes(
+    x = measure, 
+    y = total, 
+    ymin = total-sd, ymax = total+sd,
+    fill = feed
+  )) +
+  geom_col(position = position_dodge(), width = 0.95, colour = "black") +
+  geom_errorbar(position = position_dodge(width = 0.95), width = 0.5) +
+  facet_grid(cols = vars(macro)) +
+  prettyplot() +
+  scale_fill_manual(values = feed_pal) +
+  labs(y = "Mean total waste (t)", x = "Source")
+```
+
+# N inputs only
+
+```{r}
+#| label: N-inputs-comparisons
+
+N_uneat <- find_read(comparisons_path, "N_uneat_farm_per_biom_summed")
+N_excr <- find_read(comparisons_path, "N_excr_farm_per_biom_summed")
+
+N_all <- rbind(N_uneat, N_excr) %>% 
+  st_drop_geometry() %>% 
+  mutate(
+    measure = droplevels(measure),
+    country = factor(country,
+                   levels = countries_long,
+                   labels = countries_short)
+  )
+
+# ggplot(N_all, aes(x = country, y = mean_biom, fill = feed)) +
+#   geom_boxplot() +
+#   facet_grid(cols = vars(measure)) +
+#   scale_fill_manual(values = feed_pal)
+```
+
+# Spatially
+
+```{r}
+#| label: fig-spatial-N-inputs
+#| fig-height: 12
+#| fig-cap: Total N inputs per unit biomass of salmon produced when farms are fed the MD feed (top), the PD feed (middle) or the NI feed (bottom).
+
+N_ins <- rbind(
+  find_read(data_analysis_path, "P_excr_farm_per_biom_summed"),
+  find_read(data_analysis_path, "P_uneat_farm_per_biom_summed")
+) %>% 
+  st_drop_geometry() %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  group_by(country, farm_ID, feed) %>% 
+  reframe(
+    mean_biom = sum(mean_biom) %>% set_units("kg t_fish-1") %>% drop_units(), 
+    sd_biom = sqrt(sum(sd_biom^2)) %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+  
+p_bigmap_robinson +
+  geom_sf(
+    data = N_ins, 
+    aes(colour = mean_biom, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 120, 10)) + 
+  guides(col = guide_colourbar(
+    title = expression("Total N inputs (kg/t salmon)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  facet_grid(rows = vars(feed)) +
+  # prettyplot() +
+  theme(strip.background = element_blank(), strip.text = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "bottom")
+```
+
+```{r}
+#| label: N-inputs-patchwork-map
+
+p_mercator <- p_bigmap_mercator +
+  geom_sf(
+    data = N_ins,
+    aes(colour = mean_biom, geometry = geometry), 
+    size = 2.5
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 120, 10)) + #, limits = c(-30, 10)
+  guides(col = guide_colourbar(
+    title = expression("Total N inputs (kg/t salmon)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  # facet_wrap(facets = vars(feed), nrow = 2, ncol = 2) +
+  prettyplot() +
+  theme(
+    # strip.background = element_blank(), strip.text = element_blank(),
+    legend.position = "bottom"
+  ) +
+  labs(y = "Latitude", x = "Longitude")
+
+ins <- get_insets_mercator(p_mercator)
+
+ins[[1]] + facet_grid(cols = vars(feed))
+ins[[2]] + facet_grid(rows = vars(feed))
+ins[[3]] + facet_grid(cols = vars(feed))
+ins[[4]] + facet_grid(cols = vars(feed))
+ins[[5]] + facet_grid(cols = vars(feed))
+```
+
+```{r}
+#| label: fig-spatial-N-inputs-change
+#| fig-height: 12
+#| fig-cap: Change in total N inputs per unit biomass of salmon produced when farms are fed the MD feed (top), or the NI feed (bottom) compared to when farms are fed the PD feed.
+
+N_ins_comp <- rbind(
+  find_read(data_analysis_path, "P_excr_farm_per_biom_summed"),
+  find_read(data_analysis_path, "P_uneat_farm_per_biom_summed")
+  ) %>% 
+  st_drop_geometry() %>% 
+  select(-sd_biom) %>% 
+  mutate(feed = factor(feed, levels = long_feeds, labels = short_feeds)) %>% 
+  pivot_wider(
+    names_from = feed,
+    values_from = mean_biom,
+    values_fn = drop_units
+  ) %>% 
+  group_by(country, farm_ID) %>% 
+  reframe(
+    PD = sum(PD),
+    MD = sum(MD), 
+    NI = sum(NI)
+  ) %>% 
+  mutate(MD = (MD-PD),
+         NI = (NI-PD)) %>% 
+  select(-PD) %>% 
+  pivot_longer(
+    names_to = "feed",
+    values_to = "diff",
+    cols = c(MD, NI)
+  ) %>% 
+  mutate(
+    feed = factor(feed, levels = short_feeds),
+    feed = droplevels(feed),
+    diff = diff %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
+  ) %>% 
+  merge(farm_locs, by = c("country", "farm_ID")) %>% 
+  st_as_sf()
+  
+p_bigmap_robinson +
+  geom_sf(
+    data = N_ins_comp, 
+    aes(colour = diff, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(10, 35, 5), limits = c(10,36)) + 
+  guides(col = guide_colourbar(
+    title = expression("Difference in N inputs (kg/t salmon)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  facet_grid(rows = vars(feed)) +
+  # prettyplot() +
+  theme(strip.background = element_blank(), strip.text = element_blank(),
+        axis.title = element_blank(),
+        legend.position = "bottom")
+```
+
+```{r}
+#| label: N-inputs-change-patchwork-map
+#| fig-cap: Change in total N inputs per unit biomass of salmon produced when farms are fed the MD feed (A), or the NI feed (B) compared to when farms are fed the PD feed.
+
+p_mercator <- p_bigmap_mercator +
+  geom_sf(
+    data = N_ins_comp,
+    aes(colour = diff, geometry = geometry), 
+    size = 2.5
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(10, 35, 5), limits = c(10,36)) + 
+  guides(col = guide_colourbar(
+    title = expression("Difference in N inputs (kg/t salmon)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  prettyplot() +
+  theme(
+    strip.background = element_blank(), strip.text = element_blank(),
+    legend.position = "bottom"
+  ) +
+  labs(y = "Latitude", x = "Longitude")
+
+facet_labels <- c(
+  "MD" = "A",
+  "NI" = "B"
+)
+
+ins <- get_insets_mercator(p_mercator)
+
+ins[[1]] + facet_grid(cols = vars(feed), labeller = as_labeller(facet_labels))
+ins[[2]] + facet_grid(rows = vars(feed), labeller = as_labeller(facet_labels))
+ins[[3]] + facet_grid(cols = vars(feed), labeller = as_labeller(facet_labels))
+ins[[4]] + facet_grid(cols = vars(feed), labeller = as_labeller(facet_labels))
+ins[[5]] + facet_grid(cols = vars(feed), labeller = as_labeller(facet_labels))
+```
+
+# Supplemental methods {#sec-supp-methods}
+
+```{r}
+#| label: location-data
+
+farm_locs <- find_read(output_farm_data_path, "geometry") %>% 
+  rename(farm_ID = farm_id)
+
+farm_mean_lat <- farm_locs %>%
+  st_centroid() %>%
+  mutate(latitude = st_coordinates(.)[, "Y"]) %>%
+  st_drop_geometry() %>%
+  group_by(country) %>%
+  summarise(mean_latitude = mean(latitude, na.rm = TRUE)) %>% 
+  arrange(-mean_latitude)
+
+countries <- farm_mean_lat$country
+countries[str_detect(countries, "United States of America")] <- "USA"
+countries[str_detect(countries, "United Kingdom")] <- "UK"
+countries[str_detect(countries, "Russian Federation")] <- "Russia"
+
+farm_locs <- farm_locs %>% 
+  mutate(country = factor(country, levels = farm_mean_lat$country, labels = countries))
+```
+
+## Population and biomass {#sec-population-biomass}
+
+```{r}
+#| label: raw biomass and weight data
+
+weight_cohort <- find_read(output_model_cohort_path, "weight_stat_all_farms")
+biomass_cohort <- find_read(output_model_cohort_path, "biomass_stat_all_farms")
+```
+
+```{r}
+#| label: fig-harvest-size
+#| fig-cap: |
+#|   Frequency distribution of harvest sizes used to create the population timeseries for each farm, as predicted by the fish-growth model. 
+
+harv_size <- find_read(output_farm_data_path, "farm_harvest_size")
+
+harv_size %>% 
+  mutate(weight = weight %>% set_units("g") %>% set_units("kg") %>% drop_units()) %>% 
+  select(c(farm_ID, weight)) %>% 
+  ggplot(aes(x = weight)) +
+  geom_histogram(binwidth = 0.25, colour = "black", fill = "salmon", alpha = 0.75) +
+  scale_y_continuous(limits = c(0,500)) +
+  scale_x_continuous(breaks = seq(0,7,0.5)) +
+  labs(y = "Frequency", x = "Harvest weight (kg)") +
+  prettyplot() +
+  theme(aspect.ratio = 0.75)
+```
+
+
+```{r}
+#| label: fig-cohorts
+#| fig-cap: | 
+#|   Example of how the overlapping cohorts combine into a single farm production curve (in this case biomass). The left plot shows the farm biomass produced by each cohort from initialisation to harvest, while the right plot shows the combined farm biomass over the course of a single production period of 548 days.
+
+farm_biomass <- find_read(output_model_farm_path, "biomass_stat") %>% 
+  filter(farm_ID == 722 & feed == "plant_dominant")
+
+cohort_biomass_split <- rbind(
+  farm_biomass %>% 
+    farm_to_cohort() %>% 
+    mutate(cohort = 1),
+  farm_biomass %>% 
+    farm_to_cohort(time_offset = 365) %>% 
+    mutate(cohort = 2),
+  farm_biomass %>% 
+    farm_to_cohort(time_offset = 730) %>% 
+    mutate(cohort = 3)
+) %>% 
+  mutate(split = 0) %>% 
+  relocate(farm_ID, .before = t) %>% 
+  relocate(feed, .before = t)
+
+cohort_biomass <- find_read(output_model_cohort_path, "biomass_stat") %>% 
+  filter(farm_ID == 722 & feed == "plant_dominant") %>% 
+  mutate(cohort = "all", split = 1)
+
+rbind(
+  cohort_biomass_split,
+  cohort_biomass
+  ) %>% 
+  mutate(
+    t = t-min(t)+1,
+    mean = mean %>% set_units("g") %>% set_units("t"),
+    sd = sd %>% set_units("g") %>% set_units("t")
+  ) %>% 
+  ggplot(aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = as.factor(cohort))) +
+  geom_line(linewidth = 0.75) +
+  geom_ribbon(linetype = "dotted", alpha = 0) +
+  facet_grid(cols = vars(split)) +
+  scale_x_continuous(breaks = seq(0, 1600, 120)) +
+  scale_colour_manual(values = cohort_pal) +
+  prettyplot() +
+  theme(strip.background = element_blank(), strip.text = element_blank()) +
+  labs(y = "Farm biomass", x = "Day of production")
+```
+
+```{r}
+#| label: pop-biom-data
+
+biomass_farm <- find_read(output_model_farm_path, "biomass_stat") %>% 
+  group_by(farm_ID, feed) %>% 
+  slice_max(t) %>% 
+  ungroup()
+
+production <- find_read(output_farm_data_path, "farm_static_data") %>% 
+  merge(biomass_farm, by = "farm_ID", all.x = F) %>% 
+  mutate(
+    mean = set_units(mean, "g"),
+    diff = set_units(mean - tonnes_per_farm, "t"),
+    perc_diff = diff/tonnes_per_farm
+  ) %>% 
+  group_by(country, feed) %>% 
+  reframe(
+    min_percdiff = min(perc_diff),
+    max_percdiff = max(perc_diff),
+    mean_percdiff = mean(perc_diff)
+  )
+```
+
+
+## Feed provision and feeding response to temperature {#sec-model-feeding}
+
+
+```{r}
+#| label: fig-functional-response-to-temperature
+#| fig-cap: Temperature changes in potential ingestion (solid line) and amount of food provided (dotted line), relative to maximum potential ingestion. The vertical dotted lines show the actual minimum and maximum daily temperatures experienced by farms represented in the model.
+
+Sys.setenv(TAR_PROJECT = "project_farmruns")
+farm_ts_data <- tar_read(farm_ts_data_chunked) %>% bind_rows()
+min_T <- min(farm_ts_data$temp_c)
+max_T <- max(farm_ts_data$temp_c)
+
+all_params <- c(
+  find_read(output_species_data_path, "species_params"),
+  find_read(output_species_data_path, "pop_params")
+)
+
+func_T_resp <- data.frame(water_temp = seq(-5, 26, 0.25))
+weight <- 1000
+
+# Relative feeding rate with temperature
+func_T_resp$feeding_rate <- sapply(
+  FUN = feeding_rate, 
+  X = func_T_resp$water_temp, 
+  species_params = all_params
+)
+
+# Maximum potential ingestion (g) at temperature
+func_T_resp$ing_pot <- all_params['meanImax'] * (weight^all_params['m']) * func_T_resp$feeding_rate
+
+# Food provided is based on calculated potential ingestion BUT if temperature is too low they are still provided with the food that would be required at lowest temperature (when feeding rate is ~18.3%)
+func_T_resp$food_prov <- food_prov_rate(
+  water_temp = func_T_resp$water_temp, 
+  ing_pot = func_T_resp$ing_pot,
+  ing_pot_min = all_params['meanImax'] * (weight^all_params['m']) * feeding_rate(all_params['Taa'], all_params),
+  species_params = all_params,
+  pop_params = all_params
+)
+
+func_T_resp$food_enc <- all_params['eff'] * func_T_resp$food_prov
+func_T_resp <- func_T_resp %>% 
+  mutate(ing_act = pmin(food_enc, ing_pot))
+
+max_ing <- max(func_T_resp$ing_act)
+
+func_T_resp %>% 
+  ggplot(aes(x = water_temp, y = ing_act/max_ing)) +
+  geom_line(linewidth = 0.75) +
+  geom_line(aes(y = food_prov/max_ing), linewidth = 0.75, linetype = "dotted") +
+  geom_vline(xintercept = min_T, linetype = "dotted") +
+  geom_vline(xintercept = max_T, linetype = "dotted") +
+  # scale_y_continuous(breaks = seq(0,1.5,0.25)) +
+  scale_x_continuous(breaks = seq(-5,30,5), limits = c(-5,26)) +
+  labs(x = expression("Water temperature ("*degree*"C)"), y = "Feedd ingested/provided") +
+  prettyplot()
+```
+
+```{r}
+#| label: patchwork-map-mercator
+#| eval: false
+#| fig-cap: |
+#|   Example of a patchwork
+#| fig-height: 9
+#| fig-width: 9.5
+
+p_bigmap_feeding <- p_bigmap_mercator +
+  geom_sf(data = feeding, aes(color = prop_feed_eaten, geometry = geometry), size = 2) +
+  scale_color_viridis_c(option = "turbo") +
+  guides(col = guide_colourbar(
+    title = "Proportion of provided feed eaten",
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top", 
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 2,
+    barwidth = 1.5, barheight = 20
+  )) +
+  prettyplot() +
+  labs(y = "Latitude", x = "Longitude")
+
+patchwork_mercator(p_bigmap_feeding)
+```
+
+## Modelled experimental feeds {#sec-feeds}
+
+```{r}
+#| label: feed-details
+
+feed_params <- find_read(output_species_data_path, "feed_params")
+
+feed_summary <- map_dfr(names(feed_params), function(feed) {
+  df <- feed_params[[feed]]
+  map_dfr(c("Proteins", "Lipids", "Carbohydrates"), function(macro) {
+    contrib <- df[[macro]]$proportion * df[[macro]]$macro
+    total <- sum(contrib)
+    digest <- sum(df[[macro]]$digest * contrib) / total
+        tibble(
+      feed = feed,
+      macro = macro,
+      total = total,
+      digest = digest
+    )
+  })
+}) %>%
+  mutate(macro = factor(macro, levels = c("Proteins", "Lipids", "Carbohydrates"), labels = c("P", "L", "C")),
+         feed = as.factor(feed),
+         total_r = total * 100 %>% round(1),
+         digest_r = digest * 100 %>% round(1))
+```
+
+## Model sensitivity to parameter changes {#sec-param-sensitivity}
+
+```{r}
+#| label: salmon-param-names
+
+params <- find_read(output_species_data_path, "sens_params")
+
+param_names <- tibble::tribble(
+  ~name,        ~lab,
+  "alpha",      bquote(alpha),
+  "epsprot",    bquote(epsilon["P"]),
+  "epslip",     bquote(epsilon["L"]),
+  "epscarb",    bquote(epsilon["C"]),
+  "epsO2",      bquote(epsilon["O"[2]]),
+  "pk",         bquote("pk"),
+  "k0",         bquote("k"[0]),
+  "m",          bquote("m"),
+  "n",          bquote("n"),
+  "betac",      bquote(beta*"C"),
+  "Tma",        bquote("T"["max"]),
+  "Toa",        bquote("T"["opt"]),
+  "Taa",        bquote("T"["min"]),
+  "omega",      bquote(omega),
+  "a",          bquote("a"),
+  "k",          bquote("k"),
+  "eff",        bquote("eff"),
+  "meanW",      bquote(bar("W")),
+  "deltaW",     bquote(Delta*"W"), 
+  "meanImax",   bquote(bar("I"["max"])),
+  "deltaImax",  bquote(Delta*"I"["max"]),
+  "overFmean",  bquote(bar("F")),
+  "overFdelta", bquote(Delta*"F"),
+  "mortmyt",    bquote("mort")
+)
+```
+
+```{r}
+#| label: fig-sensitivity-results
+#| fig-cap: Sensitivity of modelled individual fish weight (blue) and total farm excretion across a full production period (red) to a 10% increase in each model parameter. Bars show mean values, error bars show standard deviation between farms. 
+#| fig-width: 8
+
+sens_results <- find_read(output_sens_data_path, "sens_results") %>% 
+  filter(measure %in% c("total_excr", "weight") & adj_param != "nruns") %>% 
+  mutate(measure = droplevels(measure))
+
+sens_results %>% 
+  ggplot(aes(x = adj_param, y = mean_sens, ymin = mean_sens-sd_sens, ymax = mean_sens+sd_sens, fill = measure)) +
+  geom_col(position = position_dodge(), width = 0.95, alpha = 0.65, colour = "black") +
+  geom_errorbar(position = position_dodge(width = 0.95), width = 0.5) +
+  coord_flip() +
+  prettyplot() +
+  scale_x_discrete(breaks = param_names$name, labels = param_names$lab) +
+  scale_y_continuous(breaks = seq(-10, 30, 5)) +
+  scale_fill_brewer(palette = "Set1") +
+  labs(y = "Sensitivity", x = "Adjusted parameter")
+```
+
+# Code and packages used {#sec-code}
+
+```{r not-in-use-cite}
+# All analysis was conducted in R version `r R.version[['major']]`.`r R.version[['minor']]` "`r R.version[['nickname']]`" [@R_base]. 
+# Major packages used include `r cite_packages(packages)`.
+
+# For a full list of R packages used see the lockfile on [Github](https://www.github.com).
+# This manuscript was written in Quarto [@quarto] using TinyTex [@tinytex] and the acronyms extension [@acronyms]. 
+```
