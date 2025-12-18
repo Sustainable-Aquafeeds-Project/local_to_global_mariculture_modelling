@@ -8,11 +8,11 @@ suppressPackageStartupMessages(suppressWarnings({
 tar_option_set(
   format = "qs", 
   controller = crew::crew_controller_local(
-    workers = parallelly::availableCores()-1, 
+    workers = 12, 
     seconds_idle = 120
     ),
   workspace_on_error = TRUE,
-  garbage_collection = 10
+  garbage_collection = 20
 )
 
 tar_source(
@@ -30,7 +30,7 @@ output_farm_data_path <- file.path(output_path, "farm_data")
 # Globals
 farm_chunk_size <- 20
 inds_per_farm <- 1000
-farm_sample <- 2720 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
+farm_sample <- 500 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
 reference_feed_name <- "marine_dominant_biomar"
 
 list(
@@ -346,6 +346,7 @@ list(
       )
     },
     pattern = farm_run_chunked,
-    iteration = "list"
+    iteration = "list",
+    deployment = "main"
   )
 )
