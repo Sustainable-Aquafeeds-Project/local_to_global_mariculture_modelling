@@ -93,28 +93,42 @@ biomass       | g | Mean weight of all fish within a farm (i.e. weight * populat
 # Look at raw outputs
 
 ```{r raw-outputs}
-total_ends <- qread(file.path(output_model_farm_path, "total_ends.qs")) %>% 
+total_ends <- file.path(output_model_farm_path, "total_ends.qs") %>% 
+  qread() %>% 
   mutate(
-    feed_group = as.factor(str_remove(feed, "_min|_max")),
+    feed_group = factor(
+      str_remove(feed, "_min|_max"), 
+      levels = long_feeds,
+      labels = short_feeds
+      ),
     feed_type = case_when(
       str_detect(feed, "_min") ~ "min",
       str_detect(feed, "_max") ~ "max",
       T ~ "mean"
-    ) %>% as.factor(),
+      ) %>% as.factor(),
     mean = set_units(mean, "g"),
     sd = set_units(sd, "g"),
-    mean_biomass = set_units(mean, "g g_fish-1"),
-    sd_biomass = set_units(sd, "g g_fish-1")
+    mean_biomass = set_units(mean_biomass, "g g_fish-1"),
+    sd_biomass = set_units(sd_biomass, "g g_fish-1")
   )
 
-cohort_results <- qread(file.path(output_model_cohort_path, "cohort_results.qs")) %>% 
+cohort_results <- file.path(output_model_cohort_path, "cohort_results.qs") %>% 
+  qread() %>% 
   mutate(
-    feed_group = as.factor(str_remove(feed, "_min|_max")),
+    feed_group = factor(
+      str_remove(feed, "_min|_max"), 
+      levels = long_feeds,
+      labels = short_feeds
+      ),
     feed_type = case_when(
       str_detect(feed, "_min") ~ "min",
       str_detect(feed, "_max") ~ "max",
       T ~ "mean"
-    ) %>% as.factor()
+      ) %>% as.factor(),
+    mean = set_units(mean, "g"),
+    sd = set_units(sd, "g"),
+    mean_biomass = set_units(mean_biomass, "g g_fish-1"),
+    sd_biomass = set_units(sd_biomass, "g g_fish-1")
   )
 ```
 

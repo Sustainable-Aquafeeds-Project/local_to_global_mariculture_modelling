@@ -26,19 +26,16 @@ prettyplot_600 <- function() {
     )
 }
 
-long_feeds <- c("marine_dominant_biomar", "plant_dominant", "novel_inclusive")
-short_feeds <- c("MD", "PD", "NI")
+long_feeds <- c("marine_dominant_biomar", "animal_inclusive_biomar", "novel_inclusive_biomar")
+short_feeds <- c("MD", "AI", "NI")
 
 feed_pal <- c(
-  "past" = "#E41A1C", 
-  "reference" = "#377EB8", 
-  "future" = "#4DAF4A",
-  "plant_dominant" = "#4DAF4A",
-  "marine_dominant" = "#377EB8",
-  "novel_inclusive" = "#E41A1C",
-  "PD" = "#4DAF4A",
+  "NI" = "#4DAF4A",
   "MD" = "#377EB8",
-  "NI" = "#E41A1C"
+  "AI" = "#E41A1C",
+  "novel_inclusive_biomar" = "#4DAF4A",
+  "marine_dominant_biomar" = "#377EB8",
+  "animal_inclusive_biomar" = "#E41A1C"
 )
 cohort_pal <- c("1" = "#E41A1C", "2" = "#377EB8", "3" = "#4DAF4A", "all" = "black")
 macro_pal <- c(

@@ -145,3 +145,97 @@ feed_params <- purrr::map(feed_types, function(ft) {
 
 qsave(feed_params, file.path(output_species_data_path, "feed_params.qs"))
 ```
+
+# Comparing feeds
+
+The three "biomar" feeds were designed to be isoenergetic.
+
+```{r feed-stats}
+#| code-summary: Calculate some stats about the feeds
+
+feed_stats <- feed_inputs %>% 
+  select(-contains(c("max", "min"))) %>% 
+  mutate(
+    ing_protein = proportion * protein,
+    ing_carb = proportion * carb,
+    ing_lipid = proportion * lipid,
+    digest_protein = ing_protein * protein_digestibility,
+    digest_carb = ing_carb * carb_digestibility,
+    digest_lipid = ing_lipid * lipid_digestibility,
+    E_protein = digest_protein * 17,
+    E_carb = digest_carb * 16.8,
+    E_lipid = digest_lipid * 37.6
+  ) %>% 
+  group_by(feed) %>% 
+  reframe(
+    total_protein = sum(ing_protein),
+    total_carb = sum(ing_carb),
+    total_lipid = sum(ing_lipid),
+    AD_protein = sum(digest_protein),
+    AD_carb = sum(digest_carb),
+    AD_lipid = sum(digest_lipid),
+    E_protein = sum(E_protein),
+    E_carb = sum(E_carb),
+    E_lipid = sum(E_lipid)
+    ) %>% 
+  mutate(
+    E = E_protein + E_carb + E_lipid,
+    group = case_when(str_detect(feed, "biomar") ~ "biomar", T ~ "other")
+  ) %>% 
+  relocate(group, .before = "feed") %>% 
+  arrange(group)
+
+feed_stats %>% 
+  select(group, feed, E)
+```
+
+```{r feed-macro-digestibility}
+#| code-summary: Code to generate plot
+#| fig-cap: Total protein, carbohydrate and lipid composition of each feed, with the undigestible portion shown as the lighter bars on top. 
+
+merge(
+  feed_stats %>% 
+    select(feed, group, contains("total_")) %>% 
+    pivot_longer(
+      cols = contains("total"),
+      names_to = "macro", names_prefix = "total_",
+      values_to = "total"
+    ),
+  feed_stats %>% 
+    select(feed, group, contains("AD_")) %>% 
+    pivot_longer(
+      cols = contains("AD"),
+      names_to = "macro", names_prefix = "AD_",
+      values_to = "AD"
+    ),
+  by = c("feed", "group", "macro")
+  ) %>% 
+  mutate(feed = as.factor(feed)) %>%   
+  ggplot(aes(x = macro, fill = feed)) +
+  geom_col(aes(y = total), position = position_dodge(), alpha = 0.5, colour = "black") +
+  geom_col(aes(y = AD), position = position_dodge(), alpha = 0.75, colour = "black") +
+  theme_classic() +
+  facet_wrap(facets = vars(group))
+```
+
+```{r feed-energy}
+#| code-summary: Code to generate plot
+#| fig-cap: The proportion of energy derived from protein, carbohydrate and lipid within each feed.
+
+feed_stats %>% 
+  mutate(
+    E_protein = E_protein/E,
+    E_carb = E_carb/E,
+    E_lipid = E_lipid/E
+  ) %>% 
+  select(feed, group, contains("E_")) %>% 
+  pivot_longer(
+    cols = contains("E_"),
+    names_to = "macro", names_prefix = "E_",
+    values_to = "value"
+  ) %>% 
+  ggplot(aes(x = macro, y = value, fill = feed)) +
+  geom_col(position = position_dodge(), colour = "black") +
+  theme_classic() +
+  facet_wrap(facets = vars(group))
+```

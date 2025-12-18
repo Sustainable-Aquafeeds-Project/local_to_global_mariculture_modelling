@@ -119,40 +119,6 @@ farm_locs <- farm_locs %>%
       levels = countries_long,
       labels = countries_short
     ))
-  
-long_feeds <- c("marine_dominant", "plant_dominant", "novel_inclusive")
-short_feeds <- c("MD", "PD", "NI")
-
-feed_pal <- c(
-  "past" = "#E41A1C", 
-  "reference" = "#377EB8", 
-  "future" = "#4DAF4A",
-  "plant_dominant" = "#4DAF4A",
-  "marine_dominant" = "#377EB8",
-  "novel_inclusive" = "#E41A1C",
-  "PD" = "#4DAF4A",
-  "MD" = "#377EB8",
-  "NI" = "#E41A1C"
-)
-cohort_pal <- c("1" = "#E41A1C", "2" = "#377EB8", "3" = "#4DAF4A", "all" = "black")
-macro_pal <- c(
-  "protein" = "darkred", 
-  "P" = "darkred", 
-  "carbohydrates" = "steelblue", 
-  "C" = "steelblue", 
-  "lipids" = "darkgoldenrod1", 
-  "L" = "darkgoldenrod1"
-)
-
-prettyplot <- function() {
-  theme_classic() +
-    theme(
-      text = element_text(family = "serif", size = 14, colour = "black"),
-      legend.position = "none",
-      axis.title.y = element_text(margin = margin(r = 5)),
-      axis.title.x = element_text(margin = margin(t = 5))
-    )
-}
 ```
 
 # Results {#sec-results}
