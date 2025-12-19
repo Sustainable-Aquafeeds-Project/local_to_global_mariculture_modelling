@@ -31,6 +31,11 @@ find_read <- function(path, pattern){
   }
 }
 
+split_df <- function(df, n_rows) {
+  groups <- rep(1:ceiling(nrow(df) / n_rows), each = n_rows, length.out = nrow(df))
+  split(df, groups)
+}
+
 cite_pack <- function(package_name) {
   version <- packageVersion(package_name)
   paste0("package `", package_name, "`, version ", version, " [@", package_name, "]")

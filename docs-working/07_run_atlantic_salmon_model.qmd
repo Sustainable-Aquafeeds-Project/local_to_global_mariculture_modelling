@@ -306,15 +306,20 @@ Load objects from the targets pipeline and save them as .qs files, which are muc
 ```{r all-farms-cohorts-results}
 #| code-summary: Save pipeline objects as files
 
-Sys.setenv(TAR_PROJECT = "project_farmruns")
-farm_IDs_chunked <- tar_read(farm_IDs_chunked, script = farm_script, store = farm_store) %>% unname() %>% unlist()
-tar_load(feed_names, script = farm_script, store = farm_store)
+# Sys.setenv(TAR_PROJECT = "project_farmruns")
 
-tar_load(farm_full_results, script = farm_script, store = farm_store)
+tar_load(
+  farm_full_results,
+  store = farm_store
+)
+
 total_ends <- bind_rows(lapply(farm_full_results, `[[`, "total_ends"))
-cohort_results <- bind_rows(lapply(farm_full_results, `[[`, "cohort_results_daily"))
+cohort_results <- bind_rows(lapply(farm_full_results, `[[`, "cohort_results_daily")) %>% 
+  mutate(t = as.integer(t), prod_t = as.integer(prod_t))
 
-qsave(total_ends, file.path(output_model_farm_path, "total_ends.qs"))
-qsave(cohort_results, file.path(output_model_cohort_path, "cohort_results.qs"))
-rm(farm_full_results)
+qsave(total_ends, file.path(output_path, "total_ends.qs"))
+qsave(cohort_results, file.path(output_path, "cohort_results.qs"))
+
+rm(farm_full_results, total_ends, cohort_results)
+gc()
 ```

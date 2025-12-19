@@ -30,7 +30,7 @@ output_farm_data_path <- file.path(output_path, "farm_data")
 # Globals
 farm_chunk_size <- 20
 inds_per_farm <- 1000
-farm_sample <- 500 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
+farm_sample <- 1000 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
 reference_feed_name <- "marine_dominant_biomar"
 
 list(
