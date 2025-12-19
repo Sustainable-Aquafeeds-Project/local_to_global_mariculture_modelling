@@ -4,10 +4,10 @@ project:
   output-dir: docs-rendered
   render:
     - index.qmd
-    # - docs-working/01_tidying_data.qmd
-    # - docs-working/02_extracting_production_locations.qmd
-    # - docs-working/03_assessing_species_potential.qmd
-    # - docs-working/04_extracting_temperatures.qmd
+    - docs-working/01_tidying_data.qmd
+    - docs-working/02_extracting_production_locations.qmd
+    - docs-working/03_assessing_species_potential.qmd
+    - docs-working/04_extracting_temperatures.qmd
     - docs-working/05_formulating_feeds.qmd
     - docs-working/06_how_many_runs_per_farm.qmd
     # - docs-working/07_run_atlantic_salmon_model.qmd

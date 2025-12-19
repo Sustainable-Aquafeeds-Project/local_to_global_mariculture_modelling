@@ -2,7 +2,8 @@
 title: "Assessing species potential"
 author: Richard Cottrell
 date: today
-editor: source
+execute:
+  eval: false
 ---
 
 Set up
@@ -13,16 +14,16 @@ library(here)
 library(janitor)
 library(countrycode)
 library(rnaturalearth)
-library(purrr)
 
-here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
 ```
 
 Pull in FAO data for aquaculture production.
 
 ```{r}
-aquaculture_raw <- read_csv(file.path(rdsi_dir, "raw_data/fao/FAO_fishstat_2020/global_aquaculture_production_1950_2020.csv"))
-
+aquaculture_raw <- read_csv(file.path(bigdata_path, "fao/FAO_fishstat_2020/global_aquaculture_production_1950_2020.csv"))
 
 (aquaculture_prod <- 
   aquaculture_raw |> 

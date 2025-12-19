@@ -2,7 +2,8 @@
 title: "Extracting salmon farm temperature data"
 author: Tormey Reimer
 date: today
-editor: source
+execute:
+  eval: false
 ---
 
 # Introduction
@@ -20,18 +21,12 @@ The purpose of this markdown is to extract daily temperature timeseries from SST
 ```{r setup, include=F, cache=F}
 #| code-summary: R setup
 
-library(magrittr)
-library(dplyr)
-library(tidyr)
-library(stringr)
-library(ggplot2)
+library(tidyverse)
 library(terra)
 library(qs)
 library(here)
 library(sf)
-library(purrr)
 library(furrr)
-library(targets)
 library(future)
 library(arrow)
 library(readxl)
@@ -40,7 +35,9 @@ library(tictoc)
 library(conflicted)
 conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
 
-here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
 ```
 
 # Farm locations

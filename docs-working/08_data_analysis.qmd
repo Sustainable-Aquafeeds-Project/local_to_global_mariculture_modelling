@@ -43,7 +43,7 @@ install_unit("t_fish", "1000 kg_fish")
 
 It becomes necessary at this point to explicitly declare the units of some outputs, and make clear whether they refer to individual fish within a farm (mean across nruns) or the whole farm (individual fish x population).
 
-| Stat name | Unit | Description | Level |
+| Stat name | Unit | Description |
 |-------|-----|------------------------------------|
 weight        | g | Mean weight of an individual fish within a farm | Individual |
 dw            | g | Mean daily weight change per individual within a farm | Individual |

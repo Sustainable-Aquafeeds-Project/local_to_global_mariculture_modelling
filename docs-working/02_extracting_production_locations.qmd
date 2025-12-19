@@ -2,7 +2,8 @@
 title: "Extracting production locations for each species to obtain environmental forcings"
 author: Richard Cottrell
 date: today
-editor: source
+execute:
+  eval: false
 ---
 
 ## Set up
@@ -22,7 +23,9 @@ library(readr)
 library(ggplot2)
 library(purrr)
 
-here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
 ```
 
 # Get production data
@@ -130,7 +133,10 @@ farms_sf <- qread(file = "data/_general_data/farm_locations/locations.qs") %>%
   group_by(row_num) %>% 
   group_split()
 
-FAO_shp <- read_sf(file.path(rdsi_dir, "raw_data/fao/FAO_AREAS_CWP_NOCOASTLINE")) %>% filter(F_LEVEL == "MAJOR") %>% select(F_CODE)
+FAO_shp <- file.path(bigdata_path, "fao/FAO_AREAS_CWP_NOCOASTLINE") %>% 
+  read_sf() %>% 
+  filter(F_LEVEL == "MAJOR") %>% 
+  select(F_CODE)
 
 #test function
 #this_farm <- farms_sf[[1]]
@@ -258,10 +264,6 @@ this_country_region <- farm_list[[4]]
 
 }) %>% filter(!production_fishing_areas == "")
 )
-
-
-
-
 ```
 
 Assign species to individual farms
@@ -272,10 +274,7 @@ farm_list <-
   group_by(iso3c, country, species_group, F_CODE) %>% 
   group_split()
 
-
-map_spp_to_locations_list <- 
-  
-  map(.x = farm_list, .f = \(this_country_region){
+map_spp_to_locations_list <- map(.x = farm_list, .f = \(this_country_region){
   
   this_iso3c <- this_country_region$iso3c %>% unique()
   this_fao_code <- this_country_region$F_CODE %>% unique()
@@ -312,10 +311,7 @@ map_spp_to_locations_list <-
      return(this_spp_locations)
     
   })
-  
   return(farm_locations_w_model_spp)
-  
-  
 })
 
 map_spp_to_locations <- bind_rows(lapply(map_spp_to_locations_list, FUN = function(element) if(nrow(element) == 0) NULL else element)) #removes the NULL record returns
@@ -326,13 +322,9 @@ qsave(x = map_spp_to_locations, file = here("data/_general_data/farm_locations/l
 Stocking densities from the tonnage per farm and harvest size.
 
 ```{r}
-
 farms_w_species <- qread("data/_general_data/farm_locations/locations_w_species_fao_area.qs") 
-
 harvest_sizes <- read_csv("data/_general_data/harvest_sizes/all_harvest_sizes.csv") %>% select(-harvest_size_g)
-
 production_cycle <- read_csv("data/_general_data/production_cycles/production_cycle.csv") %>% select(species, days)
-
 mortality_rates <- read_csv("data/_general_data/mortality_rates/all_mortality_rates.csv")
 
 farms_w_stocking <- 
@@ -345,7 +337,6 @@ farms_w_stocking <-
   
 
 qsave(x = farms_w_stocking, file =  "data/_general_data/farm_locations/locations_w_species_fao_area_stocking.qs")
-
 ```
 
 # From Rich

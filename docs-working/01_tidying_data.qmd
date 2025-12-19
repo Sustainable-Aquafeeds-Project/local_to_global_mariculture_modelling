@@ -11,10 +11,10 @@ library(tidyverse)
 library(here)
 library(terra)
 library(qs)
-library(magrittr)
-library(purrr)
 
-here("src") %>% list.files(pattern = "\\.R$", full.names = TRUE) %>% walk(source)
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
 ```
 
 ```{r globals}
@@ -29,7 +29,7 @@ here("src/spatial_templates.R") %>% source()
 Pull in mariculture locations data from Clawson et al (2022) and save the species groups of interest.
 
 ```{r locations}
-farm_locations <- file.path(rdsi_dir, "raw_data/aquaculture-locations/all_marine_aquaculture_farms_sources_final.csv") %>% 
+farm_locations <- file.path(bigdata_path, "all_marine_aquaculture_farms_sources_final.csv") %>% 
   read.csv() %>% 
   filter(species_group %in% c("Salmonidae fish", "General marine fish"))
 
@@ -39,15 +39,14 @@ qsave(farm_locations, "data/_general_data/farm_locations/locations.qs")
 Daily SST data from NASA - GHRSST Level 4 MUR 0.25deg Global Foundation Sea Surface Temperature Analysis
 
 ```{r}
-nasa_dir <- "/mnt/rdsi/raw_data/NASA/GHRSST_L4_MUR_0.25_SST/"
-
 #rename the NASA files 
 #SST_files <- list.files(file.path(rdsi_dir, "raw_data/NASA/GHRSST_L4_MUR_0.25_SST"), full.names = FALSE, pattern = ".nc")
 # map(SST_files, \(this_file){
 #   file.rename(from = file.path(nasa_dir, this_file), to = file.path(nasa_dir, sub('^(.{4})(.*)$', '\\1_\\2',  this_file)))
 # })
 
-SST_files <- list.files(file.path(rdsi_dir, "raw_data/NASA/GHRSST_L4_MUR_0.25_SST"), full.names = TRUE, pattern = ".nc")
+SST_files <- file.path(bigdata_path, "NASA/GHRSST_L4_MUR_0.25_SST") %>% 
+  list.files(full.names = TRUE, pattern = ".nc")
 
 # this_file <- SST_files[[1]]
 # this_year=2013
@@ -95,20 +94,24 @@ map(.x = raw_SST_files, .f = \(this_file){
 Pull in spp vulnerability to eutrophication data - save to salmon folder
 
 ```{r}
-vuln_scores <- read.csv(file.path(rdsi_data_dir, "marine_spp_vulnerabilities/butt_spp_vuln_framework-publication/_output/vuln_gapfilled_score.csv")) %>% 
+vuln_scores <- file.path(bigdata_path, "butt_spp_vuln_framework-publication/_output/vuln_gapfilled_score.csv") %>% 
+  read.csv() %>% 
   select(vuln_gf_id, eutrophication_nutrient_pollution)
 
-vuln_sd <- read.csv(file.path(rdsi_data_dir, "marine_spp_vulnerabilities/butt_spp_vuln_framework-publication/_output/vuln_gapfilled_sd.csv")) %>% 
-  select(vuln_gf_id, eutrophication_nutrient_pollution) %>% rename(sd=eutrophication_nutrient_pollution)
+vuln_sd <- file.path(bigdata_path, "butt_spp_vuln_framework-publication/_output/vuln_gapfilled_sd.csv") %>% 
+  read.csv() %>% 
+  select(vuln_gf_id, eutrophication_nutrient_pollution) %>% 
+  rename(sd = eutrophication_nutrient_pollution)
 
-vuln_tx <- read.csv(file.path(rdsi_data_dir, "marine_spp_vulnerabilities/butt_spp_vuln_framework-publication/_output/vuln_gapfilled_tx.csv"))
+vuln_tx <- file.path(bigdata_path, "butt_spp_vuln_framework-publication/_output/vuln_gapfilled_tx.csv") %>% 
+  read.csv()
 
 full_vuln_df <- 
   vuln_scores %>% 
   left_join(vuln_sd) %>% 
   left_join(vuln_tx)
 
-qsave(x = full_vuln_df, file = here("data/_general_data/species_layers/vulnerabilities/marine_spp_vulnerabilities_eutrophication.qs"))
+qsave(full_vuln_df, here("data/_general_data/species_layers/vulnerabilities/marine_spp_vulnerabilities_eutrophication.qs"))
 ```
 
 Pull in spp distribution data from Aquamaps
