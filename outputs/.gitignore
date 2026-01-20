@@ -3,3 +3,6 @@ farm_data/farm_circles*
 farm_data/farm_ts_data*
 
 sensitivity_data/res*
+
+data_analysis/*
+*.qs

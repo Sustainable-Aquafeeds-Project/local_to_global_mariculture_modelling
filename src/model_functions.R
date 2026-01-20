@@ -188,34 +188,39 @@ farm_growth <- function(pop_params, species_params, feed_params, water_temp, tim
     ) %>% unname()
   })
   
-  stat_names <- c("days", "weight", "dw", "water_temp", "T_response", "P_excr", "L_excr", "C_excr", "P_uneat", 
-                  "L_uneat", "C_uneat", "food_prov", "food_enc", "rel_feeding", "ing_pot", "ing_act", "E_assim", 
-                  "E_somat", "anab", "catab", "O2", "NH4")
+  stat_names <- c("days", "weight", "dw", "water_temp", "T_response", "P_excr", "L_excr", "C_excr", "P_uneat", "L_uneat", "C_uneat", "food_prov", "food_enc", "rel_feeding", "ing_pot", "ing_act", "E_assim", "E_somat", "anab", "catab", "O2", "NH4")
 
-  # Consolidate all individuals into a farm (with population = nruns)
+  # Consolidate all individuals into a farm (with population = nruns) - individuals are rows, timesteps are columns
   all_results <- lapply(1:length(stat_names), function(col_idx) {
-    t(sapply(mc_results, function(mat_idx) {
-      mat_idx[, col_idx]
-    }))
-  }) %>% setNames(stat_names)
+    t(
+      sapply(mc_results, function(mat_idx) {
+        mat_idx[, col_idx]
+      })
+    )
+  }) %>% 
+    setNames(stat_names)
   
   # Some stats need to be summed/added
   all_results[["total_excr"]] <- all_results[["P_excr"]] + all_results[["L_excr"]] + all_results[["C_excr"]]
   all_results[["total_uneat"]] <- all_results[["P_uneat"]] + all_results[["L_uneat"]] + all_results[["C_uneat"]]
   all_results[["metab"]] <- all_results[["anab"]] - all_results[["catab"]]
-  all_results[["biomass"]] <- all_results[["weight"]]
+  all_results[["biomass"]] <- all_results[["weight"]] # weight is individual weight, biomass will be farm biomass
   
+  # Average across individuals to get mean and sd for the whole farm
   all_results <- lapply(2:length(all_results), function(col_idx) {
-      cbind(colMeans(all_results[[col_idx]]), matrixStats::colSds(all_results[[col_idx]])) %>% 
+    cbind(
+      colMeans(all_results[[col_idx]]), 
+      matrixStats::colSds(all_results[[col_idx]])
+    ) %>% 
       as.matrix() %>% unname()
-  }) %>% setNames(names(all_results)[2:length(names(all_results))])
+  }) %>% 
+    setNames(names(all_results)[2:length(names(all_results))])
 
-  # Some stats should be multiplied by the farm population (Npop)
-  pop_names <- c("biomass", "P_excr", "L_excr", "C_excr", "P_uneat", "L_uneat", "C_uneat", "ing_act", 
-                 "total_excr", "total_uneat", "O2", "NH4", "food_prov")
+  # Some stats need to be multiplied by the farm population (Npop)
+  pop_names <- c("biomass", "dw", "P_excr", "L_excr", "C_excr", "P_uneat", "L_uneat", "C_uneat", "ing_act", "total_excr", "total_uneat", "O2", "NH4", "food_prov")
   for (stat_nm in pop_names) {
     all_results[[stat_nm]][,1] <- all_results[[stat_nm]][,1] * N_pop[1:length(days)]
-    all_results[[stat_nm]][,2] <- all_results[[stat_nm]][,2] * N_pop[1:length(days)]
+    all_results[[stat_nm]][,2] <- all_results[[stat_nm]][,2] * sqrt(N_pop[1:length(days)])
   }
   
   out_list <- lapply(1:length(all_results), function(col_idx) {
@@ -272,12 +277,12 @@ uni_farm_growth <- function(pop_params, species_params, feed_params, water_temp,
 
 farm_to_cohort <- function(df, time_offset = 0) {
   df %>% 
-    mutate(t = t + time_offset)
+    mutate(t = as.integer(t + time_offset))
 }
 
 farm_to_cohort_2 <- function(df, time_offset = 0) {
   df %>% 
-    mutate(prod_t = prod_t + time_offset)
+    mutate(prod_t = as.integer(prod_t + time_offset))
 }
 
 # Process each time period (current, +365 days, +730 days)

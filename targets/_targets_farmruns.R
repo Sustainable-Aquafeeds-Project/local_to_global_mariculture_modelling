@@ -8,7 +8,7 @@ suppressPackageStartupMessages(suppressWarnings({
 tar_option_set(
   format = "qs", 
   controller = crew::crew_controller_local(
-    workers = 12, 
+    workers = 16, 
     seconds_idle = 120
     ),
   workspace_on_error = TRUE,
@@ -17,9 +17,9 @@ tar_option_set(
 
 tar_source(
   files = c(
-    "/home/treimer/local_to_global_mariculture_modelling/src/dirs.R",
-    "/home/treimer/local_to_global_mariculture_modelling/src/functions.R",
-    "/home/treimer/local_to_global_mariculture_modelling/src/model_functions.R"
+    here::here("src/dirs.R"),
+    here::here("src/functions.R"),
+    here::here("src/model_functions.R")
   )
 )
 
@@ -30,7 +30,7 @@ output_farm_data_path <- file.path(output_path, "farm_data")
 # Globals
 farm_chunk_size <- 20
 inds_per_farm <- 1000
-farm_sample <- 1000 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
+farm_sample <- 2720 # For only runing a subset of farms (multiples of farm_chunk_size, maximum 2720)
 reference_feed_name <- "marine_dominant_biomar"
 
 list(
@@ -74,49 +74,7 @@ list(
 
   tar_target(
     feed_params,
-    command = {
-      list(
-        "marine_dominant_biomar" = qread(feed_params_file)[["marine_dominant_biomar"]],
-        "marine_dominant_biomar_min" = qread(feed_params_file)[["marine_dominant_biomar"]] %>% 
-          lapply(function(el) {
-            el %>% 
-              mutate(digest = min_digest) %>% 
-              select(ingredient, proportion, macro, digest)
-          }),
-        "marine_dominant_biomar_max" = qread(feed_params_file)[["marine_dominant_biomar"]] %>% 
-          lapply(function(el) {
-            el %>% 
-              mutate(digest = max_digest) %>% 
-              select(ingredient, proportion, macro, digest)
-          }),
-        "animal_inclusive_biomar" = qread(feed_params_file)[["animal_inclusive_biomar"]],
-        "animal_inclusive_biomar_min" = qread(feed_params_file)[["animal_inclusive_biomar"]] %>% 
-          lapply(function(el) {
-            el %>% 
-              mutate(digest = min_digest) %>% 
-              select(ingredient, proportion, macro, digest)
-          }),
-        "animal_inclusive_biomar_max" = qread(feed_params_file)[["animal_inclusive_biomar"]] %>% 
-          lapply(function(el) {
-            el %>% 
-              mutate(digest = max_digest) %>% 
-              select(ingredient, proportion, macro, digest)
-          }),
-        "novel_inclusive_biomar" = qread(feed_params_file)[["novel_inclusive_biomar"]],
-        "novel_inclusive_biomar_min" = qread(feed_params_file)[["novel_inclusive_biomar"]] %>% 
-          lapply(function(el) {
-            el %>% 
-              mutate(digest = min_digest) %>% 
-              select(ingredient, proportion, macro, digest)
-          }),
-        "novel_inclusive_biomar_max" = qread(feed_params_file)[["novel_inclusive_biomar"]] %>% 
-          lapply(function(el) {
-            el %>% 
-              mutate(digest = max_digest) %>% 
-              select(ingredient, proportion, macro, digest)
-          })
-      )
-    }
+    command = qread(feed_params_file)
   ),
 
   tar_target(
@@ -266,87 +224,116 @@ list(
 
 # Process results ------------------------------------------------------------------------------------------------------
   tar_target(
-    farm_full_results,
+    farm_results,
     command = {
       # error == T
-      farm_results <- farm_run_chunked %>% 
-        mutate(prod_t = t-min(t)+1)
+      farm_results <- split(farm_run_chunked, farm_run_chunked$farm_ID) %>% 
+        lapply(function(farm_df) {
+          farm_df %>% 
+            mutate(prod_t = as.integer(t-min(t)+1))
 
-      # Get biomass only (is already cumulative)
-      biomass <- farm_results %>% 
-          filter(measure == "biomass_stat" & t == max(t)) %>% 
-          select(-t, -prod_t)
-      
-      total_ends <- rbind(
-        biomass, 
-        # These stats are daily, need to accumulate
-        farm_results %>% 
-          filter(measure %in% c("food_prov_stat", "total_uneat_stat", "total_excr_stat", "L_excr_stat", "L_uneat_stat", "P_excr_stat", "P_uneat_stat", "C_excr_stat", "C_uneat_stat")) %>% 
-          group_by(farm_ID, feed, measure) %>% 
-          reframe(
-            mean = sum(mean),
-            sd = sqrt(sumna(sd^2))
-          )
-      ) %>% 
-        mutate(measure = droplevels(measure))
+          # Get biomass only (is already cumulative)
+          biomass <- farm_df %>% 
+            filter(measure == "biomass_stat" & t == max(t)) %>% 
+            select(-t)
 
-      # Calculate everything per biomass as well
-      total_ends <- merge(
-        total_ends,
-        total_ends %>% filter(measure == "biomass_stat") %>% select(-measure),
-        by = c("farm_ID", "feed")
-        ) %>% 
-        rename(
-          mean = mean.x, sd = sd.x,
-          mean_biomass = mean.y, sd_biomass = sd.y
-        ) %>% 
-        mutate(
-          mean_per_biom = mean/mean_biomass,
-          sd_per_biom = (mean/mean_biomass) * sqrt((sd_biomass/mean_biomass)^2 + (sd/mean)^2)
-        )
-
-      # Calculate stats based on daily values across cohorts
-      cohort_results_daily <- farm_results %>% 
-        filter(prod_t != max(prod_t) & !measure %in% c("anab_stat", "catab_stat", "dw_stat", "E_assim_stat", "E_somat_stat", "food_enc_stat", "ing_act_stat", "ing_pot_stat", "metab_stat", "NH4_stat", "O2_stat", "rel_feeding_stat", "T_response_stat", "water_temp_stat", "weight_stat")) %>% 
-        mutate(measure = droplevels(measure))
-      cohort_results_daily <- split(cohort_results_daily, cohort_results_daily$farm_ID)
-      cohort_results_daily <- purrr::map(cohort_results_daily, function(crd) {
-        cohort_1 <- farm_to_cohort(crd, time_offset = 0)
-        cohort_2 <- farm_to_cohort(crd, time_offset = 365)
-        cohort_3 <- farm_to_cohort(crd, time_offset = 730)
-        lims <- min(cohort_2$t):(min(cohort_2$t)+365*2) # Two years after start of cohort 2
-        rbind(cohort_1, cohort_2, cohort_3) %>% 
-          filter(t %in% lims) %>% 
-          group_by(farm_ID, feed, measure, t) %>%
-          reframe(
-            mean = sumna(mean),
-            sd = sqrt(sumna(sd^2))
-          ) %>% 
-          mutate(prod_t = t-min(lims)+1)
-      }) %>% 
+          # These stats are daily, need to accumulate
+          full_df <- farm_df %>% 
+            filter(measure %in% c("dw_stat", "food_prov_stat", "total_uneat_stat", "total_excr_stat", "L_excr_stat", "L_uneat_stat", "P_excr_stat", "P_uneat_stat", "C_excr_stat", "C_uneat_stat")) %>% 
+            group_by(farm_ID, feed, measure) %>% 
+            reframe(
+              mean = sum(mean),
+              sd = sqrt(sumna(sd^2))
+            ) %>% 
+            rbind(biomass) %>% 
+            mutate(measure = droplevels(measure))
+          
+          # Calculate everything per biomass as well
+          full_df %>% 
+            left_join(
+              biomass %>% 
+                rename(
+                  mean_biomass = mean,
+                  sd_biomass = sd
+                ) %>% select(-measure),
+                by = c("farm_ID", "feed")
+            ) %>% 
+            mutate(
+              mean_per_biom = mean/mean_biomass,
+              sd_per_biom = (mean/mean_biomass) * sqrt((sd_biomass/mean_biomass)^2 + (sd/mean)^2)
+            )
+        }) %>% 
         bind_rows()
-
-      cohort_results_daily <- merge(
-        cohort_results_daily,
-        cohort_results_daily %>% filter(measure == "biomass_stat") %>% select(-measure),
-        by = c("farm_ID", "feed", "t", "prod_t")
-        ) %>% 
-        rename(
-          mean = mean.x, sd = sd.x,
-          mean_biomass = mean.y, sd_biomass = sd.y
-        ) %>% 
-        mutate(
-          mean_per_biom = mean/mean_biomass,
-          sd_per_biom = (mean/mean_biomass) * sqrt((sd_biomass/mean_biomass)^2 + (sd/mean)^2)
-        )
-      
-      list(
-        total_ends = total_ends,
-        cohort_results_daily = cohort_results_daily
-      )
     },
     pattern = farm_run_chunked,
-    iteration = "list",
+    deployment = "main"
+  ),
+
+  tar_target(
+    cohort_results,
+    command = {
+      farm_results <- split(farm_run_chunked, farm_run_chunked$farm_ID) %>% 
+        lapply(function(farm_df) {
+          # Define the three cohorts
+          cohort_1 <- farm_df %>% 
+            mutate(prod_t = as.integer(t-min(t)+1)) %>% 
+            filter(
+              prod_t != max(prod_t) & 
+                !measure %in% c("anab_stat", "catab_stat","E_assim_stat", "E_somat_stat", "food_enc_stat", "ing_act_stat", "ing_pot_stat", "metab_stat", "NH4_stat", "O2_stat", "rel_feeding_stat", "T_response_stat", "water_temp_stat", "weight_stat")
+            ) %>% 
+            mutate(
+              measure = droplevels(measure),
+              cohort = 1
+            )
+          cohort_2 <- farm_to_cohort(cohort_1, time_offset = 365) %>% mutate(cohort = 2)
+          cohort_3 <- farm_to_cohort(cohort_1, time_offset = 730) %>% mutate(cohort = 3)
+
+          # Start and end times for each
+          starts <- rbind(
+            cohort_2 %>% distinct(cohort, t, prod_t) %>% slice_min(t, n = 1),
+            cohort_3 %>% distinct(cohort, t, prod_t) %>% slice_min(t, n = 1)
+          )
+          ends <- rbind(
+            cohort_1 %>% distinct(cohort, t, prod_t) %>% slice_max(t, n = 1),
+            cohort_2 %>% distinct(cohort, t, prod_t) %>% slice_max(t, n = 1)
+          )
+
+          # Calculate stats based on daily values across overlapping cohorts
+          full_df <- rbind(cohort_1, cohort_2, cohort_3) %>% 
+            filter(t %in% starts$t[starts$cohort == 2]:ends$t[ends$cohort == 2]) %>% 
+            group_by(farm_ID, feed, measure, t) %>%
+            reframe(
+              mean = sumna(mean),
+              sd = sqrt(sumna(sd^2))) %>% 
+            mutate(
+              cohorts = as.factor(case_when(
+                t <= ends$t[ends$cohort == 1] ~ "1 & 2",
+                t >= starts$t[starts$cohort == 3] ~ "2 & 3",
+                T ~ "2"
+              )),
+              prod_t = as.integer(t-min(t)+1)
+            )
+          
+          # Combine with biomass to get values per biomass produced
+          full_df %>% 
+            left_join(
+              full_df %>% filter(measure == "biomass_stat") %>% select(-measure),
+              by = c("farm_ID", "cohorts", "feed", "t", "prod_t")
+            ) %>% 
+            rename(
+              mean = mean.x, 
+              sd = sd.x,
+              mean_biomass = mean.y, 
+              sd_biomass = sd.y
+            ) %>% 
+            mutate(
+              mean_per_biom = mean/mean_biomass,
+              sd_per_biom = (mean/mean_biomass) * sqrt((sd_biomass/mean_biomass)^2 + (sd/mean)^2)
+            )
+        }) %>% 
+        bind_rows()
+    },
+    pattern = farm_run_chunked,
     deployment = "main"
   )
 )

@@ -4,8 +4,6 @@ suppressPackageStartupMessages(suppressWarnings({
   library(magrittr)
   library(qs)
   library(tidyverse)
-  # library(arrow)
-  # library(tibble)
 }))
 
 tar_option_set(
@@ -20,9 +18,9 @@ tar_option_set(
 
 tar_source(
   files = c(
-    "/home/treimer/local_to_global_mariculture_modelling/src/dirs.R",
-    "/home/treimer/local_to_global_mariculture_modelling/src/functions.R",
-    "/home/treimer/local_to_global_mariculture_modelling/src/model_functions.R"
+    here::here("src/dirs.R"),
+    here::here("src/functions.R"),
+    here::here("src/model_functions.R")
   )
 )
 
@@ -31,7 +29,7 @@ output_path <- here() %>% file.path("outputs")
 output_species_data_path <- file.path(output_path, "species_data")
 
 # Globals
-inds_per_farm <- 250
+inds_per_farm <- 1000
 farm_sample <- 272
 farm_chunk_size <- 25
 reference_feed_name <- "marine_dominant_biomar"

@@ -107,8 +107,9 @@ qsave(farm_ts_data, farm_ts_data_file)
 
 ## Species and population parameters
 
-```{r species-parameters, eval=F}
+```{r species-parameters}
 #| code-summary: Load species-specific parameters from Excel file
+#| cache: true
 
 species_params <- readxl::read_excel(
   path = species_params_excel["file"], 
@@ -120,8 +121,9 @@ species_params <- vals[!is.na(vals)]
 qsave(species_params, species_params_file)
 ```
 
-```{r population-parameters, eval=F}
+```{r population-parameters}
 #| code-summary: Load population-specific parameters
+#| cache: true
 
 pop_params <- readxl::read_excel(path = pop_params_excel["file"])
 vals <- pop_params$Value
@@ -186,15 +188,16 @@ First, let's test the pipeline to make sure that the feed input data is being pr
 ```{r check-farmrun-pipeline}
 #| code-summary: Check that the pipeline will run correctly
 
-# Sys.setenv(TAR_PROJECT = "project_farmruns")
+Sys.setenv(TAR_PROJECT = "project_farmruns")
 
-tar_validate(script = farm_script, store = farm_store)
-# tar_prune(script = farm_script, store = farm_store)
+tar_validate()
+# tar_prune()
 
-tar_make(test_reference_feed, script = farm_script, store = farm_store)
-tar_load_globals(script = farm_script)
+tar_make(test_reference_feed)
+
+tar_load_globals()
 reference_feed_name
-tar_read(test_reference_feed, store = farm_store) # if weight ~ 0 then feeds aren't processing properly
+tar_read(test_reference_feed) # if weight ~ 0 then feeds aren't processing properly
 ```
 
 Calculations of expected harvest sizes for each farm (using default feed and no Monte-Carlo variation) are done in the targets pipeline. This sets a "target population" for each farm and grounds the growth somewhat.
@@ -202,16 +205,16 @@ Calculations of expected harvest sizes for each farm (using default feed and no 
 ```{r farm-harvest-size, eval=F}
 #| code-summary: Run limited pipeline for harvest sizes and testing
 
-# Sys.setenv(TAR_PROJECT = "project_farmruns")
+Sys.setenv(TAR_PROJECT = "project_farmruns")
 
 # Get harvest sizes for all farms
-tar_make(names = contains(c("harvest_size", "feed_params")), script = farm_script, store = farm_store)
+tar_make(names = contains(c("harvest_size", "feed_params")))
 ```
 
 ```{r save-harvest-size}
 #| code-summary: Save harvest size data
 
-harvest_size <- tar_read(harvest_size_chunked, store = farm_store) %>% 
+harvest_size <- tar_read(harvest_size_chunked) %>% 
   bind_rows()
 
 ggplot(harvest_size, aes(x = weight)) +
@@ -227,22 +230,21 @@ Run the sensitivity runs using the targets pipeline - note that this can take a 
 ```{r check-sensitivity-pipeline}
 #| code-summary: Check that the sensitivities pipeline is running correctly
 
-# Sys.setenv(TAR_PROJECT = "project_sensitivities")
-# tar_validate(script = farm_script, store = farm_store)
-# tar_visnetwork(targets_only = T, script = farm_script, store = farm_store)
+Sys.setenv(TAR_PROJECT = "project_sensitivities")
+tar_validate()
+# tar_visnetwork(targets_only = T)
 
-tar_make(test_reference_feed, script = sens_script, store = sens_store)
-tar_read(test_reference_feed, store = sens_store) # if weight ~ 0 then feeds aren't processing properly, fix before proceeding
+tar_make(test_reference_feed)
+tar_read(test_reference_feed) # if weight ~ 0 then feeds aren't processing properly, fix before proceeding
 ```
 
 ```{r sensitivity-run}
 #| code-summary: Run sensitivity pipeline
 
-# Sys.setenv(TAR_PROJECT = "project_sensitivities")
+Sys.setenv(TAR_PROJECT = "project_sensitivities")
 
-tar_make(contains("spec"), seconds_meta_append = 300, script = sens_script, store = sens_store)
-tar_make(contains("pop"), seconds_meta_append = 300, script = sens_script, store = sens_store)
-# tar_prune(script = sens_script, store = sens_store)
+tar_make(seconds_meta_append = 300)
+tar_prune()
 ```
 
 ## Process sensitivity results
@@ -284,42 +286,39 @@ The following code runs the main pipeline in two stages. The pre-run prepares al
 ```{r run-farms-pipeline, eval=F}
 #| code-summary: Run the main pipeline
 
-# Sys.setenv(TAR_PROJECT = "project_farmruns")
+Sys.setenv(TAR_PROJECT = "project_farmruns")
 
-# Pre-run to reduce load
-tar_make(
-  names = contains(c("data", "feed")),
-  script = farm_script, store = farm_store
-)
-
-# tar_outdated(script = farm_script, store = farm_store)
+tar_validate()
 
 # Run whole pipeline
-tar_make(
-  seconds_meta_append = 300,
-  script = farm_script, store = farm_store
-)
+tar_make(seconds_meta_append = 300)
 ```
 
 Load objects from the targets pipeline and save them as .qs files, which are much quicker to load down the line. This takes a few minutes to gather all the targets.
 
 ```{r all-farms-cohorts-results}
 #| code-summary: Save pipeline objects as files
+#| eval: false
 
-# Sys.setenv(TAR_PROJECT = "project_farmruns")
+Sys.setenv(TAR_PROJECT = "project_farmruns")
 
-tar_load(
-  farm_full_results,
-  store = farm_store
-)
+tar_load(farm_results)
+qsave(farm_results, file.path(output_path, "total_ends.qs"))
 
-total_ends <- bind_rows(lapply(farm_full_results, `[[`, "total_ends"))
-cohort_results <- bind_rows(lapply(farm_full_results, `[[`, "cohort_results_daily")) %>% 
-  mutate(t = as.integer(t), prod_t = as.integer(prod_t))
+tar_load(cohort_results)
 
-qsave(total_ends, file.path(output_path, "total_ends.qs"))
-qsave(cohort_results, file.path(output_path, "cohort_results.qs"))
+for (m in levels(cohort_results$measure)) {
+  df <- cohort_results %>% 
+    filter(measure == m)
+  qsave(
+    df, 
+    file.path(
+      output_path, 
+      str_c("cohort_results_", m,".qs")
+    )
+  )
+}
 
-rm(farm_full_results, total_ends, cohort_results)
+rm(farm_results, cohort_results, df)
 gc()
 ```

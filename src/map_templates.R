@@ -28,11 +28,11 @@ inset_boxes <- list(   # lonmin, lonmax, latmin, latmax
 
 # For the corresponding patchwork map lims, basically the same, just a little refined
 inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
-  CAN1 = c(-130.5, -123, 48.25, 54.25),
+  CAN1 = c(-130.5, -123, 48.25, 54),
   CAN2 = c(-69, -55, 43.5, 48),
   EUR = c(-23, 28.5, 52, 71),
-  CHI = c(-78, -62, -55.5, -27),
-  AUS = c(144.25, 148.5, -43.75, -40.75)
+  CHI = c(-77, -62, -55.25, -27.5),
+  AUS = c(144.5, 148.5, -43.75, -40.75)
 ) %>% 
   map(function(bx) {
     list(
@@ -40,7 +40,7 @@ inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
       ylims = bx[3:4],
       labx = bx[1],
       laby = bx[4]
-      )
+    )
 })
 
 # Where should the inset labels be positioned in the big map
@@ -86,6 +86,12 @@ p_bigmap_robinson <- ggplot() +
   geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
   geom_sf(data = worldmap_robinson, fill = "white", color = "dimgray") +
   coord_sf() +
+  theme_void()
+
+p_bigmap_robinson_boxes <- ggplot() +
+  geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
+  geom_sf(data = worldmap_robinson, fill = "white", color = "dimgray") +
+  coord_sf() +
   geom_sf(data = boxes_robinson, fill = NA, color = "darkred", size = 1.65) +
   geom_sf_text(data = labels_robinson, aes(label = letter), 
                color = "darkred", size = 5, fontface = "bold", 
@@ -96,53 +102,102 @@ p_bigmap_robinson <- ggplot() +
 worldmap_mercator <- ne_countries(scale = "large", returnclass = "sf")
 
 get_insets_mercator <- function(map) {
-  map2(inset_boxes_sm, labels_spec_mercator, function(specs, labs) {
+  map(inset_boxes_sm, function(specs) {
     map + 
       coord_sf(
         xlim = specs[["xlims"]], 
         ylim = specs[["ylims"]]
-      )  #+
-      # draw_label(
-      #   labs["l"], 
-      #   size = 14, 
-      #   fontface = "bold", 
-      #   x = specs[["labx"]], 
-      #   y = specs[["laby"]], 
-      #   hjust = labs["h"], vjust = labs["h"]
-      # )
+      )
   })
 }
 
 p_bigmap_mercator <- ggplot() +
   geom_sf(data = worldmap_mercator, fill = "white", color = "dimgray") +
   coord_sf() +
-  theme_void() +
   labs(y = "Latitude", x = "Longitude")
+
+p_mercator_insets <- get_insets_mercator(p_bigmap_mercator)
 
 patchwork_mercator <- function(bigmap) {
   p_insets <- get_insets_mercator(bigmap)
-  
+  CAN1 <- p_insets[["CAN1"]] + scale_x_continuous(breaks = seq(-130, -122, 2))
+  CAN2 <- p_insets[["CAN2"]] + scale_x_continuous(breaks = seq(-72.5, -50, 5))
+  EUR <- p_insets[["EUR"]] + scale_x_continuous(breaks = seq(-30, 50, 10))
+  AUS <- p_insets[["AUS"]] + scale_x_continuous(breaks = seq(140, 150, 1))
+  CHI <- p_insets[["CHI"]] + scale_x_continuous(breaks = seq(-80, -60, 5))
+
   grid_canada <- plot_grid(
-    p_insets[["CAN1"]], 
-    p_insets[["CAN2"]], 
+    CAN1, CAN2, 
     ncol = 2, 
-    rel_widths =  c(1, 1.35)
+    rel_widths =  c(1, 1.3)
   )
+
   grid_notcanada <- plot_grid(
     plot_grid(
-      p_insets[["EUR"]],  
-      p_insets[["AUS"]],  
+      EUR, AUS,  
       nrow = 2, 
       rel_heights = c(1, 1)
     ), 
-    p_insets[["CHI"]],  
+    CHI,  
     ncol = 2, 
-    rel_widths =  c(1, 1)
+    rel_widths =  c(1.1, 1)
   )
   
   plot_grid(
     grid_canada, grid_notcanada,
     nrow = 2,
     rel_heights = c(1, 1.5)
+  )
+}
+
+patchwork_mercator_1 <- function(bigmap) {
+  p_insets <- get_insets_mercator(bigmap)
+  CAN1 <- p_insets[["CAN1"]] + 
+    scale_x_continuous(breaks = seq(-130, -122, 2)) +
+    theme(legend.position = "none")
+  CAN2 <- p_insets[["CAN2"]] + 
+    scale_x_continuous(breaks = seq(-70, -50, 2.5)) +
+    theme(legend.position = "top")
+
+  plot_grid(
+    CAN1, CAN2, 
+    ncol = 2, 
+    rel_widths =  c(1, 1.65)
+  )
+}
+
+patchwork_mercator_2 <- function(bigmap) {
+  p_insets <- get_insets_mercator(bigmap)
+  EUR <- p_insets[["EUR"]] + 
+    scale_x_continuous(breaks = seq(-30, 50, 10)) +
+    theme(legend.position = "none")
+  AUS <- p_insets[["AUS"]] + 
+    scale_x_continuous(breaks = seq(140, 150, 1)) +
+    theme(legend.position = "none")
+  CHI <- p_insets[["CHI"]] + 
+    scale_x_continuous(breaks = seq(-82.5, -60, 5)) +
+    theme(legend.position = "none")
+
+  plot_grid(
+    plot_grid(
+      EUR, AUS,  
+      nrow = 2, 
+      rel_heights = c(1, 0.9)
+    ), 
+    CHI,  
+    ncol = 2, 
+    rel_widths =  c(1.1, 1)
+  )
+}
+
+# patchwork_mercator(p_bigmap_mercator)
+# patchwork_mercator_1(p_bigmap_mercator)
+# patchwork_mercator_2(p_bigmap_mercator)
+
+# Other map display functions
+remove_map_axes <- function() {
+  theme(
+    axis.title.x = element_blank(), axis.line.x = element_blank(), axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+    axis.title.y = element_blank(), axis.line.y = element_blank(), axis.text.y = element_blank(), axis.ticks.y = element_blank()
   )
 }

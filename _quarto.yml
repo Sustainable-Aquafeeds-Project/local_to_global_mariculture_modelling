@@ -1,5 +1,5 @@
 project:
-  title: "myproject"
+  title: "Local to global inputs from changing feeds"
   type: default
   output-dir: docs-rendered
   render:
@@ -17,6 +17,7 @@ editor: source
 
 execute:
   eval: true
+  cache: true
 
 format:
   html:
@@ -26,6 +27,7 @@ format:
     code-fold: false
     code-overflow: wrap
     toc: true
+    toc-depth: 4
     toc-expand: true
     toc-location: left
     number-sections: true
@@ -44,7 +46,7 @@ format:
     fig-align: center
     grid:
       sidebar-width: 250px
-      body-width: 1200px
+      body-width: 1400px
       margin-width: 250px
       gutter-width: 2em
   

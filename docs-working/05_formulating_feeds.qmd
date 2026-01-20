@@ -33,7 +33,7 @@ here("src") %>%
 
 # Import ingredients
 
-There is no check or correction here to ensure that protein + lipid + ash + carb = 1 in the incoming ingredient data. This was checked manually prior to import. 
+There is no check or correction here to ensure that protein + lipid + ash + carb = 1 in the incoming ingredient data. This needs to be checked manually prior to import. 
 
 ``` {r import-ingredients}
 #| code-summary: Get ingredient details (PLC composition, digestibility)
@@ -65,21 +65,6 @@ feed_inputs <- feed_inputs %>%
   left_join(ingreds, by = "ingredient")
 ```
 
-Include the range of digestibility values so that feeds can be sampled (if required) within the targets pipeline.
-
-```{r min-max-values}
-#| code-summary: Novel feeds use the mean digestibility values
-
-feed_inputs <- feed_inputs %>% 
-  rename(
-    protein_digestibility = mean_protein_digestibility,
-    carb_digestibility = mean_carb_digestibility,
-    lipid_digestibility = mean_lipid_digestibility
-  )
-
-feed_types <- levels(feed_inputs$feed)
-```
-
 Check that ingredient proportions sum to 1.
 
 ```{r check-proportions}
@@ -105,7 +90,7 @@ The following chunk allows as many ingredients and feeds to be added to the inco
 
 feed_types <- levels(feed_inputs$feed)
 
-feed_params <- purrr::map(feed_types, function(ft) {
+feed_params_all <- purrr::map(feed_types, function(ft) {
   # Filter by specified feed
   df <- feed_inputs %>% filter(feed == ft) 
 
@@ -114,7 +99,7 @@ feed_params <- purrr::map(feed_types, function(ft) {
       select(ingredient, proportion, contains("protein")) %>% 
       rename(
         macro = protein, 
-        digest = protein_digestibility,
+        mean_digest = mean_protein_digestibility,
         min_digest = min_protein_digestibility,
         max_digest = max_protein_digestibility
       ),
@@ -122,7 +107,7 @@ feed_params <- purrr::map(feed_types, function(ft) {
       select(ingredient, proportion, contains("carb")) %>% 
       rename(
         macro = carb, 
-        digest = carb_digestibility,
+        mean_digest = mean_carb_digestibility,
         min_digest = min_carb_digestibility,
         max_digest = max_carb_digestibility
       ),
@@ -130,13 +115,114 @@ feed_params <- purrr::map(feed_types, function(ft) {
       select(ingredient, proportion, contains("lipid")) %>% 
       rename(
         macro = lipid, 
-        digest = lipid_digestibility,
+        mean_digest = mean_lipid_digestibility,
         min_digest = min_lipid_digestibility,
         max_digest = max_lipid_digestibility
       )
   )
 }) %>% 
   setNames(feed_types)
+```
+
+```{r min-max-values}
+
+make_mean_digest <- function(df) {
+  df %>% 
+    mutate(digest = mean_digest) %>% 
+    select(ingredient, proportion, macro, digest)
+}
+make_min_digest <- function(df) {
+  df %>% 
+    mutate(digest = min_digest) %>% 
+    select(ingredient, proportion, macro, digest)
+}
+make_max_digest <- function(df) {
+  df %>% 
+    mutate(digest = max_digest) %>% 
+    select(ingredient, proportion, macro, digest)
+}
+
+feed_params <- list(
+  "marine_dominant_biomar"     = feed_params_all[["marine_dominant_biomar"]] %>% lapply(make_mean_digest),
+  "marine_dominant_biomar_min" = feed_params_all[["marine_dominant_biomar"]] %>% lapply(make_min_digest),
+  "marine_dominant_biomar_max" = feed_params_all[["marine_dominant_biomar"]] %>% lapply(make_max_digest),
+  "animal_inclusive_biomar"     = feed_params_all[["animal_inclusive_biomar"]] %>% lapply(make_mean_digest),
+  "animal_inclusive_biomar_min" = feed_params_all[["animal_inclusive_biomar"]] %>% lapply(make_min_digest),
+  "animal_inclusive_biomar_max" = feed_params_all[["animal_inclusive_biomar"]] %>% lapply(make_max_digest),
+  "novel_inclusive_biomar"     = feed_params_all[["novel_inclusive_biomar"]] %>% lapply(make_mean_digest),
+  "novel_inclusive_biomar_min" = feed_params_all[["novel_inclusive_biomar"]] %>% lapply(make_min_digest),
+  "novel_inclusive_biomar_max" = feed_params_all[["novel_inclusive_biomar"]] %>% lapply(make_max_digest)
+  )
+```
+
+```{r}
+proteins <- feed_params %>% 
+  lapply(function(ls) {
+    ls$Proteins %>% 
+      mutate(prop_macro = proportion * macro) %>% 
+      pull(prop_macro) %>% sum()
+  }) %>% 
+    as.data.frame() %>% 
+    pivot_longer(cols = names(feed_params), names_to = "feed", values_to = "protein")
+
+lipids <- feed_params %>% 
+  lapply(function(ls) {
+    ls$Lipids %>% 
+      mutate(prop_macro = proportion * macro) %>% 
+      pull(prop_macro) %>% sum()
+  }) %>% 
+    as.data.frame() %>% 
+    pivot_longer(cols = names(feed_params), names_to = "feed", values_to = "lipid")
+
+carbs <- feed_params %>% 
+  lapply(function(ls) {
+    ls$Carbohydrates %>% 
+      mutate(prop_macro = proportion * macro) %>% 
+      pull(prop_macro) %>% sum()
+  }) %>% 
+    as.data.frame() %>% 
+    pivot_longer(cols = names(feed_params), names_to = "feed", values_to = "carbohydrate")
+
+proteins %>% 
+  left_join(lipids, by = "feed") %>% 
+  left_join(carbs, by = "feed") %>% 
+  mutate(total = protein+lipid+carbohydrate)
+```
+
+```{r}
+proteins <- feed_params %>% 
+  lapply(function(ls) {
+    ls$Proteins %>% 
+      filter(macro > 0) %>% 
+      mutate(prop_digest = proportion * digest / sum(proportion)) %>% 
+      pull(prop_digest) %>% sum()
+  }) %>% 
+    as.data.frame() %>% 
+    pivot_longer(cols = names(feed_params), names_to = "feed", values_to = "AD_protein")
+
+lipids <- feed_params %>% 
+  lapply(function(ls) {
+    ls$Lipids %>% 
+      filter(macro > 0) %>% 
+      mutate(prop_digest = proportion * digest / sum(proportion)) %>% 
+      pull(prop_digest) %>% sum()
+  }) %>% 
+    as.data.frame() %>% 
+    pivot_longer(cols = names(feed_params), names_to = "feed", values_to = "AD_lipid")
+
+carbs <- feed_params %>% 
+  lapply(function(ls) {
+    ls$Carbohydrates %>% 
+      filter(macro > 0) %>% 
+      mutate(prop_digest = proportion * digest / sum(proportion)) %>% 
+      pull(prop_digest) %>% sum()
+  }) %>% 
+    as.data.frame() %>% 
+    pivot_longer(cols = names(feed_params), names_to = "feed", values_to = "AD_carbohydrate")
+
+proteins %>% 
+  left_join(lipids, by = "feed") %>% 
+  left_join(carbs, by = "feed")
 ```
 
 ```{r save}
@@ -150,49 +236,59 @@ qsave(feed_params, file.path(output_species_data_path, "feed_params.qs"))
 The three "biomar" feeds were designed to be isoenergetic.
 
 ```{r feed-stats}
-#| code-summary: Calculate some stats about the feeds
+#| code-summary: Calculate energy stats about the feeds
 
-feed_stats <- feed_inputs %>% 
-  select(-contains(c("max", "min"))) %>% 
+feed_params[[1]] %>% 
+  lapply(function(ls) {
+    ls %>% mutate(total = proportion * macro * digest) %>% 
+      pull(total) %>% sum()
+  }) %>% as.data.frame() %>% 
+    mutate(
+      Proteins = Proteins * 17,
+      Carbohydrates = Carbohydrates * 37.6,
+      Lipids = Lipids * 16.8,
+      total = Proteins + Carbohydrates + Lipids
+    )
+
+
+feed_stats <- 
+  map2(feed_params, names(feed_params), function(ls, feedname) {
+    map2(ls, names(ls), function(df, macroname) {
+      df %>% mutate(component = macroname)
+    }) %>% bind_rows() %>% 
+      mutate(feed = feedname)
+  }) %>% 
+  bind_rows() %>% 
   mutate(
-    ing_protein = proportion * protein,
-    ing_carb = proportion * carb,
-    ing_lipid = proportion * lipid,
-    digest_protein = ing_protein * protein_digestibility,
-    digest_carb = ing_carb * carb_digestibility,
-    digest_lipid = ing_lipid * lipid_digestibility,
-    E_protein = digest_protein * 17,
-    E_carb = digest_carb * 16.8,
-    E_lipid = digest_lipid * 37.6
+    ing_macro = proportion * macro,
+    digest_macro = ing_macro * digest,
+    E = case_when(
+      component == "Proteins" ~ digest_macro * 17,
+      component == "Lipids" ~ digest_macro * 37.6,
+      T ~ digest_macro * 16.8
+    )
   ) %>% 
   group_by(feed) %>% 
-  reframe(
-    total_protein = sum(ing_protein),
-    total_carb = sum(ing_carb),
-    total_lipid = sum(ing_lipid),
-    AD_protein = sum(digest_protein),
-    AD_carb = sum(digest_carb),
-    AD_lipid = sum(digest_lipid),
-    E_protein = sum(E_protein),
-    E_carb = sum(E_carb),
-    E_lipid = sum(E_lipid)
-    ) %>% 
-  mutate(
-    E = E_protein + E_carb + E_lipid,
-    group = case_when(str_detect(feed, "biomar") ~ "biomar", T ~ "other")
-  ) %>% 
-  relocate(group, .before = "feed") %>% 
-  arrange(group)
+  mutate(total_E = sum(E)) %>% 
+  ungroup() %>% 
+  group_by(feed, component, total_E) %>% 
+  reframe(comp_E = sum(E)) %>% 
+  mutate(prop_E = comp_E/total_E)
 
 feed_stats %>% 
-  select(group, feed, E)
+  group_by(feed) %>% 
+  reframe(total_E = mean(total_E))
+
+feed_stats %>% 
+  filter(component == "Proteins")
 ```
 
 ```{r feed-macro-digestibility}
 #| code-summary: Code to generate plot
+#| eval: false
 #| fig-cap: Total protein, carbohydrate and lipid composition of each feed, with the undigestible portion shown as the lighter bars on top. 
 
-merge(
+df <- merge(
   feed_stats %>% 
     select(feed, group, contains("total_")) %>% 
     pivot_longer(
@@ -209,7 +305,12 @@ merge(
     ),
   by = c("feed", "group", "macro")
   ) %>% 
-  mutate(feed = as.factor(feed)) %>%   
+  mutate(feed = as.factor(feed)) 
+  
+df %>% 
+  filter(feed %in% c("animal_inclusive_biomar", "marine_dominant_biomar", "novel_inclusive_biomar"))
+
+df %>% 
   ggplot(aes(x = macro, fill = feed)) +
   geom_col(aes(y = total), position = position_dodge(), alpha = 0.5, colour = "black") +
   geom_col(aes(y = AD), position = position_dodge(), alpha = 0.75, colour = "black") +
@@ -219,6 +320,7 @@ merge(
 
 ```{r feed-energy}
 #| code-summary: Code to generate plot
+#| eval: false
 #| fig-cap: The proportion of energy derived from protein, carbohydrate and lipid within each feed.
 
 feed_stats %>% 
