@@ -12,6 +12,7 @@ project:
     - docs-working/06_how_many_runs_per_farm.qmd
     # - docs-working/07_run_atlantic_salmon_model.qmd
     - docs-working/08_data_analysis.qmd
+    - docs-working/08_data_analysis_2.qmd
 
 editor: source
 
