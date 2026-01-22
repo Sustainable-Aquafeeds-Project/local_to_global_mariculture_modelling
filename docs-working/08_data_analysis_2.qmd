@@ -989,7 +989,7 @@ farm_locs <- file.path(output_farm_data_path, "farm_geometry.qs") %>%
 data_basemap <- total_vals %>% 
   filter(feed_type == "Mean", feed_group == "PD") %>% 
   merge(farm_locs, by = "farm_ID") %>% 
-  mutate(mean_per_biom = mean_per_biom %>% set_units("kg t_fish-1") %>% drop_units())
+  mutate(mean = mean %>% set_units("kg") %>% drop_units())
 ```
 
 ```{r fig-map-total-P-lost-pd-mean}
@@ -1001,7 +1001,7 @@ p_bigmap_robinson +
       filter(measure == "total_P_lost_stat") %>% 
       st_as_sf(crs = 4326) %>% 
       st_transform(crs = "+proj=robin"), 
-    aes(color = mean_per_biom, geometry = geometry), 
+    aes(color = mean, geometry = geometry), 
     size = 2
   ) +
   coord_sf() +
@@ -1298,4 +1298,73 @@ daily_vals.total_P_lost_stat %>%
   scale_fill_manual(values = level_pal) +
   facet_wrap(facets = vars(country)) +
   prettyplot_300()
+```
+
+## Peak day: Northern Hemisphere
+
+The peak/trough days are always on the same day of the production cycle, but on different actual days in the southern and northern hemispheres.
+
+```{r peak-day-hemispheres}
+#| code-summary: Get peak days in each hemisphere
+
+pds_N <- daily_vals.total_P_lost_stat %>% 
+  qread() %>% 
+  filter(prod_t == min(pds)) %>% 
+  left_join(farm_locs, by = "farm_ID") %>% 
+  distinct(country, t, prod_t)
+
+pds_S <- pds_N %>% 
+  filter(country == "Chile") %>% 
+  pull(t)
+
+pds_N <- pds_N %>% 
+  filter(country == "Canada") %>% 
+  pull(t)
+```
+
+```{r}
+
+data_formap <- daily_vals.total_P_lost_stat %>% 
+  qread() %>% 
+  filter(t %in% c(pds_N, pds_S)) %>% 
+  mutate(mean = mean %>% set_units("kg") %>% drop_units()) %>% 
+  select("farm_ID", "t", "prod_t", "feed_group", "feed_type", "mean") %>% 
+  pivot_wider(names_from = feed_group, values_from = mean) %>% 
+  mutate(
+    MD_PD = MD - PD,
+    AD_PD = AD - PD
+  ) %>% 
+  select(-c(AD, PD, MD)) %>% 
+  pivot_longer(
+    names_to = "feed_comparison",
+    values_to = "diff", cols = c("AD_PD", "MD_PD")
+  ) %>% 
+  mutate(feed_comparison = factor(feed_comparison, levels = c("MD_PD", "AD_PD"))) %>% 
+  left_join(farm_locs, by = "farm_ID")
+
+range(data_formap$diff)
+
+p_bigmap_robinson +
+  geom_sf(
+    data = data_formap %>% 
+      st_as_sf(crs = 4326) %>% 
+      st_transform(crs = "+proj=robin"), 
+    aes(color = diff, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  prettyplot_300() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(-500, 500, 150), limits = c(-450, 350)) + 
+  facet_grid(rows = vars(t), cols = vars(feed_comparison)) +
+  labs(y = "Latitude", x = "Longitude") +
+  remove_map_axes() +
+  guides(color = guide_colourbar(
+    title = expression("Total protein loss (kg)"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  ))
+
 ```
