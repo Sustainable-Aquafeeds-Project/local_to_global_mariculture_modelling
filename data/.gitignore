@@ -5,7 +5,6 @@ atlantic_salmon/data_products/model_outputs*
 atlantic_salmon/data_products/processed*
 atlantic_salmon/data_products/total_*
 
-
 # Data sourced from other publications
 _general_data/background_nitrogen/halpern_2019/*
 _general_data/background_nitrogen/tuholske_2021/*
@@ -13,3 +12,6 @@ _general_data/background_nitrogen/*.tif
 _general_data/species_layers/butt_2022/*
 _general_data/species_layers/from_aquamaps/*
 
+# Other big data files
+_general_data/SST/SST_raw_rasters/*
+_general_data/SST/SST_gf_rasters/*
