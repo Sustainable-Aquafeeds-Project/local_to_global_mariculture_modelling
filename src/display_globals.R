@@ -20,7 +20,7 @@ prettyplot_300 <- function() {
 prettyplot_600 <- function() {
   theme_classic() +
     theme(
-      text = element_text(family = "serif", size = 12, colour = "black"),
+      text = element_text(family = "serif", size = 15, colour = "black"),
       legend.position = "none",
       axis.title.y = element_text(vjust = 0.5),
       axis.title.x = element_text(vjust = 0.5),

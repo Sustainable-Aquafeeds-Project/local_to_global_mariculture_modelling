@@ -19,18 +19,18 @@ library(purrr)
 # Define areas -------------------------------------------------
 # For drawing area boxes on the big map
 inset_boxes <- list(   # lonmin, lonmax, latmin, latmax
-  CAN1 = c(-132, -122, 47.75, 54.1),
-  CAN2 = c(-69, -54.75, 43.25, 48.25),
-  EUR = c(-26, 30, 51, 72),
-  CHI = c(-77.5, -62.5, -56, -25),
-  AUS = c(144, 149.5, -44, -39.75)
+  CAN1 = c(-134, -118, 46, 56),
+  CAN2 = c(-73, -50, 41, 51),
+  EUR = c(-28, 42, 49, 74),
+  CHI = c(-80, -61, -57, -24),
+  AUS = c(142, 151, -46, -38.5)
 )
 
 # For the corresponding patchwork map lims, basically the same, just a little refined
 inset_boxes_sm <- list(   # lonmin, lonmax, latmin, latmax
   CAN1 = c(-130.5, -123, 48.25, 54),
-  CAN2 = c(-69, -55, 43.5, 48),
-  EUR = c(-23, 28.5, 52, 71),
+  CAN2 = c(-67.75, -55, 43.5, 48),
+  EUR = c(-23, 33, 52, 71),
   CHI = c(-77, -62, -55.25, -27.5),
   AUS = c(144.5, 148.5, -43.75, -40.75)
 ) %>% 
@@ -53,10 +53,10 @@ labels_spec_robinson <- c(
 )
 
 labels_offset_robinson <- c(
-  CAN1 = 1, 
-  CAN2 = 2, 
-  EUR = 1.75, 
-  CHI = 1.75, 
+  CAN1 = 2, 
+  CAN2 = 4, 
+  EUR = 3, 
+  CHI = 3, 
   AUS = 3.5
 )
 
@@ -92,10 +92,13 @@ p_bigmap_robinson_boxes <- ggplot() +
   geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
   geom_sf(data = worldmap_robinson, fill = "white", color = "dimgray") +
   coord_sf() +
-  geom_sf(data = boxes_robinson, fill = NA, color = "darkred", size = 1.65) +
-  geom_sf_text(data = labels_robinson, aes(label = letter), 
-               color = "darkred", size = 5, fontface = "bold", 
-               hjust = 0.5, vjust = 0.5) +
+  geom_sf(data = boxes_robinson, fill = NA, color = "grey2", size = 0.75) +
+  geom_sf_text(
+    data = labels_robinson, 
+    aes(label = letter), 
+    color = "grey2", size = 5, fontface = "bold", 
+    hjust = 0.5, vjust = 0.5
+  ) +
   theme_void()
 
 # The Mercator projection --------------------------------------------------------------------------------------------------------------

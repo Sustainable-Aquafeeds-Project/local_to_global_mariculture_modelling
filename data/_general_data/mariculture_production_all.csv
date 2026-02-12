@@ -1,0 +1,849 @@
+"","country","ISO3_Code","model_name","Scientific_Name","environment","fao_fishing_area","production","national_production","farm_name","prop_production"
+"1","Indonesia","IDN","grunts","Terapon puta","Marine","Pacific, Western Central",0.011,8739896.85872143,"Other",1.25859608846794e-09
+"2","Indonesia","IDN","lobsters","Panulirus homarus","Marine","Pacific, Western Central",0.115,8739896.85872143,"Other",1.31580500158012e-08
+"3","Indonesia","IDN","trevally","Caranx bucculentus","Marine","Pacific, Western Central",0.117,8739896.85872143,"Other",1.33868856682499e-08
+"4","Indonesia","IDN","sea_cucumber","Actinopyga echinites","Marine","Pacific, Western Central",0.125,8739896.85872143,"Other",1.43022282780447e-08
+"5","Indonesia","IDN","grouper","Plectropomus oligacanthus","Marine","Pacific, Western Central",0.15,8739896.85872143,"Other",1.71626739336537e-08
+"6","Indonesia","IDN","grouper","Epinephelus maculatus","Marine","Pacific, Western Central",0.18,8739896.85872143,"Other",2.05952087203844e-08
+"7","Indonesia","IDN","clams","Polymesoda spp","Marine","Pacific, Western Central",0.204,8739896.85872143,"Other",2.3341236549769e-08
+"8","Indonesia","IDN","trevally","Platycaranx malabaricus","Marine","Pacific, Western Central",0.37,8739896.85872143,"Other",4.23345957030124e-08
+"9","China","CHN","oysters","Ex Pinctada spp","Marine","Pacific, Northwest",2.346,37340268.6414286,"Other",6.2827614405461e-08
+"10","Indonesia","IDN","chubs","Kyphosus cinerascens","Marine","Pacific, Western Central",0.801,8739896.85872143,"Other",9.16486788057107e-08
+"11","Indonesia","IDN","trevally","Caranx lugubris","Marine","Pacific, Western Central",1.295,8739896.85872143,"Other",1.48171084960543e-07
+"12","Indonesia","IDN","general_fish","Plectorhinchus schotaf","Marine","Pacific, Western Central",1.301,8739896.85872143,"Other",1.4885759191789e-07
+"13","Spain","ESP","soles","Solea solea","Marine","Atlantic, Northeast",0.04,264035.123892857,"Other",1.5149499585605e-07
+"14","Indonesia","IDN","general_fish","Lutjanus fulvus","Marine","Pacific, Western Central",1.56,8739896.85872143,"Other",1.78491808909998e-07
+"15","Philippines","PHL","shrimp","Penaeus merguiensis","Marine","Pacific, Western Central",0.316,1684667.3459881,"Other",1.87574123017538e-07
+"16","Spain","ESP","crabs","Carcinus maenas","Marine","Mediterranean and Black Sea",0.05,264035.123892857,"Other",1.89368744820062e-07
+"17","Spain","ESP","general_molluscs","Mollusca","Marine","Atlantic, Northeast",0.05,264035.123892857,"Other",1.89368744820062e-07
+"18","Indonesia","IDN","trevally","Turrum gymnostethus","Marine","Pacific, Western Central",1.7,8739896.85872143,"Other",1.94510304581408e-07
+"19","Indonesia","IDN","general_fish","Lutjanus argentimaculatus","Marine","Pacific, Western Central",1.753,8739896.85872143,"Other",2.00574449371299e-07
+"20","Indonesia","IDN","grouper","Epinephelus cyanopodus","Marine","Pacific, Western Central",2.2,8739896.85872143,"Other",2.51719217693587e-07
+"21","Republic of Korea","KOR","general_invertebrates","Invertebrata","Marine","Pacific, Northwest",0.5975,2266404.24630238,"Other",2.63633462995322e-07
+"22","Spain","ESP","scallops","Mimachlamys varia","Marine","Atlantic, Northeast",0.07,264035.123892857,"Other",2.65116242748087e-07
+"23","Mexico","MEX","general_gastropods","Gastropoda","Marine","Atlantic, Western Central",0.00883333333333333,26076.2340595238,"Other",3.38750346893252e-07
+"24","Spain","ESP","general_seaweed","Undaria pinnatifida","Marine","Atlantic, Northeast",0.093,264035.123892857,"Other",3.52225865365316e-07
+"25","Indonesia","IDN","mudskipper","Planiliza subviridis","Marine","Pacific, Western Central",3.108,8739896.85872143,"Other",3.55610603905304e-07
+"26","Republic of Korea","KOR","clams","Meretrix lusoria","Marine","Pacific, Northwest",0.86,2266404.24630238,"Other",3.79455695692012e-07
+"27","Spain","ESP","cockles","Cerastoderma glaucum","Marine","Atlantic, Northeast",0.103,264035.123892857,"Other",3.90099614329328e-07
+"28","Spain","ESP","bass","Dicentrarchus punctatus","Marine","Atlantic, Northeast",0.118,264035.123892857,"Other",4.46910237775347e-07
+"29","Spain","ESP","clams","Venus verrucosa","Marine","Mediterranean and Black Sea",0.1235,264035.123892857,"Other",4.67740799705554e-07
+"30","Indonesia","IDN","lobsters","Panulirus longipes","Marine","Pacific, Western Central",4.213,8739896.85872143,"Other",4.8204230188322e-07
+"31","Papua New Guinea","PNG","oysters","Ex Pinctada spp","Marine","Pacific, Western Central",0.000428571428571429,715.286142857143,"Other",5.99160815362004e-07
+"32","Indonesia","IDN","cobia_ling","Rachycentron canadum","Marine","Pacific, Western Central",6.45633333333333,8739896.85872143,"Other",7.38719625379863e-07
+"33","Spain","ESP","general_seaweed","Gracilaria spp","Marine","Atlantic, Northeast",0.19575,264035.123892857,"Other",7.41378635970544e-07
+"34","Spain","ESP","clams","Solen spp","Marine","Atlantic, Northeast",0.206666666666667,264035.123892857,"Other",7.82724145256258e-07
+"35","Spain","ESP","microalgae","Spirulina spp","Marine","Atlantic, Eastern Central",0.2075,264035.123892857,"Other",7.85880291003259e-07
+"36","Canada","CAN","general_molluscs","Mollusca","Marine","Pacific, Northeast",0.142857142857143,169568,"Other",8.4247701722697e-07
+"37","Indonesia","IDN","lobsters","Thenus orientalis","Marine","Pacific, Western Central",8.34666666666667,8739896.85872143,"Other",9.55007456219307e-07
+"38","Malaysia","MYS","grouper","Epinephelus fasciatus","Marine","Indian Ocean, Eastern",0.25,258189.336988095,"Other",9.68281660723762e-07
+"39","France","FRA","cockles","Cerastoderma edule","Marine","Mediterranean and Black Sea",0.15,153925.758804762,"Other",9.7449576448253e-07
+"40","Spain","ESP","general_invertebrates","Invertebrata","Marine","Atlantic, Northeast",0.2625,264035.123892857,"Other",9.94185910305327e-07
+"41","Indonesia","IDN","shrimp","Metapenaeus spp","Marine","Pacific, Western Central",8.862,8739896.85872143,"Other",1.01397077600026e-06
+"42","Philippines","PHL","shrimp","Penaeus monodon","Marine","Pacific, Western Central",2.00566666666667,1684667.3459881,"Other",1.19054166476427e-06
+"43","Philippines","PHL","trevally","Caranx spp","Marine","Pacific, Western Central",2.1055,1684667.3459881,"Other",1.24980163295388e-06
+"44","Indonesia","IDN","trevally","Platycaranx chrysophrys","Marine","Pacific, Western Central",12.047,8739896.85872143,"Other",1.37839155252484e-06
+"45","Spain","ESP","general_seaweed","Chlorophyceae","Marine","Atlantic, Eastern Central",0.371666666666667,264035.123892857,"Other",1.40764100316246e-06
+"46","Chile","CHL","general_seaweed","Sarcothalia crispata","Marine","Pacific, Southeast",2,1410104.90385714,"Other",1.41833419239184e-06
+"47","Indonesia","IDN","general_fish","Lutjanus sanguineus","Marine","Pacific, Western Central",12.727,8739896.85872143,"Other",1.4561956743574e-06
+"48","Spain","ESP","breams_porgies","Diplodus sargus","Marine","Atlantic, Northeast",0.397,264035.123892857,"Other",1.5035878338713e-06
+"49","Indonesia","IDN","general_seaweed","Kappaphycus alvarezii","Marine","Pacific, Western Central",14.0415,8739896.85872143,"Other",1.60659790692932e-06
+"50","Spain","ESP","microalgae","Dunaliella salina","Marine","Atlantic, Eastern Central",0.4585,264035.123892857,"Other",1.73651138999997e-06
+"51","Croatia","HRV","scallops","Pecten jacobaeus","Marine","Mediterranean and Black Sea",0.0393333333333333,19986.0245238095,"Other",1.96804188279041e-06
+"52","China","CHN","general_fish","Actinopterygii","Marine","Pacific, Western Central",74.2857142857143,37340268.6414286,"Other",1.98942634824258e-06
+"53","Spain","ESP","general_seaweed","Saccharina latissima","Marine","Atlantic, Northeast",0.54275,264035.123892857,"Other",2.05559772502178e-06
+"54","Indonesia","IDN","shrimp","Penaeus vannamei","Marine","Pacific, Western Central",18.009,8739896.85872143,"Other",2.06055063247446e-06
+"55","Indonesia","IDN","crabs","Scyllarides squammosus","Marine","Pacific, Western Central",20.119,8739896.85872143,"Other",2.30197224580786e-06
+"56","Indonesia","IDN","trevally","Caranx papuensis","Marine","Pacific, Western Central",20.209,8739896.85872143,"Other",2.31226985016805e-06
+"57","Republic of Korea","KOR","mackerels","Trachurus spp","Marine","Pacific, Northwest",5.25,2266404.24630238,"Other",2.31644465393379e-06
+"58","Philippines","PHL","crabs","Scylla serrata","Marine","Pacific, Western Central",3.96942857142857,1684667.3459881,"Other",2.35620912394453e-06
+"59","Indonesia","IDN","grouper","Epinephelus faveatus","Marine","Pacific, Western Central",21.961,8739896.85872143,"Other",2.51272988171312e-06
+"60","Spain","ESP","octopus","Octopus spp","Marine","Atlantic, Northeast",0.84625,264035.123892857,"Other",3.20506600607955e-06
+"61","Indonesia","IDN","crabs","Scylla olivacea","Marine","Pacific, Western Central",28.7546666666667,8739896.85872143,"Other",3.290046453806e-06
+"62","Chile","CHL","general_seaweed","Gigartina skottsbergii","Marine","Pacific, Southeast",4.75,1410104.90385714,"Other",3.36854370693063e-06
+"63","Indonesia","IDN","general_crustaceans","Crustacea","Marine","Pacific, Western Central",30,8739896.85872143,"Other",3.43253478673074e-06
+"64","Türkiye","TUR","grouper","Epinephelus aeneus","Marine","Mediterranean and Black Sea",1,291018.271428571,"Other",3.4362103626385e-06
+"65","Indonesia","IDN","grouper","Plectropomus leopardus","Marine","Pacific, Western Central",32.48,8739896.85872143,"Other",3.71629099576714e-06
+"66","Spain","ESP","oysters","Ostrea edulis","Marine","Mediterranean and Black Sea",1,264035.123892857,"Other",3.78737489640125e-06
+"67","Mexico","MEX","oysters","Ostrea edulis","Marine","Atlantic, Western Central",0.1,26076.2340595238,"Other",3.83490958747078e-06
+"68","Malaysia","MYS","grouper","Epinephelus fasciatus","Marine","Pacific, Western Central",1,258189.336988095,"Other",3.87312664289505e-06
+"69","Indonesia","IDN","trevally","Caranx melampygus","Marine","Pacific, Western Central",35.603,8739896.85872143,"Other",4.07361786706581e-06
+"70","Indonesia","IDN","grouper","Epinephelus amblycephalus","Marine","Pacific, Western Central",48.617,8739896.85872143,"Other",5.56265145754961e-06
+"71","Philippines","PHL","jack_pompano","Trachinotus blochii","Marine","Pacific, Western Central",9.498,1684667.3459881,"Other",5.63790829247017e-06
+"72","Chile","CHL","general_seaweed","Macrocystis pyrifera","Marine","Pacific, Southeast",8.75166666666667,1410104.90385714,"Other",6.20639403687465e-06
+"73","Spain","ESP","abalone","Haliotis discus","Marine","Atlantic, Northeast",1.76166666666667,264035.123892857,"Other",6.6720921091602e-06
+"74","Norway","NOR","general_crustaceans","Crustacea","Marine","Atlantic, Northeast",10.4542857142857,1511209.72928571,"Other",6.91782583958549e-06
+"75","Indonesia","IDN","rabbitfish","Siganus canaliculatus","Marine","Pacific, Western Central",61.197,8739896.85872143,"Other",7.00202771145203e-06
+"76","Singapore","SGP","cobia_ling","Rachycentron canadum","Marine","Pacific, Western Central",0.03,4174.23357142857,"Other",7.18694809158294e-06
+"77","Spain","ESP","general_gastropods","Gastropoda","Marine","Mediterranean and Black Sea",2.024,264035.123892857,"Other",7.66564679031612e-06
+"78","Singapore","SGP","grouper","Chromileptes altivelis","Marine","Pacific, Western Central",0.032,4174.23357142857,"Other",7.66607796435513e-06
+"79","Spain","ESP","crabs","Maja squinado","Marine","Atlantic, Northeast",2.159,264035.123892857,"Other",8.17694240133029e-06
+"80","Indonesia","IDN","trevally","Turrum fulvoguttatum","Marine","Pacific, Western Central",73.919,8739896.85872143,"Other",8.45765129667831e-06
+"81","Chile","CHL","abalone","Haliotis discus","Marine","Pacific, Southeast",12.5771428571429,1410104.90385714,"Other",8.91929587844128e-06
+"82","United Kingdom of Great Britain and Northern Ireland","GBR","scallops","Aequipecten opercularis","Marine","Atlantic, Northeast",1.89542857142857,204097.140142857,"Other",9.28689431954741e-06
+"83","Philippines","PHL","lobsters","Panulirus spp","Marine","Pacific, Western Central",16.3388571428571,1684667.3459881,"Other",9.69856582177298e-06
+"84","Spain","ESP","general_seaweed","Algae","Marine","Atlantic, Northeast",2.6145,264035.123892857,"Other",9.90209166664106e-06
+"85","Indonesia","IDN","general_fish","Variola albimarginata","Marine","Pacific, Western Central",91.269,8739896.85872143,"Other",1.04428005816709e-05
+"86","Norway","NOR","oysters","Ostrea edulis","Marine","Atlantic, Northeast",15.7884285714286,1511209.72928571,"Other",1.04475429620818e-05
+"87","Indonesia","IDN","milkfish","Chanos chanos","Marine","Pacific, Western Central",93.3686666666667,8739896.85872143,"Other",1.06830398774667e-05
+"88","Republic of Korea","KOR","general_fish","Takifugu spp","Marine","Pacific, Northwest",24.4311428571429,2266404.24630238,"Other",1.07796933830326e-05
+"89","Indonesia","IDN","trevally","Caranx sexfasciatus","Marine","Pacific, Western Central",100,8739896.85872143,"Other",1.14417826224358e-05
+"90","Indonesia","IDN","general_fish","Plectorhinchus gibbosus","Marine","Pacific, Western Central",100,8739896.85872143,"Other",1.14417826224358e-05
+"91","Indonesia","IDN","trevally","Seriolina nigrofasciata","Marine","Pacific, Western Central",100,8739896.85872143,"Other",1.14417826224358e-05
+"92","Norway","NOR","scallops","Pecten maximus","Marine","Atlantic, Northeast",18.5442857142857,1511209.72928571,"Other",1.22711529411942e-05
+"93","Republic of Korea","KOR","sea_cucumber","Apostichopus japonicus","Marine","Pacific, Northwest",29.7,2266404.24630238,"Other",1.31044583279683e-05
+"94","Spain","ESP","scallops","Aequipecten opercularis","Marine","Atlantic, Northeast",3.513,264035.123892857,"Other",1.33050480110576e-05
+"95","Greece","GRC","oysters","Ostrea edulis","Marine","Mediterranean and Black Sea",2,131967.969585714,"Other",1.51551926295341e-05
+"96","Indonesia","IDN","grouper","Plectropomus laevis","Marine","Pacific, Western Central",133.818,8739896.85872143,"Other",1.53111646696911e-05
+"97","Malaysia","MYS","grunts","Pomadasys spp","Marine","Indian Ocean, Eastern",4.09666666666667,258189.336988095,"Other",1.58669088137267e-05
+"98","Japan","JPN","oysters","Ex Pinctada spp","Marine","Pacific, Northwest",16.1714285714286,936255.171428571,"Other",1.72724584759875e-05
+"99","Indonesia","IDN","grouper","Epinephelus spilotoceps","Marine","Pacific, Western Central",151.076,8739896.85872143,"Other",1.72857875146711e-05
+"100","Spain","ESP","clams","Ruditapes decussatus","Marine","Mediterranean and Black Sea",4.68666666666667,264035.123892857,"Other",1.77501636811338e-05
+"101","Indonesia","IDN","mullets","Mugil cephalus","Marine","Pacific, Western Central",155.857,8739896.85872143,"Other",1.78328191418497e-05
+"102","Denmark","DNK","general_seaweed","Ulva lactuca","Marine","Atlantic, Northeast",0.3,16238.5548571429,"Other",1.8474550391905e-05
+"103","Spain","ESP","clams","Ensis leei","Marine","Atlantic, Northeast",4.959,264035.123892857,"Other",1.87815921112538e-05
+"104","United Kingdom of Great Britain and Northern Ireland","GBR","scallops","Pecten maximus","Marine","Atlantic, Northeast",3.98571428571429,204097.140142857,"Other",1.95285160925062e-05
+"105","Indonesia","IDN","grouper","Epinephelus longispinis","Marine","Pacific, Western Central",172.246,8739896.85872143,"Other",1.97080128958408e-05
+"106","Republic of Korea","KOR","clams","Mactra quadrangularis","Marine","Pacific, Northwest",46,2266404.24630238,"Other",2.02964674439913e-05
+"107","Indonesia","IDN","grouper","Epinephelus bleekeri","Marine","Pacific, Western Central",180.591,8739896.85872143,"Other",2.0662829655683e-05
+"108","Republic of Korea","KOR","clams","Cyclina sinensis","Marine","Pacific, Northwest",50.42725,2266404.24630238,"Other",2.22498921285872e-05
+"109","Portugal","PRT","breams_porgies","Diplodus sargus","Marine","Atlantic, Northeast",0.30575,13263.517647619,"Other",2.3051954098684e-05
+"110","Indonesia","IDN","grouper","Serranidae","Marine","Pacific, Western Central",201.736,8739896.85872143,"Other",2.30821945911971e-05
+"111","Spain","ESP","clams","Ruditapes decussatus","Marine","Atlantic, Northeast",6.31016666666667,264035.123892857,"Other",2.38989668254413e-05
+"112","United Kingdom of Great Britain and Northern Ireland","GBR","clams","Mercenaria mercenaria","Marine","Atlantic, Northeast",5.045,204097.140142857,"Other",2.47186217135074e-05
+"113","Indonesia","IDN","grouper","Plectropomus areolatus","Marine","Pacific, Western Central",231.093,8739896.85872143,"Other",2.64411587156655e-05
+"114","Republic of Korea","KOR","general_bivalves","Tegillarca granosa","Marine","Pacific, Northwest",63.6271428571429,2266404.24630238,"Other",2.80740485555258e-05
+"115","Malaysia","MYS","trevally","Gnathanodon speciosus","Marine","Pacific, Western Central",8.04333333333333,258189.336988095,"Other",3.11528486310192e-05
+"116","Iceland","ISL","halibut","Hippoglossus hippoglossus","Marine","Atlantic, Northeast",1,31629.3338095238,"Other",3.16162207532456e-05
+"117","United States of America","USA","general_seaweed","Algae","Marine","Atlantic, Western Central",6.71428571428571,208164.464857143,"Other",3.22547160914017e-05
+"118","Republic of Korea","KOR","croaker","Miichthys miiuy","Marine","Pacific, Northwest",73.7,2266404.24630238,"Other",3.25184706656992e-05
+"119","Republic of Korea","KOR","general_salmonid","Oncorhynchus mykiss","Marine","Pacific, Northwest",74.4031428571429,2266404.24630238,"Salmonidae fish",3.28287166680573e-05
+"120","Norway","NOR","general_seaweed","Alaria esculenta","Marine","Atlantic, Northeast",51.4481428571429,1511209.72928571,"Other",3.40443433231867e-05
+"121","Spain","ESP","mullets","Mugilidae","Marine","Atlantic, Northeast",9.503,264035.123892857,"Other",3.5991423640501e-05
+"122","United States of America","USA","clams","Leukoma staminea","Marine","Pacific, Northeast",7.54857142857143,208164.464857143,"Other",3.62625361333972e-05
+"123","Spain","ESP","cockles","Cerastoderma edule","Marine","Mediterranean and Black Sea",9.702,264035.123892857,"Other",3.67451112448849e-05
+"124","Malaysia","MYS","grouper","Chromileptes altivelis","Marine","Indian Ocean, Eastern",9.68,258189.336988095,"Other",3.74918659032241e-05
+"125","Spain","ESP","sturgeon","Acipenseridae","Marine","Atlantic, Northeast",10,264035.123892857,"Other",3.78737489640125e-05
+"126","Spain","ESP","general_molluscs","Mollusca","Marine","Mediterranean and Black Sea",10,264035.123892857,"Other",3.78737489640125e-05
+"127","Spain","ESP","clams","Ruditapes philippinarum","Marine","Mediterranean and Black Sea",10.0966666666667,264035.123892857,"Other",3.82398618706646e-05
+"128","United States of America","USA","clams","Saxidomus gigantea","Marine","Pacific, Northeast",8.14,208164.464857143,"Other",3.91036962316611e-05
+"129","Malaysia","MYS","grouper","Epinephelus lanceolatus","Marine","Pacific, Western Central",10.11,258189.336988095,"Other",3.9157310359669e-05
+"130","Republic of Korea","KOR","general_fish","Actinopterygii","Marine","Pacific, Northwest",89.6824285714286,2266404.24630238,"Other",3.95703585173495e-05
+"131","China","CHN","general_seaweed","Ulva prolifera","Marine","Pacific, Northwest",1480,37340268.6414286,"Other",3.9635494168833e-05
+"132","Philippines","PHL","rabbitfish","Siganus spp","Marine","Pacific, Western Central",68.9775714285714,1684667.3459881,"Other",4.09443274322591e-05
+"133","France","FRA","abalone","Haliotis tuberculata","Marine","Atlantic, Northeast",6.42857142857143,153925.758804762,"Other",4.17641041921084e-05
+"134","Singapore","SGP","parrotfish","Bolbometopon muricatum","Marine","Pacific, Western Central",0.175,4174.23357142857,"Other",4.19238638675671e-05
+"135","United Kingdom of Great Britain and Northern Ireland","GBR","clams","Ruditapes philippinarum","Marine","Atlantic, Northeast",8.69742857142857,204097.140142857,"Other",4.26141618904647e-05
+"136","Philippines","PHL","general_fish","Lutjanus spp","Marine","Pacific, Western Central",77.34425,1684667.3459881,"Other",4.59106957727823e-05
+"137","Republic of Korea","KOR","breams_porgies","Sparidae","Marine","Pacific, Northwest",107.393714285714,2266404.24630238,"Other",4.73850657758545e-05
+"138","Greece","GRC","mullets","Mugil cephalus","Marine","Mediterranean and Black Sea",6.4,131967.969585714,"Other",4.84966164145092e-05
+"139","Malaysia","MYS","trevally","Caranx spp","Marine","Pacific, Western Central",12.682,258189.336988095,"Other",4.9118992085195e-05
+"140","Malaysia","MYS","general_seaweed","Algae","Marine","Indian Ocean, Eastern",13.2466666666667,258189.336988095,"Other",5.13060175962164e-05
+"141","Philippines","PHL","general_seaweed","Gracilaria spp","Marine","Pacific, Western Central",86.46,1684667.3459881,"Other",5.13217046711909e-05
+"142","Indonesia","IDN","jack_pompano","Trachinotus blochii","Marine","Pacific, Western Central",473.71,8739896.85872143,"Other",5.42008684607406e-05
+"143","Peru","PER","general_seaweed","Macrocystis pyrifera","Marine","Pacific, Southeast",1.8875,34531.5773571429,"Other",5.46601153048565e-05
+"144","Malaysia","MYS","clams","Veneridae","Marine","Pacific, Western Central",14.7,258189.336988095,"Other",5.69349616505572e-05
+"145","Türkiye","TUR","breams_porgies","Pagrus pagrus","Marine","Mediterranean and Black Sea",17,291018.271428571,"Other",5.84155761648544e-05
+"146","Malaysia","MYS","grouper","Epinephelus fuscoguttatus","Marine","Indian Ocean, Eastern",15.28625,258189.336988095,"Other",5.92055821449545e-05
+"147","Philippines","PHL","general_fish","Actinopterygii","Marine","Pacific, Western Central",100.750142857143,1684667.3459881,"Other",5.98041762351906e-05
+"148","Indonesia","IDN","lobsters","Panulirus spp","Marine","Pacific, Western Central",540.619142857143,8739896.85872143,"Other",6.18564671409899e-05
+"149","Indonesia","IDN","sea_cucumber","Holothuroidea","Marine","Pacific, Western Central",541.286714285714,8739896.85872143,"Other",6.19328492126965e-05
+"150","Portugal","PRT","general_gastropods","Bolinus brandaris","Marine","Atlantic, Northeast",0.8505,13263.517647619,"Other",6.41232607062331e-05
+"151","Italy","ITA","breams_porgies","Diplodus sargus","Marine","Mediterranean and Black Sea",4.715,71954.7164285714,"Other",6.55273237673103e-05
+"152","United Republic of Tanzania","TZA","sea_cucumber","Holothuria scabra","Marine","Indian Ocean, Western",1.8025,26536.3739285714,"Other",6.79256331272626e-05
+"153","Spain","ESP","atlantic_salmon","Salmo salar","Marine","Atlantic, Northeast",17.998,264035.123892857,"Salmonidae fish",6.81651733854296e-05
+"154","Mexico","MEX","tuna","Thunnus albacares","Marine","Pacific, Eastern Central",1.803,26076.2340595238,"Other",6.91434198620982e-05
+"155","Spain","ESP","shrimp","Penaeus vannamei","Marine","Europe - Inland waters",20,264035.123892857,"Other",7.57474979280249e-05
+"156","Türkiye","TUR","general_bivalves","Donax trunculus","Marine","Mediterranean and Black Sea",23,291018.271428571,"Other",7.90328383406854e-05
+"157","Republic of Korea","KOR","rockfish","Scorpaenidae","Marine","Pacific, Northwest",182.976428571429,2266404.24630238,"Other",8.07342418590827e-05
+"158","Indonesia","IDN","grouper","Chromileptes altivelis","Marine","Pacific, Western Central",715.743333333333,8739896.85872143,"Other",8.1893796334576e-05
+"159","Canada","CAN","shrimp","Penaeus spp","Marine","America, North - Inland waters",14,169568,"Other",8.25627476882431e-05
+"160","United Kingdom of Great Britain and Northern Ireland","GBR","oysters","Ostrea edulis","Marine","Atlantic, Northeast",16.8711428571429,204097.140142857,"Other",8.26623187631828e-05
+"161","Thailand","THA","cobia_ling","Rachycentron canadum","Marine","Indian Ocean, Eastern",8,94638.4285714286,"Other",8.45322573584575e-05
+"162","Malaysia","MYS","abalone","Haliotis spp","Marine","Pacific, Western Central",22.4075,258189.336988095,"Other",8.67870852506708e-05
+"163","Democratic People's Republic of Korea","PRK","atlantic_salmon","Salmo salar","Marine","Pacific, Northwest",58.5714285714286,658515.714285714,"Salmonidae fish",8.89446178743972e-05
+"164","Canada","CAN","scallops","Pectinidae","Marine","Atlantic, Northwest",15.2857142857143,169568,"Other",9.01450408432858e-05
+"165","Chile","CHL","oysters","Magallana gigas","Marine","Pacific, Southeast",130.118333333333,1410104.90385714,"Other",9.22756406118531e-05
+"166","Taiwan Province of China","TWN","clams","Ruditapes philippinarum","Marine","Pacific, Northwest",2.17333333333333,23210.4990952381,"Other",9.36357863058282e-05
+"167","Republic of Korea","KOR","grouper","Hyporthodus septemfasciatus","Marine","Pacific, Northwest",216.156285714286,2266404.24630238,"Other",9.53741090394367e-05
+"168","Norway","NOR","general_seaweed","Saccharina latissima","Marine","Atlantic, Northeast",145.881285714286,1511209.72928571,"Other",9.65327862091238e-05
+"169","United States of America","USA","oysters","Ostrea conchaphila","Marine","Pacific, Northeast",20.26,208164.464857143,"Other",9.73268901294169e-05
+"170","Italy","ITA","soles","Solea solea","Marine","Mediterranean and Black Sea",7.02,71954.7164285714,"Other",9.75613600947016e-05
+"171","Malaysia","MYS","grouper","Chromileptes altivelis","Marine","Pacific, Western Central",25.19,258189.336988095,"Other",9.75640601345263e-05
+"172","Faroe Islands","FRO","general_seaweed","Laminaria digitata","Marine","Atlantic, Northeast",9.71428571428571,96104.4285714286,"Other",0.000101080521040356
+"173","United Republic of Tanzania, Zanzibar","EAZ","sea_cucumber","Holothuria scabra","Marine","Indian Ocean, Western",11.3385714285714,111673.91,"Other",0.000101532859631864
+"174","Mexico","MEX","general_gastropods","Gastropoda","Marine","Pacific, Eastern Central",2.69633333333333,26076.2340595238,"Other",0.000103401945510171
+"175","Netherlands (Kingdom of the)","NLD","general_seaweed","Ulva spp","Marine","Atlantic, Northeast",4,38530.0285714286,"Other",0.000103815131945325
+"176","Italy","ITA","breams_porgies","Diplodus puntazzo","Marine","Mediterranean and Black Sea",7.65,71954.7164285714,"Other",0.000106316866769867
+"177","Malaysia","MYS","grouper","Plectropomus leopardus","Marine","Pacific, Western Central",27.7466666666667,258189.336988095,"Other",0.000107466353918195
+"178","Malaysia","MYS","clams","Polymesoda expansa","Marine","Pacific, Western Central",27.7783333333333,258189.336988095,"Other",0.000107589002928553
+"179","Russian Federation","RUS","general_salmonid","Oncorhynchus nerka","Marine","Pacific, Northwest",11.5,103803.65,"Salmonidae fish",0.000110786085075043
+"180","Jersey","JEY","oysters","Ostrea edulis","Marine","Atlantic, Northeast",0.166666666666667,1481.37747619048,"Other",0.000112507898456286
+"181","Republic of Korea","KOR","mackerels","Scomber japonicus","Marine","Pacific, Northwest",256.350857142857,2266404.24630238,"Other",0.000113109061439984
+"182","Türkiye","TUR","breams_porgies","Pagrus auriga","Marine","Mediterranean and Black Sea",33.5,291018.271428571,"Other",0.00011511304714839
+"183","Türkiye","TUR","breams_porgies","Dentex dentex","Marine","Mediterranean and Black Sea",34,291018.271428571,"Other",0.000116831152329709
+"184","Russian Federation","RUS","general_seaweed","Laminariaceae","Marine","Atlantic, Northeast",12.25,103803.65,"Other",0.000118011264536459
+"185","Mexico","MEX","lobsters","Panulirus interruptus","Marine","Pacific, Eastern Central",3.182,26076.2340595238,"Other",0.00012202682307332
+"186","Republic of Korea","KOR","general_seaweed","Sargassum spp","Marine","Pacific, Northwest",289.295142857143,2266404.24630238,"Other",0.000127644988015322
+"187","Singapore","SGP","grouper","Epinephelus tukula","Marine","Pacific, Western Central",0.5675,4174.23357142857,"Other",0.000135953101399111
+"188","Republic of Korea","KOR","general_fish","Konosirus punctatus","Marine","Pacific, Northwest",321.892857142857,2266404.24630238,"Other",0.000142027997727247
+"189","Türkiye","TUR","drums","Umbrina cirrosa","Marine","Mediterranean and Black Sea",41.3333333333333,291018.271428571,"Other",0.000142030028322391
+"190","Democratic People's Republic of Korea","PRK","sea_cucumber","Apostichopus japonicus","Marine","Pacific, Northwest",100,658515.714285714,"Other",0.000151856664663605
+"191","Malaysia","MYS","clams","Meretrix spp","Marine","Pacific, Western Central",39.275,258189.336988095,"Other",0.000152117048899703
+"192","China, Hong Kong SAR","HKG","grouper","Epinephelus areolatus","Marine","Pacific, Northwest",0.2,1311.86714285714,"Other",0.000152454462396562
+"193","Spain","ESP","general_bivalves","Venerupis corrugata","Marine","Atlantic, Northeast",42.5074285714286,264035.123892857,"Other",0.000160991567881998
+"194","Mauritius","MUS","rabbitfish","Siganus sutor","Marine","Indian Ocean, Western",0.4,2324.375,"Other",0.000172089271309492
+"195","Taiwan Province of China","TWN","snappers","Lutjanidae","Marine","Pacific, Northwest",4,23210.4990952381,"Other",0.000172335803016862
+"196","Türkiye","TUR","breams_porgies","Dentex gibbosus","Marine","Mediterranean and Black Sea",50.2,291018.271428571,"Other",0.000172497760204453
+"197","Democratic People's Republic of Korea","PRK","general_fish","Actinopterygii","Marine","Pacific, Northwest",114.285714285714,658515.714285714,"Other",0.000173550473901263
+"198","Faroe Islands","FRO","general_seaweed","Alaria esculenta","Marine","Atlantic, Northeast",16.8571428571429,96104.4285714286,"Other",0.00017540443357003
+"199","Spain","ESP","cockles","Cerastoderma edule","Marine","Atlantic, Northeast",46.9034285714286,264035.123892857,"Other",0.000177640867926578
+"200","Philippines","PHL","grouper","Serranidae","Marine","Pacific, Western Central",300.454142857143,1684667.3459881,"Other",0.000178346273270299
+"201","Malaysia","MYS","grouper","Epinephelus lanceolatus","Marine","Indian Ocean, Eastern",46.52,258189.336988095,"Other",0.000180177851427478
+"202","Mexico","MEX","oysters","Magallana gigas","Marine","Atlantic, Western Central",4.7365,26076.2340595238,"Other",0.000181640492610554
+"203","Singapore","SGP","shrimp","Penaeus monodon","Marine","Pacific, Western Central",0.7625,4174.23357142857,"Other",0.0001826682639944
+"204","Japan","JPN","general_invertebrates","Invertebrata","Marine","Pacific, Northwest",173.428571428571,936255.171428571,"Other",0.000185236436306085
+"205","Norway","NOR","general_fish","Actinopterygii","Marine","Atlantic, Northeast",291.314428571429,1511209.72928571,"Other",0.000192769026645376
+"206","Mexico","MEX","abalone","Haliotis spp","Marine","Pacific, Eastern Central",5.404,26076.2340595238,"Other",0.000207238514106921
+"207","China","CHN","urchins","Strongylocentrotus spp","Marine","Pacific, Northwest",8323.36028571429,37340268.6414286,"Other",0.000222905741938868
+"208","Malaysia","MYS","sea_cucumber","Holothuria scabra","Marine","Pacific, Western Central",57.7504285714286,258189.336988095,"Other",0.000223674723538608
+"209","Indonesia","IDN","general_fish","Lutjanus spp","Marine","Pacific, Western Central",2020.05,8739896.85872143,"Other",0.000231129729864514
+"210","Spain","ESP","general_fish","Seriola dumerili","Marine","Mediterranean and Black Sea",61.5821428571429,264035.123892857,"Other",0.000233234661923738
+"211","Mexico","MEX","general_fish","Actinopterygii","Marine","Atlantic, Western Central",6.12,26076.2340595238,"Other",0.000234696466753212
+"212","Republic of Korea","KOR","general_fish","Seriola spp","Marine","Pacific, Northwest",534.462571428571,2266404.24630238,"Other",0.000235819612631128
+"213","Philippines","PHL","tilapia","Oreochromis spp","Marine","Pacific, Western Central",431.373714285714,1684667.3459881,"Other",0.000256058690347977
+"214","Chile","CHL","oysters","Ostrea chilensis","Marine","Pacific, Southeast",365.275714285714,1410104.90385714,"Other",0.000259041517610891
+"215","Malaysia","MYS","general_fish","Eleutheronema tetradactylum","Marine","Pacific, Western Central",67.6071666666667,258189.336988095,"Other",0.000261851118467313
+"216","Australia","AUS","mussels","Mytilus planulatus","Marine","Pacific, Southwest",25.75,94141.3358428571,"Other",0.000273524905605573
+"217","Republic of Korea","KOR","filefish","Monacanthidae","Marine","Pacific, Northwest",621.624,2266404.24630238,"Other",0.000274277636487036
+"218","Brunei Darussalam","BRN","scats","Scatophagus argus","Marine","Pacific, Western Central",0.10825,393.83725,"Other",0.000274859729494861
+"219","Singapore","SGP","oysters","Magallana gigas","Marine","Pacific, Western Central",1.18914285714286,4174.23357142857,"Other",0.000284876932925411
+"220","Russian Federation","RUS","mussels","Mytilidae","Marine","Atlantic, Northeast",30,103803.65,"Other",0.000289007178456634
+"221","France","FRA","general_bivalves","Bivalvia","Marine","Mediterranean and Black Sea",44.6417142857143,153925.758804762,"Other",0.000290021076604452
+"222","France","FRA","general_seaweed","Saccharina latissima","Marine","Atlantic, Northeast",45.2,153925.758804762,"Other",0.000293648057030736
+"223","Portugal","PRT","general_fish","Eremichthys acros","Marine","Atlantic, Northeast",3.94,13263.517647619,"Other",0.000297055434664972
+"224","Indonesia","IDN","barramundi","Lates calcarifer","Marine","Pacific, Western Central",2673.4745,8739896.85872143,"Other",0.000305893140756252
+"225","Türkiye","TUR","breams_porgies","Pagrus caeruleostictus","Marine","Mediterranean and Black Sea",90,291018.271428571,"Other",0.000309258932637465
+"226","Thailand","THA","general_bivalves","Tegillarca granosa","Marine","Indian Ocean, Eastern",29.7142857142857,94638.4285714286,"Other",0.000313976955902842
+"227","Mexico","MEX","general_fish","Actinopterygii","Marine","Pacific, Eastern Central",8.20566666666667,26076.2340595238,"Other",0.000314679897715894
+"228","China","CHN","general_bivalves","Atrina spp","Marine","Pacific, Northwest",11758.1428571429,37340268.6414286,"Other",0.000314891758547697
+"229","Brunei Darussalam","BRN","lobsters","Panulirus spp","Marine","Pacific, Western Central",0.132,393.83725,"Other",0.000335163827190039
+"230","Republic of Korea","KOR","general_molluscs","Mollusca","Marine","Pacific, Northwest",799.567,2266404.24630238,"Other",0.000352790990973692
+"231","Malaysia","MYS","grouper","Epinephelus fuscoguttatus","Marine","Pacific, Western Central",91.126,258189.336988095,"Other",0.000352942538460454
+"232","Republic of Korea","KOR","general_fish","Oplegnathus fasciatus","Marine","Pacific, Northwest",803.114,2266404.24630238,"Other",0.000354356025104645
+"233","Malaysia","MYS","general_fish","Eleutheronema tetradactylum","Marine","Indian Ocean, Eastern",91.9661666666667,258189.336988095,"Other",0.000356196610361593
+"234","Australia","AUS","oysters","Ostreidae","Marine","Pacific, Western Central",35.1822,94141.3358428571,"Other",0.000373716812970733
+"235","Netherlands (Kingdom of the)","NLD","general_seaweed","Undaria pinnatifida","Marine","Atlantic, Northeast",14.5,38530.0285714286,"Other",0.000376329853301803
+"236","Iceland","ISL","cod","Gadus morhua","Marine","Atlantic, Northeast",12.36,31629.3338095238,"Other",0.000390776488510116
+"237","Thailand","THA","general_fish","Actinopterygii","Marine","Pacific, Western Central",39,94638.4285714286,"Other",0.00041209475462248
+"238","Mauritius","MUS","breams_porgies","Rhabdosargus sarba","Marine","Indian Ocean, Western",1,2324.375,"Other",0.00043022317827373
+"239","Russian Federation","RUS","general_salmonid","Oncorhynchus gorbuscha","Marine","Pacific, Northwest",45.4,103803.65,"Salmonidae fish",0.00043736419673104
+"240","Greece","GRC","breams_porgies","Diplodus puntazzo","Marine","Mediterranean and Black Sea",58.199,131967.969585714,"Other",0.000441008527923128
+"241","Chile","CHL","abalone","Haliotis rufescens","Marine","Pacific, Southeast",632.174285714286,1410104.90385714,"Other",0.000448317202489731
+"242","Venezuela (Bolivarian Republic of)","VEN","general_seaweed","Eucheuma denticulatum","Marine","Atlantic, Western Central",3,6536.30952380952,"Other",0.000458974592477916
+"243","Japan","JPN","general_bivalves","Bivalvia","Marine","Pacific, Northwest",431,936255.171428571,"Other",0.000460344586767264
+"244","Republic of Korea","KOR","bass","Lateolabrax japonicus","Marine","Pacific, Northwest",1053.06071428571,2266404.24630238,"Other",0.000464639402261875
+"245","Singapore","SGP","rabbitfish","Siganus canaliculatus","Marine","Pacific, Western Central",1.9975,4174.23357142857,"Other",0.000478530960431231
+"246","Canada","CAN","scallops","Pectinidae","Marine","Pacific, Northeast",81.2857142857143,169568,"Other",0.000479369422802146
+"247","Spain","ESP","breams_porgies","Pagellus bogaraveo","Marine","Atlantic, Northeast",127.671,264035.123892857,"Other",0.000483537940398443
+"248","China","CHN","general_fish","Takifugu rubripes","Marine","Pacific, Northwest",18277.1428571429,37340268.6414286,"Other",0.000489475398065685
+"249","Indonesia","IDN","grouper","Epinephelus fuscoguttatus","Marine","Pacific, Western Central",4383.473,8739896.85872143,"Other",0.000501547451973165
+"250","China","CHN","general_seaweed","Eucheuma spp","Marine","Pacific, Northwest",19002.8571428571,37340268.6414286,"Other",0.000508910563160055
+"251","Mexico","MEX","general_seaweed","Phaeophyceae","Marine","Pacific, Eastern Central",13.465,26076.2340595238,"Other",0.000516370575952941
+"252","Ireland","IRL","general_invertebrates","Invertebrata","Marine","Atlantic, Northeast",20.4166666666667,39343.6880952381,"Other",0.000518931184520492
+"253","Netherlands (Kingdom of the)","NLD","soles","Soleidae","Marine","Atlantic, Northeast",20,38530.0285714286,"Other",0.000519075659726625
+"254","Russian Federation","RUS","crabs","Paralithodes camtschaticus","Marine","Pacific, Northwest",54,103803.65,"Other",0.000520212921221942
+"255","Republic of Korea","KOR","breams_porgies","Acanthopagrus schlegelii","Marine","Pacific, Northwest",1182.77271428571,2266404.24630238,"Other",0.000521871910633506
+"256","Greece","GRC","general_molluscs","Mollusca","Marine","Mediterranean and Black Sea",71.1957142857143,131967.969585714,"Other",0.000539492382198637
+"257","New Zealand","NZL","abalone","Haliotis iris","Marine","Pacific, Southwest",60,110435.428571429,"Other",0.000543303908683549
+"258","Philippines","PHL","general_seaweed","Caulerpa spp","Marine","Pacific, Western Central",940.381142857143,1684667.3459881,"Other",0.00055819989928373
+"259","France","FRA","general_seaweed","Algae","Marine","Atlantic, Northeast",88.0364,153925.758804762,"Other",0.000571940659468599
+"260","Chile","CHL","mussels","Choromytilus chorus","Marine","Pacific, Southeast",812.195714285714,1410104.90385714,"Other",0.000575982476242773
+"261","Taiwan Province of China","TWN","general_seaweed","Saccharina japonica","Marine","Pacific, Northwest",13.4285714285714,23210.4990952381,"Other",0.000578555910128036
+"262","Democratic People's Republic of Korea","PRK","scallops","Mizuhopecten yessoensis","Marine","Pacific, Northwest",385.714285714286,658515.714285714,"Other",0.000585732849416762
+"263","Greece","GRC","general_fish","Actinopterygii","Marine","Mediterranean and Black Sea",79.2165,131967.969585714,"Other",0.000600270658468745
+"264","France","FRA","general_seaweed","Undaria pinnatifida","Marine","Atlantic, Northeast",94.2765,153925.758804762,"Other",0.000612480332934915
+"265","China","CHN","general_fish","Seriola spp","Marine","Pacific, Northwest",23437.1428571429,37340268.6414286,"Other",0.000627664012870535
+"266","Greece","GRC","general_fish","Seriola dumerili","Marine","Mediterranean and Black Sea",82.9818,131967.969585714,"Other",0.000628802581872737
+"267","Portugal","PRT","clams","Ruditapes philippinarum","Marine","Atlantic, Northeast",8.3526,13263.517647619,"Other",0.000629742442533666
+"268","Venezuela (Bolivarian Republic of)","VEN","mussels","Perna perna","Marine","Atlantic, Western Central",4.14285714285714,6536.30952380952,"Other",0.000633822056279027
+"269","France","FRA","clams","Ruditapes philippinarum","Marine","Mediterranean and Black Sea",98.6695,153925.758804762,"Other",0.000641020065557393
+"270","France","FRA","general_seaweed","Phaeophyceae","Marine","Atlantic, Northeast",100,153925.758804762,"Other",0.000649663842988353
+"271","Brazil","BRA","general_fish","Actinopterygii","Marine","Atlantic, Southwest",10,15334.4745714286,"Other",0.000652125376283329
+"272","Brazil","BRA","cobia_ling","Rachycentron canadum","Marine","Atlantic, Southwest",10,15334.4745714286,"Other",0.000652125376283329
+"273","Spain","ESP","general_fish","Actinopterygii","Marine","Atlantic, Northeast",174.338,264035.123892857,"Other",0.000660283364688801
+"274","Denmark","DNK","general_seaweed","Phaeophyceae","Marine","Atlantic, Northeast",11,16238.5548571429,"Other",0.000677400181036518
+"275","Portugal","PRT","clams","Solen spp","Marine","Atlantic, Northeast",9.02575,13263.517647619,"Other",0.000680494438940957
+"276","Singapore","SGP","bass","Lateolabrax japonicus","Marine","Pacific, Western Central",2.89,4174.23357142857,"Other",0.000692342666155823
+"277","Malaysia","MYS","oysters","Crassostrea spp","Marine","Indian Ocean, Eastern",181.304571428571,258189.336988095,"Other",0.000702215566078669
+"278","Netherlands (Kingdom of the)","NLD","general_seaweed","Saccharina latissima","Marine","Atlantic, Northeast",27.1428571428571,38530.0285714286,"Other",0.000704459823914706
+"279","United States of America","USA","general_seaweed","Laminariaceae","Marine","Pacific, Northeast",150.714285714286,208164.464857143,"Other",0.000724015435668698
+"280","Faroe Islands","FRO","general_seaweed","Saccharina latissima","Marine","Atlantic, Northeast",70,96104.4285714286,"Other",0.000728374342790803
+"281","Japan","JPN","mackerels","Trachurus japonicus","Marine","Pacific, Northwest",688.571428571429,936255.171428571,"Other",0.000735452737228444
+"282","Portugal","PRT","general_molluscs","Polititapes aureus","Marine","Atlantic, Northeast",9.92085714285714,13263.517647619,"Other",0.000747980845385918
+"283","Mexico","MEX","mojarras","Gerreidae","Marine","Pacific, Eastern Central",19.667,26076.2340595238,"Other",0.000754211668567879
+"284","Greece","GRC","drums","Umbrina cirrosa","Marine","Mediterranean and Black Sea",100.275,131967.969585714,"Other",0.000759843470463267
+"285","Singapore","SGP","trevally","Caranx ignobilis","Marine","Pacific, Western Central",3.27133333333333,4174.23357142857,"Other",0.000783696761897722
+"286","Denmark","DNK","general_seaweed","Saccharina latissima","Marine","Atlantic, Northeast",13,16238.5548571429,"Other",0.000800563850315885
+"287","Singapore","SGP","general_fish","Lutjanus purpureus","Marine","Pacific, Western Central",3.6,4174.23357142857,"Other",0.000862433770989952
+"288","Spain","ESP","clams","Ruditapes philippinarum","Marine","Atlantic, Northeast",228.269,264035.123892857,"Other",0.000864540280226616
+"289","Russian Federation","RUS","general_invertebrates","Invertebrata","Marine","Pacific, Northwest",91.8333333333333,103803.65,"Other",0.000884683085164475
+"290","Republic of Korea","KOR","general_seaweed","Gracilaria spp","Marine","Pacific, Northwest",2043.66385714286,2266404.24630238,"Other",0.000901720803107864
+"291","Singapore","SGP","grouper","Epinephelus fuscoguttatus","Marine","Pacific, Western Central",3.82457142857143,4174.23357142857,"Other",0.000916233210989802
+"292","China","CHN","cobia_ling","Rachycentron canadum","Marine","Pacific, Northwest",35440.4285714286,37340268.6414286,"Other",0.000949120878367432
+"293","Chile","CHL","mussels","Aulacomya atra","Marine","Pacific, Southeast",1341.49385714286,1410104.90385714,"Other",0.000951343303234667
+"294","Indonesia","IDN","general_fish","Actinopterygii","Marine","Pacific, Western Central",8530.66371428571,8739896.85872143,"Other",0.000976059998439578
+"295","Singapore","SGP","grouper","Epinephelus coioides","Marine","Pacific, Western Central",4.13628571428571,4174.23357142857,"Other",0.000990909024017583
+"296","United States of America","USA","general_seaweed","Laminariaceae","Marine","Atlantic, Northwest",210.714285714286,208164.464857143,"Other",0.00101224906882591
+"297","Malaysia","MYS","mussels","Perna viridis","Marine","Indian Ocean, Eastern",268.059428571429,258189.336988095,"Other",0.00103822811467922
+"298","Jersey","JEY","scallops","Pecten maximus","Marine","Atlantic, Northeast",1.56666666666667,1481.37747619048,"Other",0.00105757424548908
+"299","Indonesia","IDN","general_molluscs","Mollusca","Marine","Pacific, Western Central",9467,8739896.85872143,"Other",0.001083193560866
+"300","Singapore","SGP","breams_porgies","Acanthopagrus latus","Marine","Pacific, Western Central",4.55666666666667,4174.23357142857,"Other",0.00109161756013265
+"301","Spain","ESP","oysters","Ostrea edulis","Marine","Atlantic, Northeast",295.009714285714,264035.123892857,"Other",0.00111731238608022
+"302","United Republic of Tanzania","TZA","lobsters","Panulirus spp","Marine","Indian Ocean, Western",30,26536.3739285714,"Other",0.00113052371362989
+"303","Thailand","THA","milkfish","Chanos chanos","Marine","Pacific, Western Central",107,94638.4285714286,"Other",0.00113061894216937
+"304","Argentina","ARG","mussels","Aulacomya atra","Marine","Atlantic, Southwest",0.05,43.6918571428571,"Other",0.00114437799786165
+"305","Canada","CAN","general_molluscs","Mollusca","Marine","Atlantic, Northwest",195.714285714286,169568,"Other",0.00115419351360095
+"306","Mexico","MEX","drums","Sciaenops ocellatus","Marine","Atlantic, Western Central",30.168,26076.2340595238,"Other",0.00115691552434819
+"307","Malaysia","MYS","jack_pompano","Trachinotus blochii","Marine","Pacific, Western Central",312.811166666667,258189.336988095,"Other",0.00121155726381175
+"308","Türkiye","TUR","general_salmonid","Salmo spp","Marine","Mediterranean and Black Sea",364.666666666667,291018.271428571,"Salmonidae fish",0.00125307137890884
+"309","Singapore","SGP","general_fish","Lutjanus spp","Marine","Pacific, Western Central",5.2415,4174.23357142857,"Other",0.00125567961406773
+"310","Mexico","MEX","abalone","Haliotis rufescens","Marine","Pacific, Eastern Central",33.5852857142857,26076.2340595238,"Other",0.0012879653418366
+"311","France","FRA","mussels","Mytilus edulis","Marine","Mediterranean and Black Sea",198.267,153925.758804762,"Other",0.00128806901157772
+"312","Norway","NOR","halibut","Hippoglossus hippoglossus","Marine","Atlantic, Northeast",1967.10757142857,1511209.72928571,"Other",0.00130167741333848
+"313","Singapore","SGP","grouper","Plectropomus maculatus","Marine","Pacific, Western Central",5.43614285714286,4174.23357142857,"Other",0.00130230921775717
+"314","China, Hong Kong SAR","HKG","general_fish","Lutjanus russellii","Marine","Pacific, Northwest",1.72,1311.86714285714,"Other",0.00131110837661044
+"315","Bulgaria","BGR","oysters","Magallana gigas","Marine","Mediterranean and Black Sea",3.035,2284.47389285714,"Other",0.00132853345774251
+"316","Indonesia","IDN","general_bivalves","Tegillarca granosa","Marine","Pacific, Western Central",11703.9895,8739896.85872143,"Other",0.00133914503674271
+"317","Singapore","SGP","grouper","Epinephelus lanceolatus","Marine","Pacific, Western Central",5.59528571428571,4174.23357142857,"Other",0.0013404342662049
+"318","Indonesia","IDN","trevally","Atropus armatus","Marine","Pacific, Western Central",11724.0176666667,8739896.85872143,"Other",0.00134143661603597
+"319","Spain","ESP","oysters","Magallana gigas","Marine","Mediterranean and Black Sea",354.747428571429,264035.123892857,"Other",0.00134356150553432
+"320","Republic of Korea","KOR","general_plants","Plantae aquaticae","Marine","Pacific, Northwest",3053.584,2266404.24630238,"Other",0.00134732539659767
+"321","Portugal","PRT","general_bivalves","Bivalvia","Marine","Atlantic, Northeast",17.89,13263.517647619,"Other",0.00134881262085186
+"322","Papua New Guinea","PNG","clams","Tridacna spp","Marine","Pacific, Western Central",1,715.286142857143,"Other",0.00139804190251134
+"323","Russian Federation","RUS","general_salmonid","Oncorhynchus keta","Marine","Pacific, Northwest",145.571428571429,103803.65,"Salmonidae fish",0.00140237292784433
+"324","Norway","NOR","mussels","Mytilus edulis","Marine","Atlantic, Northeast",2167.44742857143,1511209.72928571,"Other",0.00143424660824272
+"325","Saudi Arabia","SAU","rabbitfish","Siganus spp","Marine","Indian Ocean, Western",26.6666666666667,17942.3212142857,"Other",0.00148624396744356
+"326","Malaysia","MYS","oysters","Crassostrea spp","Marine","Pacific, Western Central",387.926,258189.336988095,"Other",0.00150248652607171
+"327","Singapore","SGP","shrimp","Penaeus vannamei","Marine","Pacific, Western Central",6.33,4174.23357142857,"Other",0.001516446047324
+"328","Taiwan Province of China","TWN","barramundi","Lates calcarifer","Marine","Pacific, Northwest",35.2066666666667,23210.4990952381,"Other",0.00151684229288674
+"329","Singapore","SGP","shrimp","Penaeus spp","Marine","Pacific, Western Central",6.663,4174.23357142857,"Other",0.00159622117114057
+"330","Canada","CAN","general_bivalves","Bivalvia","Marine","Atlantic, Northwest",280.714285714286,169568,"Other",0.001655467338851
+"331","Republic of Korea","KOR","clams","Anadara broughtonii","Marine","Pacific, Northwest",3784.04928571429,2266404.24630238,"Other",0.00166962680725997
+"332","France","FRA","general_bivalves","Bivalvia","Marine","Atlantic, Northeast",260.425571428571,153925.758804762,"Other",0.00169189077546724
+"333","Malaysia","MYS","general_fish","Actinopterygii","Marine","Pacific, Western Central",446.903714285714,258189.336988095,"Other",0.00173091468260876
+"334","Taiwan Province of China","TWN","general_seaweed","Pyropia tenera","Marine","Pacific, Northwest",40.3552857142857,23210.4990952381,"Other",0.00173866514238658
+"335","Iceland","ISL","mussels","Mytilus edulis","Marine","Atlantic, Northeast",55.1166666666667,31629.3338095238,"Other",0.00174258070051639
+"336","Republic of Korea","KOR","general_seaweed","Capsosiphon fulvescens","Marine","Pacific, Northwest",4034.17814285714,2266404.24630238,"Other",0.00177999055086438
+"337","United States of America","USA","clams","Mya arenaria","Marine","Atlantic, Northwest",376.289714285714,208164.464857143,"Other",0.00180765585780431
+"338","China","CHN","drums","Sciaenops ocellatus","Marine","Pacific, Northwest",67985,37340268.6414286,"Other",0.00182068856153251
+"339","Germany","DEU","shrimp","Penaeus vannamei","Marine","Europe - Inland waters",29.06,15689.2028571429,"Other",0.0018522292218798
+"340","Saudi Arabia","SAU","mullets","Mugil cephalus","Marine","Indian Ocean, Western",33.3333333333333,17942.3212142857,"Other",0.00185780495930444
+"341","Malaysia","MYS","grouper","Epinephelus spp","Marine","Pacific, Western Central",481.719428571429,258189.336988095,"Other",0.00186576035320018
+"342","Singapore","SGP","crabs","Scylla serrata","Marine","Pacific, Western Central",7.82871428571429,4174.23357142857,"Other",0.00187548543984208
+"343","Malta","MLT","general_fish","Actinopterygii","Marine","Mediterranean and Black Sea",33.3545714285714,17708.4821428571,"Other",0.00188353644087025
+"344","Indonesia","IDN","grouper","Epinephelus spp","Marine","Pacific, Western Central",16682.0181428571,8739896.85872143,"Other",0.00190872025294101
+"345","Dominican Republic","DOM","oysters","Crassostrea virginica","Marine","Atlantic, Western Central",0.857142857142857,448,"Other",0.00191326530612245
+"346","United States of America","USA","general_fish","Seriola rivoliana","Marine","Pacific, Eastern Central",400,208164.464857143,"Other",0.00192155755438138
+"347","Norway","NOR","cod","Gadus morhua","Marine","Atlantic, Northeast",2953.11071428571,1511209.72928571,"Other",0.00195413691234077
+"348","Singapore","SGP","trevally","Gnathanodon speciosus","Marine","Pacific, Western Central",8.16685714285714,4174.23357142857,"Other",0.00195649261190292
+"349","United Arab Emirates","ARE","rabbitfish","Siganus canaliculatus","Marine","Indian Ocean, Western",5.406,2727.95552380952,"Other",0.00198170386313727
+"350","Brazil","BRA","general_bivalves","Nodipecten nodosus","Marine","Atlantic, Southwest",30.6666666666667,15334.4745714286,"Other",0.00199985115393554
+"351","Japan","JPN","flounder","Paralichthys olivaceus","Marine","Pacific, Northwest",1926.42857142857,936255.171428571,"Other",0.00205758924512978
+"352","Spain","ESP","oysters","Magallana gigas","Marine","Atlantic, Northeast",543.514142857143,264035.123892857,"Other",0.00205849182049618
+"353","Italy","ITA","general_fish","Argyrosomus regius","Marine","Mediterranean and Black Sea",149.271428571429,71954.7164285714,"Other",0.00207451903058514
+"354","Italy","ITA","drums","Umbrina cirrosa","Marine","Mediterranean and Black Sea",150,71954.7164285714,"Other",0.00208464444646798
+"355","Brunei Darussalam","BRN","mussels","Perna viridis","Marine","Pacific, Western Central",0.8415,393.83725,"Other",0.0021366693983365
+"356","Tonga","TON","general_seaweed","Kappaphycus alvarezii","Marine","Pacific, Eastern Central",0.2,92.3428571428571,"Other",0.00216584158415842
+"357","Tunisia","TUN","general_seaweed","Gracilariopsis longissima","Marine","Mediterranean and Black Sea",48.1,21888.9955714286,"Other",0.00219745121894877
+"358","Denmark","DNK","general_salmonid","Oncorhynchus kisutch","Marine","Atlantic, Northeast",36,16238.5548571429,"Salmonidae fish",0.0022169460470286
+"359","Malaysia","MYS","general_fish","Lutjanus johnii","Marine","Pacific, Western Central",587.954,258189.336988095,"Other",0.00227722030219672
+"360","France","FRA","mussels","Mytilus galloprovincialis","Marine","Atlantic, Northeast",377.306,153925.758804762,"Other",0.00245122065942564
+"361","Republic of Korea","KOR","general_seaweed","Codium fragile","Marine","Pacific, Northwest",5588.41557142857,2266404.24630238,"Other",0.0024657629284564
+"362","Namibia","NAM","abalone","Haliotis midae","Marine","Atlantic, Southeast",0.834166666666667,337.415119047619,"Other",0.00247222670110684
+"363","Portugal","PRT","general_bivalves","Venerupis corrugata","Marine","Atlantic, Northeast",33.0922857142857,13263.517647619,"Other",0.0024949856134301
+"364","Myanmar","MMR","lobsters","Panulirus spp","Marine","Indian Ocean, Eastern",6.81,2712.69889285714,"Other",0.00251041500327645
+"365","Indonesia","IDN","general_molluscs","Pteria penguin","Marine","Pacific, Western Central",22037.9594,8739896.85872143,"Other",0.00252153540896865
+"366","Republic of Korea","KOR","clams","Anadara kagoshimensis","Marine","Pacific, Northwest",5777.09466666667,2266404.24630238,"Other",0.00254901334397513
+"367","Malaysia","MYS","general_bivalves","Tegillarca granosa","Marine","Pacific, Western Central",687.216166666667,258189.336988095,"Other",0.00266167524454487
+"368","Singapore","SGP","general_fish","Actinopterygii","Marine","Pacific, Western Central",11.1197142857143,4174.23357142857,"Other",0.00266389364548873
+"369","Cyprus","CYP","breams_porgies","Pagrus major","Marine","Mediterranean and Black Sea",19.6614285714286,7279.97285714286,"Other",0.00270075575242529
+"370","Portugal","PRT","general_fish","Argyrosomus regius","Marine","Atlantic, Northeast",36.4833333333333,13263.517647619,"Other",0.00275065290389858
+"371","Spain","ESP","soles","Solea senegalensis","Marine","Atlantic, Northeast",730.632142857143,264035.123892857,"Other",0.00276717783636099
+"372","Republic of Korea","KOR","scallops","Mizuhopecten yessoensis","Marine","Pacific, Northwest",6272.07071428571,2266404.24630238,"Other",0.00276741041432416
+"373","China","CHN","general_invertebrates","Invertebrata","Marine","Pacific, Northwest",104642.180857143,37340268.6414286,"Other",0.00280239496566031
+"374","Spain","ESP","tuna","Thunnus thynnus","Marine","Atlantic, Northeast",747.24,264035.123892857,"Other",0.00283007801758687
+"375","Republic of Korea","KOR","breams_porgies","Pagrus major","Marine","Pacific, Northwest",6547.28057142857,2266404.24630238,"Other",0.00288884058618863
+"376","Netherlands (Kingdom of the)","NLD","oysters","Ostrea edulis","Marine","Atlantic, Northeast",112.842857142857,38530.0285714286,"Other",0.00292869902584329
+"377","Croatia","HRV","oysters","Ostrea edulis","Marine","Mediterranean and Black Sea",61.2394285714286,19986.0245238095,"Other",0.00306411255017092
+"378","Brunei Darussalam","BRN","crabs","Scylla serrata","Marine","Pacific, Western Central",1.2105,393.83725,"Other",0.00307360464252683
+"379","Republic of Korea","KOR","general_seaweed","Monostroma nitidum","Marine","Pacific, Northwest",6970.70471428571,2266404.24630238,"Other",0.00307566698467776
+"380","France","FRA","general_fish","Argyrosomus regius","Marine","Mediterranean and Black Sea",473.913333333333,153925.758804762,"Other",0.00307884357376754
+"381","China","CHN","breams_porgies","Sparidae","Marine","Pacific, Northwest",115422.571428571,37340268.6414286,"Other",0.00309110179514112
+"382","United States of America","USA","general_fish","Actinopterygii","Marine","Pacific, Northeast",661.714285714286,208164.464857143,"Other",0.00317880521139091
+"383","French Polynesia","PYF","shrimp","Penaeus stylirostris","Marine","Pacific, Eastern Central",4.86666666666667,1515.09352380952,"Other",0.00321212294171122
+"384","Canada","CAN","mussels","Mytilidae","Marine","Pacific, Northeast",545,169568,"Other",0.00321404982072089
+"385","Brazil","BRA","general_seaweed","Gracilaria spp","Marine","Atlantic, Southwest",50,15334.4745714286,"Other",0.00326062688141665
+"386","Mexico","MEX","general_fish","Lutjanus spp","Marine","Pacific, Eastern Central",86.8975,26076.2340595238,"Other",0.00333244055877242
+"387","Republic of Korea","KOR","mullets","Mugilidae","Marine","Pacific, Northwest",7581.491,2266404.24630238,"Other",0.00334516272300899
+"388","Indonesia","IDN","mussels","Perna viridis","Marine","Pacific, Western Central",29461.317,8739896.85872143,"Other",0.00337089984884672
+"389","Saudi Arabia","SAU","general_fish","Argyrosomus regius","Marine","Indian Ocean, Western",62.0395,17942.3212142857,"Other",0.00345771872318304
+"390","Singapore","SGP","grunts","Pomadasys argenteus","Marine","Pacific, Western Central",14.57,4174.23357142857,"Other",0.00349046112314545
+"391","Japan","JPN","general_fish","Takifugu rubripes","Marine","Pacific, Northwest",3393.14285714286,936255.171428571,"Other",0.00362416460884855
+"392","Morocco","MAR","general_fish","Argyrosomus regius","Marine","Atlantic, Eastern Central",4.805,1318.78186666667,"Other",0.00364351385278374
+"393","Indonesia","IDN","general_seaweed","Gelidium amansii","Marine","Pacific, Western Central",32204.187,8739896.85872143,"Other",0.00368473307186273
+"394","Saudi Arabia","SAU","grouper","Epinephelus spp","Marine","Indian Ocean, Western",66.6666666666667,17942.3212142857,"Other",0.00371560991860889
+"395","Taiwan Province of China","TWN","bass","Lateolabrax japonicus","Marine","Pacific, Northwest",88,23210.4990952381,"Other",0.00379138766637096
+"396","French Polynesia","PYF","clams","Tridacna maxima","Marine","Pacific, Eastern Central",5.8,1515.09352380952,"Other",0.00382814651957365
+"397","Japan","JPN","general_fish","Actinopterygii","Marine","Pacific, Northwest",3643.42857142857,936255.171428571,"Other",0.0038914909979822
+"398","Germany","DEU","oysters","Magallana gigas","Marine","Atlantic, Northeast",62.8571428571429,15689.2028571429,"Other",0.00400639493475131
+"399","Chile","CHL","scallops","Argopecten purpuratus","Marine","Pacific, Southeast",5807.98714285714,1410104.90385714,"Other",0.00411883337684325
+"400","Singapore","SGP","lobsters","Panulirus polyphagus","Marine","Pacific, Western Central",17.4674285714286,4174.23357142857,"Other",0.00418458341454299
+"401","Canada","CAN","general_fish","Actinopterygii","Marine","Pacific, Northeast",712.571428571429,169568,"Other",0.00420227536192813
+"402","Madagascar","MDG","sea_cucumber","Holothuria scabra","Marine","Indian Ocean, Western",57.9885714285714,13622.9428571429,"Other",0.00425668462656485
+"403","Viet Nam","VNM","general_seaweed","Kappaphycus alvarezii","Marine","Pacific, Western Central",1583.06771428571,354879.191857143,"Other",0.00446086372661427
+"404","France","FRA","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",687.519428571429,153925.758804762,"Other",0.00446656514094871
+"405","Democratic People's Republic of Korea","PRK","general_seaweed","Pyropia tenera","Marine","Pacific, Northwest",3000,658515.714285714,"Other",0.00455569993990815
+"406","Japan","JPN","trevally","Pseudocaranx dentex","Marine","Pacific, Northwest",4381.85714285714,936255.171428571,"Other",0.00468019539605976
+"407","Canada","CAN","general_salmonid","Salmo spp","Marine","Pacific, Northeast",800,169568,"Salmonidae fish",0.00471787129647103
+"408","Mexico","MEX","mussels","Mytilidae","Marine","Pacific, Eastern Central",124.448333333333,26076.2340595238,"Other",0.0047724810664476
+"409","Myanmar","MMR","shrimp","Miyakella nepa","Marine","Indian Ocean, Eastern",13.0125,2712.69889285714,"Other",0.00479688329370556
+"410","Taiwan Province of China","TWN","clams","Meretrix lusoria","Marine","Pacific, Northwest",111.738,23210.4990952381,"Other",0.00481411448937452
+"411","Malaysia","MYS","grouper","Epinephelus fuscoguttatus x E. lanceolatus","Marine","Pacific, Western Central",1245.65,258189.336988095,"Other",0.00482456020272222
+"412","France","FRA","clams","Ruditapes philippinarum","Marine","Atlantic, Northeast",744.528285714286,153925.758804762,"Other",0.00483693107310674
+"413","Singapore","SGP","crabs","Portunus pelagicus","Marine","Pacific, Western Central",20.6351428571429,4174.23357142857,"Other",0.00494345668588947
+"414","China","CHN","grouper","Epinephelus spp","Marine","Pacific, Northwest",188243.142857143,37340268.6414286,"Other",0.00504129053448452
+"415","Ireland","IRL","general_seaweed","Algae","Marine","Atlantic, Northeast",200.571428571429,39343.6880952381,"Other",0.00509793154332434
+"416","Mexico","MEX","mussels","Mytilidae","Marine","Atlantic, Western Central",136.139,26076.2340595238,"Other",0.00522080756328685
+"417","Myanmar","MMR","grouper","Epinephelus spp","Marine","Indian Ocean, Eastern",14.215,2712.69889285714,"Other",0.00524016876234579
+"418","China","CHN","jack_pompano","Trachinotus ovatus","Marine","Pacific, Northwest",197658,37340268.6414286,"Other",0.00529342736920486
+"419","China","CHN","abalone","Haliotis spp","Marine","Pacific, Northwest",198067.428571429,37340268.6414286,"Other",0.0053043921690396
+"420","Singapore","SGP","general_fish","Lutjanus argentimaculatus","Marine","Pacific, Western Central",22.4091428571429,4174.23357142857,"Other",0.00536844488303841
+"421","Malaysia","MYS","mussels","Perna viridis","Marine","Pacific, Western Central",1402.63428571429,258189.336988095,"Other",0.00543258022223807
+"422","Russian Federation","RUS","oysters","Magallana gigas","Marine","Mediterranean and Black Sea",576.428571428571,103803.65,"Other",0.00555306650034533
+"423","Republic of Korea","KOR","general_invertebrates","Ascidiacea","Marine","Pacific, Northwest",12935.1888571429,2266404.24630238,"Other",0.00570736172871477
+"424","Malta","MLT","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",101.304142857143,17708.4821428571,"Other",0.00572065646507172
+"425","France","FRA","oysters","Ostrea edulis","Marine","Mediterranean and Black Sea",883.505,153925.758804762,"Other",0.00573981253599425
+"426","Spain","ESP","breams_porgies","Sparus aurata","Marine","Atlantic, Eastern Central",1522.19285714286,264035.123892857,"Other",0.00576511501462415
+"427","China","CHN","sea_cucumber","Apostichopus japonicus","Marine","Pacific, Northwest",217967.285714286,37340268.6414286,"Other",0.00583732505535468
+"428","South Africa","ZAF","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Southeast",18.54,3146.33714285714,"Salmonidae fish",0.00589256623120944
+"429","Malaysia","MYS","general_fish","Lutjanus argentimaculatus","Marine","Pacific, Western Central",1522.927,258189.336988095,"Other",0.00589848913888423
+"430","Malaysia","MYS","general_fish","Actinopterygii","Marine","Indian Ocean, Eastern",1525.87557142857,258189.336988095,"Other",0.00590990932944271
+"431","Indonesia","IDN","general_seaweed","Gracilaria spp","Marine","Pacific, Western Central",51660.2846666667,8739896.85872143,"Other",0.00591085747369153
+"432","Taiwan Province of China","TWN","general_molluscs","Mollusca","Marine","Pacific, Northwest",137.577142857143,23210.4990952381,"Other",0.00592736684776281
+"433","Viet Nam","VNM","lobsters","Panulirus spp","Marine","Pacific, Western Central",2142.37614285714,354879.191857143,"Other",0.00603691676495803
+"434","France","FRA","bass","Dicentrarchus labrax","Marine","Atlantic, Northeast",934.035,153925.758804762,"Other",0.00606808767585627
+"435","Cyprus","CYP","general_fish","Argyrosomus regius","Marine","Mediterranean and Black Sea",44.74,7279.97285714286,"Other",0.00614562730905001
+"436","Malaysia","MYS","trevally","Caranx spp","Marine","Indian Ocean, Eastern",1601.59833333333,258189.336988095,"Other",0.00620319317604964
+"437","China","CHN","croaker","Larimichthys crocea","Marine","Pacific, Northwest",235447.857142857,37340268.6414286,"Other",0.00630546768165537
+"438","Finland","FIN","general_salmonid","Salmo trutta","Marine","Atlantic, Northeast",80.6,12539.3028571429,"Salmonidae fish",0.00642778956041302
+"439","Saudi Arabia","SAU","bass","Dicentrarchus labrax","Marine","Indian Ocean, Western",117.333333333333,17942.3212142857,"Other",0.00653947345675164
+"440","Canada","CAN","general_bivalves","Bivalvia","Marine","Pacific, Northeast",1135.71428571429,169568,"Other",0.00669769228695441
+"441","France","FRA","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",1074.00228571429,153925.758804762,"Other",0.00697740452315419
+"442","Canada","CAN","general_salmonid","Salmo spp","Marine","Atlantic, Northwest",1195.57142857143,169568,"Salmonidae fish",0.00705069015717251
+"443","Indonesia","IDN","general_seaweed","Sargassum spp","Marine","Pacific, Western Central",61769.70125,8739896.85872143,"Other",0.007067554943553
+"444","France","FRA","cockles","Cerastoderma edule","Marine","Atlantic, Northeast",1093.44342857143,153925.758804762,"Other",0.00710370659896075
+"445","France","FRA","breams_porgies","Sparus aurata","Marine","Atlantic, Northeast",1107.9045,153925.758804762,"Other",0.0071976549513409
+"446","Algeria","DZA","oysters","Magallana gigas","Marine","Mediterranean and Black Sea",18.7732857142857,2607.63628571429,"Other",0.00719934977785574
+"447","Singapore","SGP","general_fish","Lutjanus johnii","Marine","Pacific, Western Central",30.8687142857143,4174.23357142857,"Other",0.00739506157417777
+"448","United Republic of Tanzania, Zanzibar","EAZ","general_seaweed","Kappaphycus alvarezii","Marine","Indian Ocean, Western",829.428571428571,111673.91,"Other",0.0074272367774046
+"449","China","CHN","general_gastropods","Rapana spp","Marine","Pacific, Northwest",279881.285714286,37340268.6414286,"Other",0.00749542774857707
+"450","Bulgaria","BGR","shrimp","Penaeus vannamei","Marine","Europe - Inland waters",17.13375,2284.47389285714,"Other",0.00750008571057522
+"451","United States of America","USA","oysters","Crassostrea spp","Marine","Pacific, Northeast",1565.443,208164.464857143,"Other",0.00752022205650862
+"452","Republic of Korea","KOR","clams","Ruditapes philippinarum","Marine","Pacific, Northwest",17123.036,2266404.24630238,"Other",0.00755515527644112
+"453","Mauritius","MUS","oysters","Saccostrea cuccullata","Marine","Indian Ocean, Western",17.6071428571429,2324.375,"Other",0.00757500096031959
+"454","China","CHN","general_seaweed","Sargassum fusiforme","Marine","Pacific, Northwest",289415.714285714,37340268.6414286,"Other",0.0077507667945541
+"455","China, Hong Kong SAR","HKG","breams_porgies","Rhabdosargus sarba","Marine","Pacific, Northwest",10.2685714285714,1311.86714285714,"Other",0.00782744768361779
+"456","Taiwan Province of China","TWN","abalone","Haliotis spp","Marine","Pacific, Northwest",184.702857142857,23210.4990952381,"Other",0.00795772880130575
+"457","Australia","AUS","general_molluscs","Mollusca","Marine","Pacific, Southwest",771.5685,94141.3358428571,"Other",0.00819585247109644
+"458","Ireland","IRL","oysters","Ostrea edulis","Marine","Atlantic, Northeast",324.857142857143,39343.6880952381,"Other",0.00825690621760651
+"459","Republic of Korea","KOR","general_fish","Sebastes schlegelii","Marine","Pacific, Northwest",19293.3981428571,2266404.24630238,"Other",0.0085127788541405
+"460","French Polynesia","PYF","oysters","Ex Pinctada spp","Marine","Pacific, Eastern Central",12.9697142857143,1515.09352380952,"Other",0.00856033906943478
+"461","Mexico","MEX","general_bivalves","Bivalvia","Marine","Pacific, Eastern Central",227.219714285714,26076.2340595238,"Other",0.00871367060776657
+"462","Malaysia","MYS","jack_pompano","Trachinotus blochii","Marine","Indian Ocean, Eastern",2341.82942857143,258189.336988095,"Other",0.00907020195291569
+"463","Republic of Korea","KOR","abalone","Haliotis spp","Marine","Pacific, Northwest",20567.9931428571,2266404.24630238,"Other",0.00907516528722254
+"464","Samoa","WSM","clams","Tridacna maxima","Marine","Pacific, Eastern Central",0.031,3.39507142857143,"Other",0.00913088300267194
+"465","Portugal","PRT","tuna","Thunnus thynnus","Marine","Atlantic, Northeast",121.985,13263.517647619,"Other",0.00919703228365649
+"466","Spain","ESP","bass","Dicentrarchus labrax","Marine","Atlantic, Northeast",2443.351,264035.123892857,"Other",0.00925388624049688
+"467","Australia","AUS","abalone","Haliotis spp","Marine","Indian Ocean, Eastern",908.767,94141.3358428571,"Other",0.009653219723979
+"468","China","CHN","general_bivalves","Tegillarca granosa","Marine","Pacific, Northwest",360997.714285714,37340268.6414286,"Other",0.00966778567536045
+"469","French Polynesia","PYF","general_fish","Platax orbicularis","Marine","Pacific, Eastern Central",14.8857142857143,1515.09352380952,"Other",0.00982494747141808
+"470","Russian Federation","RUS","mussels","Mytilidae","Marine","Mediterranean and Black Sea",1064,103803.65,"Other",0.0102501212625953
+"471","Republic of Korea","KOR","general_invertebrates","Halocynthia roretzi","Marine","Pacific, Northwest",23334.8516,2266404.24630238,"Other",0.0102959794741254
+"472","Malaysia","MYS","grouper","Epinephelus spp","Marine","Indian Ocean, Eastern",2677.908,258189.336988095,"Other",0.0103718768220218
+"473","Malaysia","MYS","grouper","Epinephelus fuscoguttatus x E. lanceolatus","Marine","Indian Ocean, Eastern",2693.41,258189.336988095,"Other",0.01043191803124
+"474","Mexico","MEX","trevally","Caranx spp","Marine","Pacific, Eastern Central",280.352428571429,26076.2340595238,"Other",0.0107512621619929
+"475","Saudi Arabia","SAU","breams_porgies","Sparidentex hasta","Marine","Indian Ocean, Western",194.675,17942.3212142857,"Other",0.0108500454135778
+"476","Thailand","THA","mussels","Perna viridis","Marine","Indian Ocean, Eastern",1034.28571428571,94638.4285714286,"Other",0.010928813272772
+"477","Cambodia","KHM","grouper","Epinephelus coioides","Marine","Pacific, Western Central",171.428571428571,15406.6142857143,"Other",0.0111269464042809
+"478","China, Hong Kong SAR","HKG","general_fish","Lutjanus argentimaculatus","Marine","Pacific, Northwest",14.61,1311.86714285714,"Other",0.0111367984780689
+"479","Marshall Islands","MHL","general_seaweed","Gracilaria spp","Marine","Pacific, Western Central",0.08,7.10154285714286,"Other",0.0112651576719747
+"480","United States of America","USA","mussels","Mytilus edulis","Marine","Atlantic, Northwest",2392.404,208164.464857143,"Other",0.0114928549483306
+"481","Cambodia","KHM","general_fish","Lutjanus spp","Marine","Pacific, Western Central",178.571428571429,15406.6142857143,"Other",0.0115905691711259
+"482","Italy","ITA","general_fish","Actinopterygii","Marine","Mediterranean and Black Sea",836,71954.7164285714,"Other",0.0116184183816482
+"483","Cambodia","KHM","general_fish","Actinopterygii","Marine","Pacific, Western Central",180,15406.6142857143,"Other",0.011683293724495
+"484","Viet Nam","VNM","cobia_ling","Rachycentron canadum","Marine","Pacific, Western Central",4150.01128571429,354879.191857143,"Other",0.0116941522099297
+"485","Israel","ISR","bass","Morone chrysops x M. saxatilis","Marine","Mediterranean and Black Sea",35,2981,"Other",0.0117410265011741
+"486","Philippines","PHL","mussels","Perna viridis","Marine","Pacific, Western Central",19876.7134285714,1684667.3459881,"Other",0.0117985983855544
+"487","United Kingdom of Great Britain and Northern Ireland","GBR","oysters","Magallana gigas","Marine","Atlantic, Northeast",2435.64285714286,204097.140142857,"Other",0.011933743194236
+"488","Japan","JPN","general_invertebrates","Halocynthia roretzi","Marine","Pacific, Northwest",11408.5714285714,936255.171428571,"Other",0.012185322737565
+"489","Chile","CHL","general_seaweed","Gracilaria spp","Marine","Pacific, Southeast",17252.4157142857,1410104.90385714,"Other",0.0122348455544649
+"490","Republic of Korea","KOR","general_seaweed","Sargassum fusiforme","Marine","Pacific, Northwest",28692.0137142857,2266404.24630238,"Other",0.0126597070055338
+"491","Brunei Darussalam","BRN","milkfish","Chanos chanos","Marine","Pacific, Western Central",5.03357142857143,393.83725,"Other",0.0127808413972305
+"492","Türkiye","TUR","tuna","Thunnus thynnus","Marine","Mediterranean and Black Sea",3791.85714285714,291018.271428571,"Other",0.0130296188079305
+"493","Taiwan Province of China","TWN","breams_porgies","Sparidae","Marine","Pacific, Northwest",312.366666666667,23210.4990952381,"Other",0.0134579900839251
+"494","France","FRA","general_fish","Actinopterygii","Marine","Mediterranean and Black Sea",2081.295,153925.758804762,"Other",0.0135214210809245
+"495","Türkiye","TUR","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",4056.14285714286,291018.271428571,"Other",0.0139377601180564
+"496","New Caledonia","NCL","rabbitfish","Siganus canaliculatus","Marine","Pacific, Western Central",1.388,99.1139333333333,"Other",0.0140040855338873
+"497","United Kingdom of Great Britain and Northern Ireland","GBR","cockles","Cerastoderma edule","Marine","Atlantic, Northeast",2861.97971428571,204097.140142857,"Other",0.014022635066236
+"498","China","CHN","general_fish","Actinopterygii","Marine","Pacific, Northwest",531428.857142857,37340268.6414286,"Other",0.0142320576813752
+"499","Argentina","ARG","mussels","Mytilus platensis","Marine","Atlantic, Southwest",0.625,43.6918571428571,"Other",0.0143047249732706
+"500","Türkiye","TUR","general_fish","Argyrosomus regius","Marine","Mediterranean and Black Sea",4259.85714285714,291018.271428571,"Other",0.0146377652576453
+"501","Malaysia","MYS","barramundi","Lates calcarifer","Marine","Pacific, Western Central",3961.67971428571,258189.336988095,"Other",0.0153440872520168
+"502","New Zealand","NZL","oysters","Magallana gigas","Marine","Pacific, Southwest",1744.14285714286,110435.428571429,"Other",0.0157933271931368
+"503","Portugal","PRT","cockles","Cerastoderma edule","Marine","Atlantic, Northeast",213.539571428571,13263.517647619,"Other",0.0160997690885498
+"504","Costa Rica","CRI","oysters","Magallana gigas","Marine","Pacific, Eastern Central",13.65,840.65,"Other",0.0162374353179088
+"505","Russian Federation","RUS","mussels","Mytilidae","Marine","Pacific, Northwest",1695.14285714286,103803.65,"Other",0.0163302818074592
+"506","United States of America","USA","general_bivalves","Panopea generosa","Marine","Pacific, Northeast",3500.34542857143,208164.464857143,"Other",0.0168152880030394
+"507","Spain","ESP","general_fish","Argyrosomus regius","Marine","Mediterranean and Black Sea",4455.723,264035.123892857,"Other",0.0168754934355177
+"508","Myanmar","MMR","shrimp","Squillidae","Marine","Indian Ocean, Eastern",45.85,2712.69889285714,"Other",0.016901986475804
+"509","Mauritius","MUS","general_fish","Argyrosomus japonicus","Marine","Indian Ocean, Western",39.358,2324.375,"Other",0.0169327238504974
+"510","Albania","ALB","tuna","Thunnus thynnus","Marine","Mediterranean and Black Sea",104.5,6158.78571428571,"Other",0.0169676304466326
+"511","Russian Federation","RUS","urchins","Strongylocentrotus spp","Marine","Pacific, Northwest",1775.71428571429,103803.65,"Other",0.0171064725153141
+"512","Tunisia","TUN","general_fish","Argyrosomus regius","Marine","Mediterranean and Black Sea",383.976857142857,21888.9955714286,"Other",0.0175420044236318
+"513","Thailand","THA","oysters","Crassostrea spp","Marine","Indian Ocean, Eastern",1700.14285714286,94638.4285714286,"Other",0.0179646141932679
+"514","Spain","ESP","bass","Dicentrarchus labrax","Marine","Atlantic, Eastern Central",4944.96642857143,264035.123892857,"Other",0.0187284417151184
+"515","Mauritius","MUS","bass","Dicentrarchus labrax","Marine","Indian Ocean, Western",43.675,2324.375,"Other",0.0187899973111051
+"516","United Arab Emirates","ARE","grouper","Epinephelus coioides","Marine","Asia - Inland waters",52.0366666666667,2727.95552380952,"Other",0.0190753354343544
+"517","Japan","JPN","general_salmonid","Oncorhynchus kisutch","Marine","Pacific, Northwest",18253.4285714286,936255.171428571,"Salmonidae fish",0.0194962112129932
+"518","Slovenia","SVN","clams","Venus verrucosa","Marine","Mediterranean and Black Sea",13.7666666666667,699.829047619048,"Other",0.0196714707877638
+"519","Japan","JPN","tuna","Thunnus orientalis","Marine","Pacific, Northwest",18493.1428571429,936255.171428571,"Other",0.0197522464190242
+"520","Spain","ESP","mussels","Mytilidae","Marine","Mediterranean and Black Sea",5289.93914285714,264035.123892857,"Other",0.0200349827131475
+"521","Samoa","WSM","clams","Tridacna squamosa","Marine","Pacific, Eastern Central",0.0685,3.39507142857143,"Other",0.0201763059897751
+"522","United States of America","USA","clams","Ruditapes philippinarum","Marine","Pacific, Northeast",4276.44971428571,208164.464857143,"Other",0.0205436106360445
+"523","United Arab Emirates","ARE","general_fish","Seriola lalandi","Marine","Indian Ocean, Western",57.5,2727.95552380952,"Other",0.0210780562579344
+"524","China","CHN","general_molluscs","Mollusca","Marine","Pacific, Northwest",799691.571428571,37340268.6414286,"Other",0.0214163314974473
+"525","United Kingdom of Great Britain and Northern Ireland","GBR","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Northeast",4393.28571428571,204097.140142857,"Salmonidae fish",0.021525464350998
+"526","Philippines","PHL","oysters","Magallana bilineata","Marine","Pacific, Western Central",36396.7595714286,1684667.3459881,"Other",0.0216047160040851
+"527","Malaysia","MYS","general_fish","Lutjanus johnii","Marine","Indian Ocean, Eastern",5594.093,258189.336988095,"Other",0.0216666306411327
+"528","Malaysia","MYS","general_fish","Lutjanus argentimaculatus","Marine","Indian Ocean, Eastern",5686.67214285714,258189.336988095,"Other",0.0220252013859091
+"529","Singapore","SGP","general_fish","Eleutheronema tetradactylum","Marine","Pacific, Western Central",92.5224285714286,4174.23357142857,"Other",0.0221651297150016
+"530","Japan","JPN","general_seaweed","Algae","Marine","Pacific, Northwest",20798.1428571429,936255.171428571,"Other",0.0222141820860742
+"531","Myanmar","MMR","lobsters","Panulirus polyphagus","Marine","Indian Ocean, Eastern",61.763,2712.69889285714,"Other",0.0227681001244293
+"532","China","CHN","mussels","Mytilidae","Marine","Pacific, Northwest",852324.714285714,37340268.6414286,"Other",0.022825885975016
+"533","Singapore","SGP","grouper","Epinephelus malabaricus","Marine","Pacific, Western Central",97.7565714285714,4174.23357142857,"Other",0.0234190468156087
+"534","China, Hong Kong SAR","HKG","grouper","Epinephelus coioides","Marine","Pacific, Northwest",31.1957142857143,1311.86714285714,"Other",0.0237796292525267
+"535","Russian Federation","RUS","general_salmonid","Oncorhynchus mykiss","Marine","Mediterranean and Black Sea",2541.5,103803.65,"Salmonidae fish",0.0244837248015845
+"536","Morocco","MAR","mussels","Mytilidae","Marine","Atlantic, Eastern Central",32.3802,1318.78186666667,"Other",0.0245531128524262
+"537","United Arab Emirates","ARE","barramundi","Lates calcarifer","Marine","Indian Ocean, Western",67,2727.95552380952,"Other",0.0245605177266366
+"538","Morocco","MAR","snappers","Chrysophrys auratus","Marine","Atlantic, Eastern Central",33.0853333333333,1318.78186666667,"Other",0.0250877981943741
+"539","Qatar","QAT","breams_porgies","Acanthopagrus latus","Marine","Indian Ocean, Western",0.405714285714286,16.132380952381,"Other",0.0251490642895094
+"540","Taiwan Province of China","TWN","general_fish","Seriola spp","Marine","Pacific, Northwest",587.085142857143,23210.4990952381,"Other",0.0252939473833887
+"541","Greece","GRC","general_fish","Argyrosomus regius","Marine","Mediterranean and Black Sea",3351.59714285714,131967.969585714,"Other",0.0253970501582981
+"542","Republic of Korea","KOR","mussels","Mytilus unguiculatus","Marine","Pacific, Northwest",58606.7547142857,2266404.24630238,"Other",0.0258589149794888
+"543","Namibia","NAM","mussels","Mytilus galloprovincialis","Marine","Atlantic, Southeast",8.86,337.415119047619,"Other",0.0262584558303376
+"544","Russian Federation","RUS","oysters","Crassostrea spp","Marine","Pacific, Northwest",2751.71428571429,103803.65,"Other",0.0265088393877699
+"545","Greece","GRC","breams_porgies","Pagrus pagrus","Marine","Mediterranean and Black Sea",3567.55842857143,131967.969585714,"Other",0.027033517601059
+"546","Croatia","HRV","general_fish","Actinopterygii","Marine","Mediterranean and Black Sea",543.915,19986.0245238095,"Other",0.0272147669663884
+"547","Brunei Darussalam","BRN","general_fish","Lutjanus spp","Marine","Pacific, Western Central",10.9072857142857,393.83725,"Other",0.0276949062443578
+"548","New Caledonia","NCL","rabbitfish","Siganus lineatus","Marine","Pacific, Western Central",2.7656,99.1139333333333,"Other",0.0279032413202584
+"549","Mexico","MEX","oysters","Crassostrea virginica","Marine","Atlantic, Western Central",732.587666666667,26076.2340595238,"Other",0.0280940746656285
+"550","France","FRA","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",4502.56057142857,153925.758804762,"Other",0.0292515080412212
+"551","Taiwan Province of China","TWN","grouper","Epinephelus spp","Marine","Pacific, Northwest",680.897285714286,23210.4990952381,"Other",0.0293357451263932
+"552","Brunei Darussalam","BRN","trevally","Caranx spp","Marine","Pacific, Western Central",11.5695714285714,393.83725,"Other",0.0293765290829433
+"553","Australia","AUS","mussels","Mytilus planulatus","Marine","Indian Ocean, Eastern",2766.92557142857,94141.3358428571,"Other",0.0293911866307823
+"554","Taiwan Province of China","TWN","general_fish","Actinopterygii","Marine","Pacific, Northwest",692.542857142857,23210.4990952381,"Other",0.0298374823523265
+"555","Singapore","SGP","tilapia","Oreochromis mossambicus","Marine","Pacific, Western Central",127.414428571429,4174.23357142857,"Other",0.0305240294753853
+"556","Mexico","MEX","bass","Morone saxatilis","Marine","Pacific, Eastern Central",804.184333333333,26076.2340595238,"Other",0.030839742099938
+"557","Viet Nam","VNM","general_seaweed","Gracilaria spp","Marine","Pacific, Western Central",11066.6985714286,354879.191857143,"Other",0.0311844109921313
+"558","China","CHN","general_seaweed","Phaeophyceae","Marine","Pacific, Northwest",1170478.57142857,37340268.6414286,"Other",0.0313462814814872
+"559","Spain","ESP","tuna","Thunnus thynnus","Marine","Mediterranean and Black Sea",8313.33828571429,264035.123892857,"Other",0.0314857287286057
+"560","Palau","PLW","clams","Tridacna derasa","Marine","Pacific, Western Central",0.2,6.3,"Other",0.0317460317460317
+"561","Palau","PLW","clams","Tridacna maxima","Marine","Pacific, Western Central",0.2,6.3,"Other",0.0317460317460317
+"562","Japan","JPN","general_seaweed","Saccharina japonica","Marine","Pacific, Northwest",30883.1428571429,936255.171428571,"Other",0.0329858181824729
+"563","Singapore","SGP","general_fish","Lutjanus erythropterus","Marine","Pacific, Western Central",138.002571428571,4174.23357142857,"Other",0.0330605772454036
+"564","Australia","AUS","oysters","Magallana gigas","Marine","Indian Ocean, Eastern",3138.71042857143,94141.3358428571,"Other",0.0333404067455622
+"565","Australia","AUS","oysters","Ostreidae","Marine","Indian Ocean, Eastern",3189.83085714286,94141.3358428571,"Other",0.033883424625155
+"566","France","FRA","oysters","Magallana gigas","Marine","Mediterranean and Black Sea",5270.42714285714,153925.758804762,"Other",0.034240059518187
+"567","Spain","ESP","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",9169.78142857143,264035.123892857,"Other",0.0347293999880578
+"568","Finland","FIN","general_fish","Coregonus lavaretus","Marine","Atlantic, Northeast",445.7,12539.3028571429,"Other",0.0355442407825817
+"569","Australia","AUS","oysters","Ostreidae","Marine","Pacific, Southwest",3453.71428571429,94141.3358428571,"Other",0.0366864805432473
+"570","China","CHN","clams","Sinonovacula constricta","Marine","Pacific, Northwest",1371623.57142857,37340268.6414286,"Other",0.0367330932886426
+"571","Morocco","MAR","bass","Dicentrarchus labrax","Marine","Atlantic, Eastern Central",48.466,1318.78186666667,"Other",0.0367505811423552
+"572","Australia","AUS","general_fish","Actinopterygii","Marine","Indian Ocean, Eastern",3463.442,94141.3358428571,"Other",0.0367898114998204
+"573","Croatia","HRV","general_fish","Argyrosomus regius","Marine","Mediterranean and Black Sea",748.156333333333,19986.0245238095,"Other",0.037433974547667
+"574","Canada","CAN","oysters","Crassostrea spp","Marine","Atlantic, Northwest",6397.71428571429,169568,"Other",0.0377294907394926
+"575","China, Hong Kong SAR","HKG","jack_pompano","Trachinotus blochii","Marine","Pacific, Northwest",50.1485714285714,1311.86714285714,"Other",0.0382268674854923
+"576","Slovenia","SVN","general_bivalves","Bivalvia","Marine","Mediterranean and Black Sea",27.75,699.829047619048,"Other",0.0396525409947055
+"577","Finland","FIN","general_salmonid","Salmoniformes (=Salmonoidei)","Marine","Atlantic, Northeast",499.96,12539.3028571429,"Salmonidae fish",0.0398714350945917
+"578","Singapore","SGP","grouper","Epinephelus spp","Marine","Pacific, Western Central",167.478714285714,4174.23357142857,"Other",0.0401220275338826
+"579","Viet Nam","VNM","general_fish","Actinopterygii","Marine","Pacific, Western Central",14817.3691428571,354879.191857143,"Other",0.0417532768413818
+"580","Philippines","PHL","general_seaweed","Eucheuma denticulatum","Marine","Pacific, Western Central",70834.2684285714,1684667.3459881,"Other",0.0420464423420195
+"581","Croatia","HRV","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",861.413142857143,19986.0245238095,"Other",0.0431007748354824
+"582","Canada","CAN","oysters","Crassostrea spp","Marine","Pacific, Northeast",7406,169568,"Other",0.0436756935270806
+"583","Dominican Republic","DOM","tilapia","Oreochromis spp","Marine","Atlantic, Western Central",20,448,"Other",0.0446428571428571
+"584","Russian Federation","RUS","sea_cucumber","Apostichopus japonicus","Marine","Pacific, Northwest",4638.71428571429,103803.65,"Other",0.0446873909126922
+"585","Portugal","PRT","bass","Dicentrarchus labrax","Marine","Atlantic, Northeast",610.024285714286,13263.517647619,"Other",0.0459926470429051
+"586","United Arab Emirates","ARE","oysters","Magallana gigas","Marine","Indian Ocean, Western",132.142857142857,2727.95552380952,"Other",0.0484402535120231
+"587","Taiwan Province of China","TWN","cobia_ling","Rachycentron canadum","Marine","Pacific, Northwest",1133.92514285714,23210.4990952381,"Other",0.0488539750138238
+"588","Namibia","NAM","general_seaweed","Gracilaria spp","Marine","Atlantic, Southeast",16.6666666666667,337.415119047619,"Other",0.0493951388832535
+"589","China","CHN","scallops","Pectinidae","Marine","Pacific, Northwest",1853747.42857143,37340268.6414286,"Other",0.0496447266186703
+"590","Netherlands (Kingdom of the)","NLD","oysters","Magallana gigas","Marine","Atlantic, Northeast",1915.68571428571,38530.0285714286,"Other",0.0497192912985864
+"591","Chile","CHL","general_salmonid","Oncorhynchus mykiss","Marine","Pacific, Southeast",70868.6157142857,1410104.90385714,"Salmonidae fish",0.0502576904175247
+"592","Japan","JPN","general_seaweed","Undaria pinnatifida","Marine","Pacific, Northwest",48756.8571428571,936255.171428571,"Other",0.0520764623051024
+"593","Cambodia","KHM","barramundi","Lates calcarifer","Marine","Pacific, Western Central",821.285714285714,15406.6142857143,"Other",0.0533073457318424
+"594","Spain","ESP","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",14080.3935714286,264035.123892857,"Other",0.0533277291438781
+"595","China","CHN","general_seaweed","Undaria pinnatifida","Marine","Pacific, Northwest",1991747.14285714,37340268.6414286,"Other",0.0533404609908811
+"596","New Caledonia","NCL","general_fish","Lutjanus sebae","Marine","Pacific, Western Central",5.35083333333333,99.1139333333333,"Other",0.0539866914103567
+"597","China","CHN","general_seaweed","Porphyra spp","Marine","Pacific, Northwest",2051664.28571429,37340268.6414286,"Other",0.0549450863735348
+"598","Norway","NOR","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Northeast",83492.1587142857,1511209.72928571,"Salmonidae fish",0.0552485582221264
+"599","Jersey","JEY","mussels","Mytilus edulis","Marine","Atlantic, Northeast",82.1565714285714,1481.37747619048,"Other",0.0554595791748137
+"600","Tunisia","TUN","tuna","Thunnus thynnus","Marine","Mediterranean and Black Sea",1251.6,21888.9955714286,"Other",0.0571794167491951
+"601","China, Hong Kong SAR","HKG","general_fish","Lutjanus spp","Marine","Pacific, Northwest",76.0442857142857,1311.86714285714,"Other",0.0579664534845101
+"602","Israel","ISR","drums","Sciaenops ocellatus","Marine","Mediterranean and Black Sea",175,2981,"Other",0.0587051325058705
+"603","Cook Islands","COK","general_bivalves","Asaphis violascens","Marine","Pacific, Eastern Central",0.5,8.5,"Other",0.0588235294117647
+"604","Slovenia","SVN","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",41.8666666666667,699.829047619048,"Other",0.0598241339211413
+"605","Malaysia","MYS","general_bivalves","Tegillarca granosa","Marine","Indian Ocean, Eastern",15546.7614285714,258189.336988095,"Other",0.0602145758997331
+"606","Montenegro","MNE","oysters","Ostrea edulis","Marine","Mediterranean and Black Sea",21.5714285714286,354.142857142857,"Other",0.0609116579265833
+"607","Singapore","SGP","jack_pompano","Trachinotus blochii","Marine","Pacific, Western Central",254.601857142857,4174.23357142857,"Other",0.060993677710211
+"608","Brazil","BRA","general_seaweed","Kappaphycus alvarezii","Marine","Atlantic, Southwest",940,15334.4745714286,"Other",0.0612997853706329
+"609","Bahrain","BHR","breams_porgies","Sparidentex hasta","Marine","Indian Ocean, Western",1,16,"Other",0.0625
+"610","United Kingdom of Great Britain and Northern Ireland","GBR","mussels","Mytilidae","Marine","Atlantic, Northeast",13330.0228571429,204097.140142857,"Other",0.0653121491453165
+"611","Mexico","MEX","oysters","Crassostrea spp","Marine","Pacific, Eastern Central",1709.05,26076.2340595238,"Other",0.0655405223046694
+"612","United States of America","USA","atlantic_salmon","Salmo salar","Marine","Atlantic, Northwest",13647.441,208164.464857143,"Salmonidae fish",0.0655608583788104
+"613","Algeria","DZA","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",171.265142857143,2607.63628571429,"Other",0.0656783094311904
+"614","United Republic of Tanzania, Zanzibar","EAZ","general_seaweed","Ulva lactuca","Marine","Indian Ocean, Western",7752,111673.91,"Other",0.0694163927814473
+"615","Japan","JPN","breams_porgies","Pagrus major","Marine","Pacific, Northwest",65341.2857142857,936255.171428571,"Other",0.0697900398398715
+"616","Slovenia","SVN","general_fish","Actinopterygii","Marine","Mediterranean and Black Sea",50,699.829047619048,"Other",0.0714460198102802
+"617","Brazil","BRA","oysters","Crassostrea spp","Marine","Atlantic, Southwest",1155.71428571429,15334.4745714286,"Other",0.0753670613447448
+"618","Dominican Republic","DOM","general_fish","Argyrosomus regius","Marine","Atlantic, Western Central",35,448,"Other",0.078125
+"619","Italy","ITA","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",5719.33857142857,71954.7164285714,"Other",0.0794852492693247
+"620","United Arab Emirates","ARE","atlantic_salmon","Salmo salar","Marine","Indian Ocean, Western",220,2727.95552380952,"Salmonidae fish",0.0806464761173142
+"621","France","FRA","oysters","Ostrea edulis","Marine","Atlantic, Northeast",12814.3098571429,153925.758804762,"Other",0.0832499378703497
+"622","Israel","ISR","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",250,2981,"Other",0.0838644750083865
+"623","Cambodia","KHM","general_seaweed","Eucheuma spp","Marine","Pacific, Western Central",1315.71428571429,15406.6142857143,"Other",0.085399313652856
+"624","Singapore","SGP","mussels","Perna viridis","Marine","Pacific, Western Central",356.940571428571,4174.23357142857,"Other",0.0855104452879032
+"625","Australia","AUS","tuna","Thunnus maccoyii","Marine","Indian Ocean, Eastern",8088.42857142857,94141.3358428571,"Other",0.0859179286018414
+"626","Philippines","PHL","milkfish","Chanos chanos","Marine","Pacific, Western Central",144931.040714286,1684667.3459881,"Other",0.0860294710759532
+"627","Canada","CAN","general_fish","Actinopterygii","Marine","Atlantic, Northwest",14776.7142857143,169568,"Other",0.0871432952309061
+"628","Panama","PAN","jack_pompano","Trachinotus carolinus","Marine","Atlantic, Western Central",244.033333333333,2768.5619047619,"Other",0.0881444380613624
+"629","Slovenia","SVN","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",62.3428571428571,699.829047619048,"Other",0.0890829801291608
+"630","Portugal","PRT","oysters","Crassostrea spp","Marine","Atlantic, Northeast",1186.58342857143,13263.517647619,"Other",0.0894621969899843
+"631","Türkiye","TUR","general_salmonid","Oncorhynchus mykiss","Marine","Mediterranean and Black Sea",26402.5714285714,291018.271428571,"Salmonidae fish",0.0907247895431602
+"632","Marshall Islands","MHL","clams","Tridacna maxima","Marine","Pacific, Western Central",0.6544,7.10154285714286,"Other",0.092148989756753
+"633","Argentina","ARG","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Southwest",4.08233333333333,43.6918571428571,"Salmonidae fish",0.0934346489320774
+"634","Democratic People's Republic of Korea","PRK","general_bivalves","Bivalvia","Marine","Pacific, Northwest",62000,658515.714285714,"Other",0.0941511320914351
+"635","Portugal","PRT","breams_porgies","Sparus aurata","Marine","Atlantic, Eastern Central",1283.199,13263.517647619,"Other",0.0967465067783394
+"636","Israel","ISR","general_fish","Actinopterygii","Marine","Mediterranean and Black Sea",295,2981,"Other",0.098960080509896
+"637","China","CHN","clams","Ruditapes philippinarum","Marine","Pacific, Northwest",3708896.57142857,37340268.6414286,"Other",0.099326992182204
+"638","Morocco","MAR","clams","Ruditapes decussatus","Marine","Mediterranean and Black Sea",131.614333333333,1318.78186666667,"Other",0.099799926477606
+"639","Italy","ITA","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",7282.05571428571,71954.7164285714,"Other",0.101203313357708
+"640","Morocco","MAR","general_seaweed","Gracilaria gracilis","Marine","Mediterranean and Black Sea",136.904714285714,1318.78186666667,"Other",0.103811492822352
+"641","Ecuador","ECU","cobia_ling","Rachycentron canadum","Marine","Pacific, Southeast",16.6666666666667,160.238095238095,"Other",0.104011887072808
+"642","Albania","ALB","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",656.428571428571,6158.78571428571,"Other",0.106584090091971
+"643","Brazil","BRA","oysters","Magallana gigas","Marine","Atlantic, Southwest",1653.33333333333,15334.4745714286,"Other",0.107818062212177
+"644","Saint Vincent and the Grenadines","VCT","general_seaweed","Eucheuma spp","Marine","Atlantic, Western Central",1.1,9.985,"Other",0.110165247871808
+"645","Singapore","SGP","mullets","Mugil cephalus","Marine","Pacific, Western Central",460.237714285714,4174.23357142857,"Other",0.11025681874534
+"646","China","CHN","general_seaweed","Gracilaria spp","Marine","Pacific, Northwest",4160058.57142857,37340268.6414286,"Other",0.111409444087744
+"647","Dominican Republic","DOM","cobia_ling","Rachycentron canadum","Marine","Atlantic, Western Central",50,448,"Other",0.111607142857143
+"648","Kuwait","KWT","general_fish","Actinopterygii","Marine","Indian Ocean, Western",0.853333333333333,7.63,"Other",0.111839231105286
+"649","Algeria","DZA","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",294.990714285714,2607.63628571429,"Other",0.11312571308422
+"650","Cook Islands","COK","general_seaweed","Caulerpa racemosa","Marine","Pacific, Eastern Central",1,8.5,"Other",0.117647058823529
+"651","New Zealand","NZL","general_salmonid","Oncorhynchus tshawytscha","Marine","Pacific, Southwest",13462.4285714286,110435.428571429,"Salmonidae fish",0.121903167720504
+"652","United States of America","USA","clams","Mercenaria mercenaria","Marine","Atlantic, Northwest",25954.7425714286,208164.464857143,"Other",0.124683829150381
+"653","Malta","MLT","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",2217.05114285714,17708.4821428571,"Other",0.12519713010815
+"654","United States of America","USA","oysters","Magallana gigas","Marine","Pacific, Northeast",26314.7352857143,208164.464857143,"Other",0.126413195949526
+"655","Portugal","PRT","breams_porgies","Sparus aurata","Marine","Atlantic, Northeast",1709.36157142857,13263.517647619,"Other",0.128876940253887
+"656","Canada","CAN","mussels","Mytilidae","Marine","Atlantic, Northwest",22495.5714285714,169568,"Other",0.132664013425714
+"657","Portugal","PRT","general_fish","Actinopterygii","Marine","Atlantic, Northeast",1778.965,13263.517647619,"Other",0.134124675464155
+"658","Thailand","THA","oysters","Crassostrea spp","Marine","Pacific, Western Central",12796,94638.4285714286,"Other",0.135209345644853
+"659","Greece","GRC","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",18022.3671428571,131967.969585714,"Other",0.136566222845093
+"660","Republic of Korea","KOR","oysters","Magallana gigas","Marine","Pacific, Northwest",310268.539142857,2266404.24630238,"Other",0.136899028339299
+"661","South Africa","ZAF","oysters","Magallana gigas","Marine","Atlantic, Southeast",438.652857142857,3146.33714285714,"Other",0.139416991004506
+"662","Russian Federation","RUS","scallops","Mizuhopecten yessoensis","Marine","Pacific, Northwest",14496.1428571429,103803.65,"Other",0.139649644854905
+"663","Japan","JPN","general_fish","Seriola quinqueradiata","Marine","Pacific, Northwest",131665.714285714,936255.171428571,"Other",0.140630159708292
+"664","Myanmar","MMR","general_seaweed","Kappaphycus alvarezii","Marine","Indian Ocean, Eastern",384.69425,2712.69889285714,"Other",0.141812366648191
+"665","Morocco","MAR","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",193.197285714286,1318.78186666667,"Other",0.146496771450618
+"666","Chile","CHL","general_salmonid","Oncorhynchus kisutch","Marine","Pacific, Southeast",207484.84,1410104.90385714,"Salmonidae fish",0.147141421487475
+"667","China","CHN","oysters","Crassostrea spp","Marine","Pacific, Northwest",5622762,37340268.6414286,"Other",0.150581723286308
+"668","Montenegro","MNE","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",54.2857142857143,354.142857142857,"Other",0.153287615974183
+"669","Tunisia","TUN","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",3395.57085714286,21888.9955714286,"Other",0.15512684655001
+"670","Brunei Darussalam","BRN","jack_pompano","Trachinotus blochii","Marine","Pacific, Western Central",61.3757142857143,393.83725,"Other",0.155840297700927
+"671","Morocco","MAR","snappers","Chrysophrys auratus","Marine","Mediterranean and Black Sea",209.857,1318.78186666667,"Other",0.159129424891496
+"672","Dominican Republic","DOM","bass","Dicentrarchus labrax","Marine","Atlantic, Western Central",71.4285714285714,448,"Other",0.159438775510204
+"673","Portugal","PRT","mussels","Mytilidae","Marine","Atlantic, Northeast",2183.23714285714,13263.517647619,"Other",0.164604684885315
+"674","Croatia","HRV","tuna","Thunnus thynnus","Marine","Mediterranean and Black Sea",3297.83671428571,19986.0245238095,"Other",0.165007138380971
+"675","Senegal","SEN","mussels","Mytilus edulis","Marine","Atlantic, Eastern Central",184.628571428571,1111.01428571429,"Other",0.166180195702768
+"676","Japan","JPN","scallops","Mizuhopecten yessoensis","Marine","Pacific, Northwest",155780.714285714,936255.171428571,"Other",0.166387026784609
+"677","Jamaica","JAM","general_seaweed","Kappaphycus alvarezii","Marine","Atlantic, Western Central",1,6,"Other",0.166666666666667
+"678","Switzerland","CHE","shrimp","Penaeus vannamei","Marine","Europe - Inland waters",30,179.8,"Other",0.166852057842047
+"679","Iran (Islamic Republic of)","IRN","breams_porgies","Acanthopagrus bifasciatus","Marine","Indian Ocean, Western",2312.5,13502.7333333333,"Other",0.171261621103875
+"680","Japan","JPN","oysters","Magallana gigas","Marine","Pacific, Northwest",163134.571428571,936255.171428571,"Other",0.174241570468075
+"681","Russian Federation","RUS","atlantic_salmon","Salmo salar","Marine","Atlantic, Northeast",18144.4285714286,103803.65,"Salmonidae fish",0.17479567020455
+"682","El Salvador","SLV","clams","Larkinia grandis","Marine","Pacific, Eastern Central",3,17.1428571428571,"Other",0.175
+"683","Russian Federation","RUS","general_seaweed","Laminariaceae","Marine","Pacific, Northwest",18378.1428571429,103803.65,"Other",0.177047173747193
+"684","Montenegro","MNE","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",64,354.142857142857,"Other",0.1807180314643
+"685","Canada","CAN","general_salmonid","Salmonidae","Marine","Atlantic, Northwest",31568.5714285714,169568,"Salmonidae fish",0.186170571266816
+"686","United Arab Emirates","ARE","bass","Dicentrarchus labrax","Marine","Indian Ocean, Western",513.365714285714,2727.95552380952,"Other",0.188186980984504
+"687","Singapore","SGP","barramundi","Lates calcarifer","Marine","Pacific, Western Central",835.924285714286,4174.23357142857,"Other",0.200258148330737
+"688","New Caledonia","NCL","oysters","Magallana gigas","Marine","Pacific, Western Central",20,99.1139333333333,"Other",0.201787975992612
+"689","Mexico","MEX","tuna","Thunnus orientalis","Marine","Pacific, Eastern Central",5402.90242857143,26076.2340595238,"Other",0.207196423234977
+"690","Mexico","MEX","oysters","Magallana gigas","Marine","Pacific, Eastern Central",5422.20328571429,26076.2340595238,"Other",0.207936593656013
+"691","Kuwait","KWT","grouper","Epinephelus coioides","Marine","Indian Ocean, Western",1.66666666666667,7.63,"Other",0.218435998252512
+"692","Brunei Darussalam","BRN","general_fish","Actinopterygii","Marine","Pacific, Western Central",87.5,393.83725,"Other",0.222172991508548
+"693","Brunei Darussalam","BRN","grouper","Epinephelus spp","Marine","Pacific, Western Central",87.5744285714286,393.83725,"Other",0.222361974575611
+"694","Bosnia and Herzegovina","BIH","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",40,178.014285714286,"Other",0.22470106733007
+"695","Saint Kitts and Nevis","KNA","general_seaweed","Eucheuma spp","Marine","Atlantic, Western Central",0.5,2.16666666666667,"Other",0.230769230769231
+"696","Cook Islands","COK","general_gastropods","Turbo setosus","Marine","Pacific, Eastern Central",2,8.5,"Other",0.235294117647059
+"697","Palau","PLW","clams","Tridacna crocea","Marine","Pacific, Western Central",1.5,6.3,"Other",0.238095238095238
+"698","Republic of Korea","KOR","general_seaweed","Undaria pinnatifida","Marine","Pacific, Northwest",551408.882714286,2266404.24630238,"Other",0.243296792094307
+"699","Republic of Korea","KOR","general_seaweed","Pyropia tenera","Marine","Pacific, Northwest",552190.104714286,2266404.24630238,"Other",0.243641488765819
+"700","Ireland","IRL","oysters","Magallana gigas","Marine","Atlantic, Northeast",10138.7,39343.6880952381,"Other",0.257695719208061
+"701","Kuwait","KWT","barramundi","Lates calcarifer","Marine","Indian Ocean, Western",2,7.63,"Other",0.262123197903014
+"702","Republic of Korea","KOR","general_seaweed","Saccharina japonica","Marine","Pacific, Northwest",613503.606142857,2266404.24630238,"Other",0.270694694974995
+"703","India","IND","mussels","Perna viridis","Marine","Indian Ocean, Western",3572.85714285714,13124.7142857143,"Other",0.272223613031032
+"704","Bosnia and Herzegovina","BIH","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",48.7,178.014285714286,"Other",0.27357354947436
+"705","Japan","JPN","general_seaweed","Pyropia tenera","Marine","Pacific, Northwest",257085.571428571,936255.171428571,"Other",0.274589213789122
+"706","Chile","CHL","mussels","Mytilus chilensis","Marine","Pacific, Southeast",389000.737142857,1410104.90385714,"Other",0.275866523177673
+"707","China","CHN","general_seaweed","Saccharina japonica","Marine","Pacific, Northwest",10852321.4685714,37340268.6414286,"Other",0.290633192085043
+"708","Albania","ALB","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",1849.85714285714,6158.78571428571,"Other",0.300360692622618
+"709","Portugal","PRT","clams","Ruditapes decussatus","Marine","Atlantic, Northeast",4056.76157142857,13263.517647619,"Other",0.305858647698697
+"710","Myanmar","MMR","general_gastropods","Rochia nilotica","Marine","Indian Ocean, Eastern",860.94,2712.69889285714,"Other",0.317373963718184
+"711","Ireland","IRL","atlantic_salmon","Salmo salar","Marine","Atlantic, Northeast",12654,39343.6880952381,"Salmonidae fish",0.321627193906398
+"712","Brunei Darussalam","BRN","barramundi","Lates calcarifer","Marine","Pacific, Western Central",127.584428571429,393.83725,"Other",0.323952161892834
+"713","India","IND","oysters","Magallana bilineata","Marine","Indian Ocean, Western",4252.57142857143,13124.7142857143,"Other",0.324012495510106
+"714","Thailand","THA","general_bivalves","Tegillarca granosa","Marine","Pacific, Western Central",30790.5714285714,94638.4285714286,"Other",0.325349563526746
+"715","Argentina","ARG","mussels","Mytilus edulis","Marine","Atlantic, Southwest",14.2916666666667,43.6918571428571,"Other",0.327101377722121
+"716","Cyprus","CYP","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",2413.71428571429,7279.97285714286,"Other",0.331555396301517
+"717","Greece","GRC","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",45044.617,131967.969585714,"Other",0.341329923779294
+"718","Singapore","SGP","milkfish","Chanos chanos","Marine","Pacific, Western Central",1453.99028571429,4174.23357142857,"Other",0.348325090303147
+"719","Maldives","MDV","sea_cucumber","Holothuria scabra","Marine","Indian Ocean, Western",2,5.71428571428571,"Other",0.35
+"720","Croatia","HRV","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",7000.31528571429,19986.0245238095,"Other",0.350260517161617
+"721","France","FRA","mussels","Mytilus edulis","Marine","Atlantic, Northeast",54216.6957142857,153925.758804762,"Other",0.35222626891873
+"722","Russian Federation","RUS","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Northeast",37351.1666666667,103803.65,"Salmonidae fish",0.359825176346561
+"723","Saudi Arabia","SAU","breams_porgies","Sparus aurata","Marine","Indian Ocean, Western",6504.12428571429,17942.3212142857,"Other",0.362501830617974
+"724","Cambodia","KHM","general_bivalves","Tegillarca granosa","Marine","Pacific, Western Central",5628.18571428571,15406.6142857143,"Other",0.36530970464448
+"725","Croatia","HRV","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",7473.10928571429,19986.0245238095,"Other",0.373916747515821
+"726","Denmark","DNK","mussels","Mytilus edulis","Marine","Atlantic, Northeast",6155.43285714286,16238.5548571429,"Other",0.379062848344246
+"727","Türkiye","TUR","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",112457.857142857,291018.271428571,"Other",0.386428854074405
+"728","China, Hong Kong SAR","HKG","general_fish","Actinopterygii","Marine","Pacific, Northwest",508.437142857143,1311.86714285714,"Other",0.387567556383649
+"729","Morocco","MAR","oysters","Magallana gigas","Marine","Atlantic, Eastern Central",528.472,1318.78186666667,"Other",0.400727378315989
+"730","Iran (Islamic Republic of)","IRN","barramundi","Lates calcarifer","Marine","Indian Ocean, Western",5431.83333333333,13502.7333333333,"Other",0.402276576100641
+"731","India","IND","general_seaweed","Rhodophyta","Marine","Indian Ocean, Eastern",5299.28571428571,13124.7142857143,"Other",0.403763891458862
+"732","Ireland","IRL","mussels","Mytilus edulis","Marine","Atlantic, Northeast",16005.1428571429,39343.6880952381,"Other",0.40680331794009
+"733","Kuwait","KWT","breams_porgies","Sparidentex hasta","Marine","Indian Ocean, Western",3.11,7.63,"Other",0.407601572739187
+"734","El Salvador","SLV","clams","Anadara tuberculosa","Marine","Pacific, Eastern Central",7,17.1428571428571,"Other",0.408333333333333
+"735","Belize","BLZ","general_seaweed","Kappaphycus alvarezii","Marine","Atlantic, Western Central",3.42857142857143,8.28571428571428,"Other",0.413793103448276
+"736","Ecuador","ECU","oysters","Magallana gigas","Marine","Pacific, Southeast",66.4285714285714,160.238095238095,"Other",0.414561664190193
+"737","Senegal","SEN","general_seaweed","Meristotheca senegalense","Marine","Atlantic, Eastern Central",461.5,1111.01428571429,"Other",0.415386197940106
+"738","El Salvador","SLV","oysters","Crassostrea spp","Marine","Pacific, Eastern Central",7.14285714285714,17.1428571428571,"Other",0.416666666666667
+"739","Sweden","SWE","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Northeast",1612.83333333333,3864.40476190476,"Salmonidae fish",0.417356212069869
+"740","Senegal","SEN","oysters","Crassostrea tulipa","Marine","Atlantic, Eastern Central",464.885714285714,1111.01428571429,"Other",0.418433606357125
+"741","Mexico","MEX","oysters","Crassostrea spp","Marine","Atlantic, Western Central",11021.10775,26076.2340595238,"Other",0.422649517750235
+"742","Iran (Islamic Republic of)","IRN","general_fish","Actinopterygii","Marine","Indian Ocean, Western",5758.4,13502.7333333333,"Other",0.426461802795483
+"743","France","FRA","oysters","Magallana gigas","Marine","Atlantic, Northeast",66728.218,153925.758804762,"Other",0.433509105416446
+"744","Panama","PAN","cobia_ling","Rachycentron canadum","Marine","Atlantic, Western Central",1222.32857142857,2768.5619047619,"Other",0.441503066746016
+"745","Cambodia","KHM","mussels","Perna viridis","Marine","Pacific, Western Central",7111.42857142857,15406.6142857143,"Other",0.46158282667092
+"746","Greece","GRC","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",61581.5618571429,131967.969585714,"Other",0.466640216186285
+"747","Sri Lanka","LKA","sea_cucumber","Holothuria scabra","Marine","Indian Ocean, Eastern",361.001428571429,773.045714285714,"Other",0.466985874056607
+"748","Panama","PAN","general_fish","Seriola rivoliana","Marine","Pacific, Eastern Central",1302.2,2768.5619047619,"Other",0.470352495192622
+"749","China, Hong Kong SAR","HKG","oysters","Crassostrea spp","Marine","Pacific, Northwest",619.242857142857,1311.86714285714,"Other",0.472031684393128
+"750","Türkiye","TUR","bass","Dicentrarchus labrax","Marine","Mediterranean and Black Sea",139395.285714286,291018.271428571,"Other",0.478991525274383
+"751","Ecuador","ECU","general_seaweed","Kappaphycus alvarezii","Marine","Pacific, Southeast",77.1428571428571,160.238095238095,"Other",0.481426448736998
+"752","Canada","CAN","general_salmonid","Salmonidae","Marine","Pacific, Northeast",81947.4285714286,169568,"Salmonidae fish",0.483271776345941
+"753","Myanmar","MMR","barramundi","Lates calcarifer","Marine","Indian Ocean, Eastern",1325.41414285714,2712.69889285714,"Other",0.488596115974064
+"754","Greenland","GRL","general_seaweed","Alaria esculenta","Marine","Atlantic, Northwest",9.66666666666667,19.3333333333333,"Other",0.5
+"755","Greenland","GRL","general_seaweed","Saccharina latissima","Marine","Atlantic, Northwest",9.66666666666667,19.3333333333333,"Other",0.5
+"756","Bosnia and Herzegovina","BIH","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",89.3142857142857,178.014285714286,"Other",0.50172538319557
+"757","Chile","CHL","atlantic_salmon","Salmo salar","Marine","Pacific, Southeast",716380.971428571,1410104.90385714,"Salmonidae fish",0.508033813278014
+"758","Thailand","THA","mussels","Perna viridis","Marine","Pacific, Western Central",48133.7142857143,94638.4285714286,"Other",0.508606440452308
+"759","Sri Lanka","LKA","barramundi","Lates calcarifer","Marine","Indian Ocean, Eastern",412.044285714286,773.045714285714,"Other",0.533014125943393
+"760","Argentina","ARG","oysters","Magallana gigas","Marine","Atlantic, Southwest",24.6428571428571,43.6918571428571,"Other",0.564014870374669
+"761","Albania","ALB","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",3548,6158.78571428571,"Other",0.576087586838778
+"762","Sweden","SWE","mussels","Mytilus edulis","Marine","Atlantic, Northeast",2251.57142857143,3864.40476190476,"Other",0.582643787930132
+"763","Belize","BLZ","general_seaweed","Eucheumatopsis isiformis","Marine","Atlantic, Western Central",4.85714285714286,8.28571428571428,"Other",0.586206896551724
+"764","Cook Islands","COK","clams","Tridacna spp","Marine","Pacific, Eastern Central",5,8.5,"Other",0.588235294117647
+"765","Dominican Republic","DOM","breams_porgies","Sparus aurata","Marine","Atlantic, Western Central",270.714285714286,448,"Other",0.604272959183674
+"766","Montenegro","MNE","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",214.285714285714,354.142857142857,"Other",0.605082694634933
+"767","Saudi Arabia","SAU","barramundi","Lates calcarifer","Marine","Indian Ocean, Western",10937.4824285714,17942.3212142857,"Other",0.609591272943156
+"768","United Arab Emirates","ARE","breams_porgies","Sparus aurata","Marine","Indian Ocean, Western",1680.50428571429,2727.95552380952,"Other",0.616030676104096
+"769","Denmark","DNK","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Northeast",10022.822,16238.5548571429,"Salmonidae fish",0.617223767026981
+"770","United States of America","USA","oysters","Crassostrea virginica","Marine","Atlantic, Western Central",128670.808428571,208164.464857143,"Other",0.618120909910702
+"771","Maldives","MDV","grouper","Epinephelus fuscoguttatus","Marine","Indian Ocean, Western",3.71428571428571,5.71428571428571,"Other",0.65
+"772","Cyprus","CYP","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",4801.85714285714,7279.97285714286,"Other",0.659598220637008
+"773","Palau","PLW","clams","Hippopus hippopus","Marine","Pacific, Western Central",4.4,6.3,"Other",0.698412698412698
+"774","New Caledonia","NCL","sea_cucumber","Holothuria scabra","Marine","Pacific, Western Central",69.6095,99.1139333333333,"Other",0.702318005742886
+"775","Slovenia","SVN","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",504.102857142857,699.829047619048,"Other",0.720322854356948
+"776","Australia","AUS","atlantic_salmon","Salmo salar","Marine","Indian Ocean, Eastern",68299.0164285714,94141.3358428571,"Salmonidae fish",0.72549444743994
+"777","Israel","ISR","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",2226,2981,"Other",0.746729285474673
+"778","Brazil","BRA","mussels","Perna perna","Marine","Atlantic, Southwest",11484.7602857143,15334.4745714286,"Other",0.748950362284526
+"779","Tunisia","TUN","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",16809.7478571429,21888.9955714286,"Other",0.767954281058214
+"780","Saint Kitts and Nevis","KNA","general_seaweed","Kappaphycus alvarezii","Marine","Atlantic, Western Central",1.66666666666667,2.16666666666667,"Other",0.769230769230769
+"781","Spain","ESP","mussels","Mytilidae","Marine","Atlantic, Northeast",210342.56,264035.123892857,"Other",0.796646131388773
+"782","Italy","ITA","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",57798.6657142857,71954.7164285714,"Other",0.803264449963634
+"783","Malaysia","MYS","general_seaweed","Kappaphycus alvarezii","Marine","Pacific, Western Central",208447.941428571,258189.336988095,"Other",0.807345275603627
+"784","Algeria","DZA","breams_porgies","Sparus aurata","Marine","Mediterranean and Black Sea",2122.60714285714,2607.63628571429,"Other",0.813996627706734
+"785","Taiwan Province of China","TWN","oysters","Magallana gigas","Marine","Pacific, Northwest",19186.5001428571,23210.4990952381,"Other",0.826630227300605
+"786","Switzerland","CHE","atlantic_salmon","Salmo salar","Marine","Europe - Inland waters",149.8,179.8,"Salmonidae fish",0.833147942157953
+"787","Jamaica","JAM","oysters","Crassostrea rhizophorae","Marine","Atlantic, Western Central",5,6,"Other",0.833333333333333
+"788","Philippines","PHL","general_seaweed","Kappaphycus alvarezii","Marine","Pacific, Western Central",1410588.58942857,1684667.3459881,"Other",0.837309865824715
+"789","South Africa","ZAF","mussels","Mytilus galloprovincialis","Marine","Atlantic, Southeast",2689.14428571429,3146.33714285714,"Other",0.854690442764285
+"790","New Zealand","NZL","mussels","Perna canaliculus","Marine","Pacific, Southwest",95168.8571428571,110435.428571429,"Other",0.861760201177676
+"791","Malta","MLT","tuna","Thunnus thynnus","Marine","Mediterranean and Black Sea",15356.7722857143,17708.4821428571,"Other",0.867198676985908
+"792","United Kingdom of Great Britain and Northern Ireland","GBR","atlantic_salmon","Salmo salar","Marine","Atlantic, Northeast",181039.714285714,204097.140142857,"Salmonidae fish",0.887027197730434
+"793","Saint Vincent and the Grenadines","VCT","general_seaweed","Kappaphycus alvarezii","Marine","Atlantic, Western Central",8.885,9.985,"Other",0.889834752128192
+"794","Marshall Islands","MHL","general_fish","Polydactylus sexfilis","Marine","Pacific, Western Central",6.36714285714286,7.10154285714286,"Other",0.896585852571272
+"795","Democratic People's Republic of Korea","PRK","general_seaweed","Saccharina japonica","Marine","Pacific, Northwest",592857.142857143,658515.714285714,"Other",0.900293083362801
+"796","Viet Nam","VNM","general_molluscs","Mollusca","Marine","Pacific, Western Central",321119.669,354879.191857143,"Other",0.904870379464985
+"797","Finland","FIN","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Northeast",11513.0428571429,12539.3028571429,"Salmonidae fish",0.918156534562414
+"798","Namibia","NAM","oysters","Magallana gigas","Marine","Atlantic, Southeast",311.054285714286,337.415119047619,"Other",0.921874178585302
+"799","United Republic of Tanzania, Zanzibar","EAZ","general_seaweed","Eucheuma denticulatum","Marine","Indian Ocean, Western",103081.142857143,111673.91,"Other",0.923054837581516
+"800","Bahrain","BHR","breams_porgies","Sparus aurata","Marine","Indian Ocean, Western",15,16,"Other",0.9375
+"801","Norway","NOR","atlantic_salmon","Salmo salar","Marine","Atlantic, Northeast",1420096.474,1511209.72928571,"Salmonidae fish",0.939708398166031
+"802","Jersey","JEY","oysters","Magallana gigas","Marine","Atlantic, Northeast",1397.48757142857,1481.37747619048,"Other",0.943370338681241
+"803","Netherlands (Kingdom of the)","NLD","mussels","Mytilus edulis","Marine","Atlantic, Northeast",36435.8571428571,38530.0285714286,"Other",0.945648329206682
+"804","Mauritius","MUS","drums","Sciaenops ocellatus","Marine","Indian Ocean, Western",2222.33485714286,2324.375,"Other",0.956099965428495
+"805","Indonesia","IDN","general_seaweed","Eucheuma spp","Marine","Pacific, Western Central",8471123.75685714,8739896.85872143,"Other",0.96924756593711
+"806","Samoa","WSM","general_seaweed","Caulerpa spp","Marine","Pacific, Eastern Central",3.29557142857143,3.39507142857143,"Other",0.970692811007553
+"807","French Polynesia","PYF","oysters","Pinctada margaritifera","Marine","Pacific, Eastern Central",1476.57142857143,1515.09352380952,"Other",0.974574443997862
+"808","Qatar","QAT","barramundi","Lates calcarifer","Marine","Indian Ocean, Western",15.7266666666667,16.132380952381,"Other",0.974850935710491
+"809","Costa Rica","CRI","general_fish","Lutjanus guttatus","Marine","Pacific, Eastern Central",827,840.65,"Other",0.983762564682091
+"810","Bulgaria","BGR","mussels","Mytilus galloprovincialis","Marine","Mediterranean and Black Sea",2264.30514285714,2284.47389285714,"Other",0.991171380831682
+"811","Germany","DEU","mussels","Mytilus edulis","Marine","Atlantic, Northeast",15597.2857142857,15689.2028571429,"Other",0.994141375843369
+"812","Madagascar","MDG","general_seaweed","Eucheuma spp","Marine","Indian Ocean, Western",13564.9542857143,13622.9428571429,"Other",0.995743315373435
+"813","Tonga","TON","general_seaweed","Cladosiphon okamuranus","Marine","Pacific, Eastern Central",92.1428571428571,92.3428571428571,"Other",0.997834158415842
+"814","Iceland","ISL","atlantic_salmon","Salmo salar","Marine","Atlantic, Northeast",31560.8571428571,31629.3338095238,"Salmonidae fish",0.99783502659022
+"815","Papua New Guinea","PNG","general_seaweed","Kappaphycus alvarezii","Marine","Pacific, Western Central",714.285714285714,715.286142857143,"Other",0.998601358936673
+"816","United Republic of Tanzania","TZA","general_seaweed","Eucheuma denticulatum","Marine","Indian Ocean, Western",26504.5714285714,26536.3739285714,"Other",0.998801550653243
+"817","Venezuela (Bolivarian Republic of)","VEN","general_seaweed","Kappaphycus alvarezii","Marine","Atlantic, Western Central",6529.16666666667,6536.30952380952,"Other",0.998907203351243
+"818","Faroe Islands","FRO","atlantic_salmon","Salmo salar","Marine","Atlantic, Northeast",96007.8571428571,96104.4285714286,"Salmonidae fish",0.998995140702599
+"819","Peru","PER","scallops","Argopecten purpuratus","Marine","Pacific, Southeast",34529.6898571429,34531.5773571429,"Other",0.999945339884695
+"820","Antigua and Barbuda","ATG","general_seaweed","Eucheumatopsis isiformis","Marine","Atlantic, Western Central",10,10,"Other",1
+"821","Austria","AUT","shrimp","Penaeus vannamei","Marine","Europe - Inland waters",16.8002857142857,16.8002857142857,"Other",1
+"822","Bahamas","BHS","lobsters","Panulirus argus","Marine","Atlantic, Western Central",4.368,4.368,"Other",1
+"823","Bangladesh","BGD","general_seaweed","Algae","Marine","Indian Ocean, Eastern",312.857142857143,312.857142857143,"Other",1
+"824","British Virgin Islands","VGB","lobsters","Panulirus argus","Marine","Atlantic, Western Central",1,1,"Other",1
+"825","Cuba","CUB","oysters","Crassostrea rhizophorae","Marine","Atlantic, Western Central",933.114285714286,933.114285714286,"Other",1
+"826","Dominica","DMA","general_seaweed","Kappaphycus alvarezii","Marine","Atlantic, Western Central",0.833333333333333,0.833333333333333,"Other",1
+"827","Estonia","EST","general_salmonid","Oncorhynchus mykiss","Marine","Atlantic, Northeast",233.6292,233.6292,"Salmonidae fish",1
+"828","Fiji","FJI","general_seaweed","Eucheuma spp","Marine","Pacific, Western Central",153.485714285714,153.485714285714,"Other",1
+"829","Gambia","GMB","oysters","Crassostrea tulipa","Marine","Atlantic, Eastern Central",45.7142857142857,45.7142857142857,"Other",1
+"830","Georgia","GEO","general_salmonid","Oncorhynchus mykiss","Marine","Mediterranean and Black Sea",90,90,"Salmonidae fish",1
+"831","Grenada","GRD","general_seaweed","Eucheuma spp","Marine","Atlantic, Western Central",22,22,"Other",1
+"832","Guadeloupe","GLP","drums","Sciaenops ocellatus","Marine","Atlantic, Western Central",34.2857142857143,34.2857142857143,"Other",1
+"833","Guernsey","GGY","oysters","Magallana gigas","Marine","Atlantic, Northeast",43.4594285714286,43.4594285714286,"Other",1
+"834","Kenya","KEN","general_seaweed","Eucheuma denticulatum","Marine","Indian Ocean, Western",852.857142857143,852.857142857143,"Other",1
+"835","Kiribati","KIR","general_seaweed","Eucheuma spp","Marine","Pacific, Western Central",21.4285714285714,21.4285714285714,"Other",1
+"836","Martinique","MTQ","drums","Sciaenops ocellatus","Marine","Atlantic, Western Central",35.0714285714286,35.0714285714286,"Other",1
+"837","Mayotte","MYT","drums","Sciaenops ocellatus","Marine","Indian Ocean, Western",7.85714285714286,7.85714285714286,"Other",1
+"838","Micronesia (Federated States of)","FSM","sea_cucumber","Holothuria scabra","Marine","Pacific, Western Central",0.5,0.5,"Other",1
+"839","Mozambique","MOZ","crabs","Scylla serrata","Marine","Indian Ocean, Western",6.85714285714286,6.85714285714286,"Other",1
+"840","Nicaragua","NIC","general_fish","Lutjanus guttatus","Marine","Pacific, Eastern Central",13.24,13.24,"Other",1
+"841","Oman","OMN","breams_porgies","Sparus aurata","Marine","Indian Ocean, Western",1262.16666666667,1262.16666666667,"Other",1
+"842","Saint Lucia","LCA","general_seaweed","Eucheuma spp","Marine","Atlantic, Western Central",113.898571428571,113.898571428571,"Other",1
+"843","Saint Pierre and Miquelon","SPM","scallops","Pectinidae","Marine","Atlantic, Northwest",19.5714285714286,19.5714285714286,"Other",1
+"844","Seychelles","SYC","oysters","Pinctada margaritifera","Marine","Indian Ocean, Western",0.0142857142857143,0.0142857142857143,"Other",1
+"845","Solomon Islands","SLB","general_seaweed","Kappaphycus alvarezii","Marine","Pacific, Western Central",6632.73828571429,6632.73828571429,"Other",1
+"846","Timor-Leste","TLS","general_seaweed","Eucheuma spp","Marine","Indian Ocean, Eastern",707.142857142857,707.142857142857,"Other",1
+"847","Turks and Caicos Islands","TCA","conch","Aliger gigas","Marine","Atlantic, Western Central",0.142857142857143,0.142857142857143,"Other",1
+"848","Tuvalu","TUV","milkfish","Chanos chanos","Marine","Pacific, Western Central",0.378571428571429,0.378571428571429,"Other",1

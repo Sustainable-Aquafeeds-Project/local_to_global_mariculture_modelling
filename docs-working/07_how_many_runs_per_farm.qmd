@@ -1,0 +1,484 @@
+---
+title: "How many runs per farm?"
+author: "Tormey Reimer"
+date: today
+execute:
+  eval: true
+---
+
+# Introduction
+
+Originally, each farm was run with 5000 Monte-Carlo simulation runs. This takes quite a long time (4-5 minutes per farm and feed). But is this necessary?
+
+```{r, setup}
+#| warning: false
+#| message: false
+#| echo: false
+
+library(tidyverse)
+library(arrow)
+library(sf)
+library(terra)
+library(purrr)
+library(furrr)
+library(future)
+library(tictoc)
+library(fs)
+library(conflicted)
+library(readxl)
+library(units)
+library(qs)
+library(here)
+library(targets)
+conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  str_subset("map", negate = T) %>% 
+  walk(source)
+
+overwrite <- F # Make sure to set this to FALSE for quarto rendering
+```
+
+# Set up data for MC testing
+
+Only use a small but representative sample of farms (n = 50) across the mean temperature spectrum.
+
+```{r set-up-data, eval=F}
+#| code-summary: Set up data
+
+farm_ts_data <- file.path(input_farm_coords_path, "farm_temporal_data.qs") %>% qread()
+farm_static_data <- file.path(input_farm_coords_path, "farm_static_data_w_stocking.qs") %>% qread()
+
+feed_params <- file.path(output_species_data_path, "feed_params_exploratory_PD.qs") %>% qread()
+feed_params <- feed_params[["plant_dominant_biomar"]]
+
+all_params <- c(
+  file.path(output_species_data_path, "species_params.qs") %>% qread(),
+  file.path(output_species_data_path, "pop_params.qs") %>% qread()
+)
+
+# Get a small sample of farms
+samp <- farm_ts_data %>% 
+  group_by(farm_ID) %>% 
+  reframe(mean = mean(temp_c)) %>% 
+  mutate(temp_bin = ntile(mean, 10)) %>%
+  group_by(temp_bin) %>%
+  slice_sample(n = 5) %>%
+  ungroup() %>%
+  pull(farm_ID)
+
+farm_ts_data <- farm_ts_data %>% 
+  filter(farm_ID %in% samp) %>% 
+  group_by(farm_ID) %>% 
+  group_split()
+
+farm_static_data <- farm_static_data %>% 
+  rename(farm_ID = farm_id) %>% 
+  filter(farm_ID %in% samp) %>% 
+  group_by(farm_ID) %>% 
+  group_split()
+```
+
+```{r add-population, eval=F}
+
+# For testing:
+# ts <- farm_ts_data[[1]]
+# static <- farm_static_data[[1]]
+
+farm_ts_data_2 <- purrr::map2(
+  farm_static_data, 
+  farm_ts_data, 
+  function(static, ts) {
+    cbind(
+      ts,
+      data.frame(Npop = generate_pop(
+          harvest_n = static$harvest_n,
+          mort = all_params['mortmyt'],
+          times = c(t_start = static$t_start, t_end = static$t_end, dt = 1)
+      ))
+    )
+  },
+  .progress = T
+)
+```
+
+```{r define-model-runs, eval=F}
+#| code-summary: Set up different farm runs as functions, define multisessions
+
+plan(multisession, workers = parallelly::availableCores()-2)
+
+# For testing:
+# ts <- farm_ts_data_2[[1]]
+# static <- farm_static_data[[1]]
+
+# This is uniform
+farm_run_singular <- function() {
+  furrr::future_map2_dfr(
+    farm_ts_data_2, 
+    farm_static_data, 
+    function(ts, static) {
+      fg <- uni_farm_growth(
+        pop_params = all_params,
+        species_params = all_params,
+        water_temp = ts$temp_c,
+        feed_params = feed_params,
+        times = c(t_start = static$t_start, t_end = static$t_end, dt = 1),
+        N_pop = ts$Npop
+      )
+
+      # mat <- fg[[1]]
+      fg %>%
+         purrr::map_dfr(function(mat) {
+          mat %>% 
+            as.data.frame() %>% 
+            rename(t = V1, mean = V2, sd = 0) %>% 
+            mutate(
+              farm_ID = as.integer(static$farm_ID),
+              t = as.integer(t)
+            )
+          }, .id = "measure"
+        ) %>% 
+        mutate(measure = as.factor(measure))
+  },
+  .options = furrr_options(seed = T),
+  .progress = T
+  )
+}
+
+# This has the MC runs in it
+# n <- 500
+farm_run_MC = function(n) {
+  furrr::future_map2_dfr(
+    farm_ts_data_2, 
+    farm_static_data, 
+    function(ts, static) {
+      fg <- farm_growth(
+        pop_params = all_params,
+        species_params = all_params,
+        water_temp = ts$temp_c,
+        feed_params = feed_params,
+        times = c(t_start = static$t_start, t_end = static$t_end, dt = 1),
+        N_pop = ts$Npop,
+        nruns = n
+      )
+      fg %>% 
+        purrr::map_dfr(function(mat) {
+          mat %>% 
+            as.data.frame() %>% 
+            rename(t = V1, mean = V2, sd = V3) %>% 
+            mutate(
+              farm_ID = as.integer(static$farm_ID),
+              t = as.integer(t)
+            )
+          }, 
+          .id = "measure"
+        ) %>% 
+        mutate(measure = as.factor(measure))
+    },
+  .options = furrr_options(seed = T),
+  .progress = T
+  )
+}
+```
+
+# Save runs
+
+These take quite a long time (a couple hours) so best not to do this again if you don't have to.
+
+```{r save-nruns-5000, eval=F}
+#| code-summary: Run the model with 5000 nruns (default) and save
+
+res_5000 <- farm_run_MC(5000) %>% 
+  mutate(nruns = as.factor(5000))
+
+qsave(res_5000, file.path(output_sens_data_path, "res_nruns_5000.qs"))
+```
+
+```{r save-nruns-1, eval=F}
+#| code-summary: Run the model with nrun = 1
+
+res_1 <- farm_run_singular() %>% 
+  mutate(nruns = as.factor(1), sd = 0) %>% 
+  relocate(sd, .after = mean)
+
+qsave(res_1, file.path(output_sens_data_path, "res_nruns_1.qs"))
+```
+
+```{r save-nruns-other, eval=F}
+#| code-summary: Run the model with other numbers of nruns and save
+
+for (i in c(100, 250, 500, 1000, 2500)) {
+  fnm <- file.path(output_sens_data_path, paste0("res_nruns_", i, ".qs"))
+  print(fnm)
+  res <- farm_run_MC(i) %>% 
+    mutate(nruns = as.factor(i))
+  qsave(res, fnm)
+}
+```
+
+```{r read-in-all-runs}
+#| code-summary: Read in previously saved run data
+
+res_1 <- qread(file.path(output_sens_data_path, "res_nruns_1.qs"))
+res_100 <- qread(file.path(output_sens_data_path, "res_nruns_100.qs"))
+res_250 <- qread(file.path(output_sens_data_path, "res_nruns_250.qs"))
+res_500 <- qread(file.path(output_sens_data_path, "res_nruns_500.qs"))
+res_1000 <- qread(file.path(output_sens_data_path, "res_nruns_1000.qs"))
+res_2500 <- qread(file.path(output_sens_data_path, "res_nruns_2500.qs"))
+res_5000 <- qread(file.path(output_sens_data_path, "res_nruns_5000.qs"))
+```
+
+# Difference between uniform run and 5000 nruns
+
+How does the MC run approach using 5000 runs (the default) differ from only using a uniform fish weight/maximum ingestion?
+
+```{r fig-1-nruns-weight}
+#| fig-width: 8.5
+#| fig-cap: Individual weight at each timestep, when the farm has been run with 5000 Monte-Carlo runs (with a range of fish weights/maximum ingestion values) and when only mean fish weight/maximum ingestion was used.
+
+weight_single <- res_1 %>% 
+  filter(measure == "weight_stat")
+weight_5000 <- res_5000 %>% 
+  filter(measure == "weight_stat")
+
+ggplot(
+  rbind(weight_single, weight_5000),
+  aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = nruns, fill = nruns)
+) +
+  geom_line() +
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+```{r fig-1-nruns-weight-diff}
+#| fig-width: 8.5
+
+df_diff_1 <- rbind(weight_single, weight_5000) %>% 
+  select(-sd) %>% 
+  pivot_wider(
+    names_from = "nruns", names_prefix = "nruns_",
+    values_from = mean
+  ) %>% 
+    mutate(nruns_diff = (nruns_1 - nruns_5000)/nruns_5000)
+
+ggplot(df_diff_1, aes(x = t, y = 100*nruns_diff)) +
+  geom_line() +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+## Difference between 100 and 5000 nruns
+
+```{r fig-100-nruns-weight}
+#| fig-width: 8.5
+#| fig-cap: Individual weight at each timestep, when the farm has been run with 5000 Monte-Carlo runs vs 100 Monte-Carlo runs.
+
+weight_100 <- res_100 %>% 
+  filter(measure == "weight_stat")
+weight_5000 <- res_5000 %>% 
+  filter(measure == "weight_stat")
+
+ggplot(
+  rbind(weight_100, weight_5000),
+  aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = nruns, fill = nruns)
+) +
+  geom_line() +
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+```{r fig-100-nruns-weight-diff}
+#| fig-width: 8.5
+#| fig-cap: Difference in individual weight at each timestep when the farm has been run with 5000 vs 100 Monte-Carlo runs.
+
+df_diff_100 <- rbind(weight_100, weight_5000) %>% 
+  select(-sd) %>% 
+  pivot_wider(
+    names_from = "nruns", names_prefix = "nruns_",
+    values_from = mean
+  ) %>% 
+    mutate(nruns_diff = (nruns_100 - nruns_5000)/nruns_5000)
+
+ggplot(df_diff_100, aes(x = t, y = 100*nruns_diff)) +
+  geom_line() +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+## Difference between 250 and 5000 nruns
+
+```{r fig-250-nruns-weight}
+#| fig-width: 8.5
+#| fig-cap: Individual weight at each timestep, when the farm has been run with 5000 Monte-Carlo runs vs 250 Monte-Carlo runs.
+
+weight_250 <- res_250 %>% 
+  filter(measure == "weight_stat")
+weight_5000 <- res_5000 %>% 
+  filter(measure == "weight_stat")
+
+ggplot(
+  rbind(weight_250, weight_5000),
+  aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = nruns, fill = nruns)
+) +
+  geom_line() +
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+```{r fig-250-nruns-weight-diff}
+#| fig-width: 8.5
+#| fig-cap: Difference in individual weight at each timestep when the farm has been run with 5000 vs 250 Monte-Carlo runs.
+
+df_diff_250 <- rbind(weight_250, weight_5000) %>% 
+  select(-sd) %>% 
+  pivot_wider(
+    names_from = "nruns", names_prefix = "nruns_",
+    values_from = mean
+  ) %>% 
+    mutate(nruns_diff = (nruns_250 - nruns_5000)/nruns_5000)
+
+ggplot(df_diff_250, aes(x = t, y = 100*nruns_diff)) +
+  geom_line() +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+## Difference between 500 and 5000 nruns
+
+```{r fig-500-nruns-weight}
+#| fig-width: 8.5
+#| fig-cap: Individual weight at each timestep, when the farm has been run with 5000 Monte-Carlo runs vs 500 Monte-Carlo runs.
+
+weight_500 <- res_500 %>% 
+  filter(measure == "weight_stat")
+weight_5000 <- res_5000 %>% 
+  filter(measure == "weight_stat")
+
+ggplot(
+  rbind(weight_500, weight_5000),
+  aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = nruns, fill = nruns)
+) +
+  geom_line() +
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+```{r fig-500-nruns-weight-diff}
+#| fig-width: 8.5
+#| fig-cap: Difference in individual weight at each timestep when the farm has been run with 5000 vs 500 Monte-Carlo runs.
+
+df_diff_500 <- rbind(weight_500, weight_5000) %>% 
+  select(-sd) %>% 
+  pivot_wider(
+    names_from = "nruns", names_prefix = "nruns_",
+    values_from = mean
+  ) %>% 
+    mutate(nruns_diff = (nruns_500 - nruns_5000)/nruns_5000)
+
+ggplot(df_diff_500, aes(x = t, y = 100*nruns_diff)) +
+  geom_line() +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+## Difference between 1000 and 5000 nruns
+
+```{r fig-1000-nruns-weight}
+#| fig-width: 8.5
+#| fig-cap: Individual weight at each timestep, when the farm has been run with 5000 Monte-Carlo runs vs 1000 Monte-Carlo runs.
+
+weight_1000 <- res_1000 %>% 
+  filter(measure == "weight_stat")
+weight_5000 <- res_5000 %>% 
+  filter(measure == "weight_stat")
+
+ggplot(
+  rbind(weight_1000, weight_5000),
+  aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = nruns, fill = nruns)
+) +
+  geom_line() +
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+```{r fig-1000-nruns-weight-diff}
+#| fig-width: 8.5
+#| fig-cap: Difference in individual weight at each timestep when the farm has been run with 5000 vs 1000 Monte-Carlo runs.
+
+df_diff_1000 <- rbind(weight_1000, weight_5000) %>% 
+  select(-sd) %>% 
+  pivot_wider(
+    names_from = "nruns", names_prefix = "nruns_",
+    values_from = mean
+  ) %>% 
+    mutate(nruns_diff = (nruns_1000 - nruns_5000)/nruns_5000)
+
+ggplot(df_diff_1000, aes(x = t, y = 100*nruns_diff)) +
+  geom_line() +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+## Difference between 2500 and 5000 nruns
+
+```{r fig-2500-nruns-weight}
+#| fig-width: 8.5
+#| fig-cap: Individual weight at each timestep, when the farm has been run with 5000 Monte-Carlo runs vs 2500 Monte-Carlo runs.
+
+weight_2500 <- res_2500 %>% 
+  filter(measure == "weight_stat")
+weight_5000 <- res_5000 %>% 
+  filter(measure == "weight_stat")
+
+ggplot(
+  rbind(weight_2500, weight_5000),
+  aes(x = t, y = mean, ymin = mean-sd, ymax = mean+sd, colour = nruns, fill = nruns)
+) +
+  geom_line() +
+  geom_ribbon(alpha = 0.25) +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+```{r fig-2500-nruns-weight-diff}
+#| fig-width: 8.5
+#| fig-cap: Difference in individual weight at each timestep when the farm has been run with 5000 vs 2500 Monte-Carlo runs.
+
+df_diff_2500 <- rbind(weight_2500, weight_5000) %>% 
+  select(-sd) %>% 
+  pivot_wider(
+    names_from = "nruns", names_prefix = "nruns_",
+    values_from = mean
+  ) %>% 
+    mutate(nruns_diff = (nruns_2500 - nruns_5000)/nruns_5000)
+
+ggplot(df_diff_2500, aes(x = t, y = 100*nruns_diff)) +
+  geom_line() +
+  facet_wrap(facets = vars(farm_ID), nrow = 5) +
+  theme_classic()
+```
+
+# Summary
+
+```{r summary}
+df_diff <- data.frame(
+  nruns = c(1, 100, 250, 500, 1000, 2500),
+  max_diff = c(
+    max(abs(df_diff_1$nruns_diff)),
+    max(abs(df_diff_100$nruns_diff)),
+    max(abs(df_diff_250$nruns_diff)),
+    max(abs(df_diff_500$nruns_diff)),
+    max(abs(df_diff_1000$nruns_diff)),
+    max(abs(df_diff_2500$nruns_diff))
+  )
+)
+
+ggplot(df_diff, aes(x = as.factor(nruns), y = 100*max_diff)) +
+  geom_col() + theme_classic()
+```

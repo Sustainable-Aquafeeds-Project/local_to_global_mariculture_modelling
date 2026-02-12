@@ -6,7 +6,7 @@ date: today
 
 # Introduction
 
-The purpose of this markdown is to formulate all the feeds that will be used in the analysis.
+The purpose of this markdown is to formulate all the feeds that will be used in the analysis. This needs to be done before 
 
 ```{r setup, include=F, cache=F}
 #| code-summary: R setup
@@ -83,10 +83,10 @@ feed_inputs <- feed_inputs %>%
 
 # Prepare for pipeline
 
-The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. This code does not create the "min" and "max" deigestibility versions of the feeds, they are created in the targets pipeline. 
+The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. 
 
 ```{r formulate-feeds}
-#| code-summary: Format feeds as lists to feed into targets
+#| code-summary: Format feeds as lists to give to targets
 
 feed_types <- levels(feed_inputs$feed)
 
@@ -124,6 +124,8 @@ feed_params_all <- purrr::map(feed_types, function(ft) {
   setNames(feed_types)
 ```
 
+This next chunk creates the mean, minimum and maximum digestibility variants of each of the feeds. 
+
 ```{r min-max-values}
 
 make_mean_digest <- function(df) {
@@ -154,6 +156,70 @@ feed_params <- list(
   "novel_inclusive_biomar_max" = feed_params_all[["novel_inclusive_biomar"]] %>% lapply(make_max_digest)
   )
 ```
+
+```{r save}
+#| code-summary: Save feed params file
+
+qsave(feed_params, file.path(output_species_data_path, "feed_params_all.qs"))
+
+feed_params_MD <- feed_params[1:3]
+feed_params_PD <- feed_params[7:9]
+feed_params_AD <- feed_params[4:6]
+
+names(feed_params_PD) <- c("plant_dominant_biomar", "plant_dominant_biomar_min", "plant_dominant_biomar_max")
+names(feed_params_AD) <- c("animal_dominant_biomar", "animal_dominant_biomar_min", "animal_dominant_biomar_max")
+
+qsave(feed_params_MD, file.path(output_species_data_path, "feed_params_MD.qs"))
+qsave(feed_params_PD, file.path(output_species_data_path, "feed_params_PD.qs"))
+qsave(feed_params_AD, file.path(output_species_data_path, "feed_params_AD.qs"))
+```
+
+# For exploring C/N
+
+```{r temporary-CN-exploring}
+feed_params_MD <- qread(file.path(output_species_data_path, "feed_params_MD.qs"))
+feed_params_PD <- qread(file.path(output_species_data_path, "feed_params_PD.qs"))
+feed_params_AD <- qread(file.path(output_species_data_path, "feed_params_AD.qs"))
+
+# Look at the most important lipid ingredients
+rbind(
+  feed_params_MD[[1]][["Lipids"]] %>% mutate(total = proportion * macro),
+  feed_params_PD[[1]][["Lipids"]] %>% mutate(total = proportion * macro),
+  feed_params_AD[[1]][["Lipids"]] %>% mutate(total = proportion * macro)
+  ) %>% 
+    group_by(ingredient) %>% 
+    reframe(total = sum(total)) %>% 
+    arrange(-total)
+
+# These are the top ten lipid-providing ingredients in the feeds.
+# canola-oil
+# fish-oil-forage
+# poultry-oil
+# algal-oil
+# fish-oil-trimmings
+# fishmeal-forage
+# poultry-meal
+# fishmeal-trimmings
+# wheat
+# soy-protein-concentrate
+```
+
+These are the top ten lipid-providing ingredients in the feeds:
+
+   ingredient                total
+   <fct>                     <dbl>
+ 1 canola-oil              0.579  
+ 2 fish-oil-forage         0.138  
+ 3 poultry-oil             0.120  
+ 4 algal-oil               0.0880 
+ 5 fish-oil-trimmings      0.0460 
+ 6 fishmeal-forage         0.0341 
+ 7 poultry-meal            0.0164 
+ 8 fishmeal-trimmings      0.0102 
+ 9 wheat                   0.00884
+10 soy-protein-concentrate 0.00792
+
+# Feed information
 
 ```{r}
 proteins <- feed_params %>% 
@@ -223,12 +289,6 @@ carbs <- feed_params %>%
 proteins %>% 
   left_join(lipids, by = "feed") %>% 
   left_join(carbs, by = "feed")
-```
-
-```{r save}
-#| code-summary: Save feed params file
-
-qsave(feed_params, file.path(output_species_data_path, "feed_params.qs"))
 ```
 
 # Comparing feeds

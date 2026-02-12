@@ -1,0 +1,552 @@
+---
+title: "Process data from Atlantic salmon model runs"
+author: 
+  - "Tormey Reimer"
+date: last-modified
+code-fold: true
+execute:
+  warning: false
+  message: false
+format: 
+  html:
+    fig-dpi: 600
+---
+
+# Introduction
+
+```{r setup}
+#| cache: false
+#| include: false
+
+library(tidyverse)
+library(arrow)
+library(sf)
+library(terra)
+library(magrittr)
+library(furrr)
+library(future)
+library(tictoc)
+library(fs)
+library(conflicted)
+library(readxl)
+library(units)
+library(qs)
+library(here)
+library(scales)
+library(targets)
+library(ggforce)
+
+conflicted::conflicts_prefer(
+  dplyr::filter(), 
+  dplyr::select(), 
+  scales::rescale(), 
+  .quiet = T
+)
+
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
+
+remove_unit("g_fish")
+remove_unit("kg_fish")
+remove_unit("t_fish")
+install_unit("g_fish")
+install_unit("kg_fish", "1000 g_fish")
+install_unit("t_fish", "1000 kg_fish")
+```
+
+# Get outputs
+
+These are the outputs that I want to view and analyse.
+
+## Daily values
+
+The daily values describe selected output variables (measures) daily over one year of farm operations, which includes 2 overlapping cohorts of salmon. The data were generated from the same suite of model runs as the total values, so the only difference between the structure of these data and the previous data is that they also include a calendar DOY (`t`) and a production day (`prod_t`). The output values are expressed per biomass of salmon produced.
+
+``` {r daily-values}
+#| code-summary: Get daily values data. These data give the daily values of each response metric over 1 calendar year (365 days), which encompasses 2 overlapping production cohorts.
+
+overwrite <- F
+
+cleanup_daily_vals <- function(df) {
+  df %>% 
+    mutate(
+      feed_group = factor(
+        str_remove(feed, "_min|_max"), 
+        levels = orig_feeds,
+        labels = short_feeds
+        ),
+      feed_group = factor(feed_group, levels = c("MD","PD","AD")),
+      feed_type = case_when(
+        str_detect(feed, "_min") ~ "min",
+        str_detect(feed, "_max") ~ "max",
+        T ~ "mean"
+        ),
+      feed_type = factor(
+        feed_type, 
+        levels = c("min", "mean", "max"), 
+        labels = c("Minimum", "Mean", "Maximum")
+      ),
+      mean_per_biom = set_units(mean_per_biom, "g g_fish-1"),
+      sd_per_biom = set_units(sd_per_biom, "g g_fish-1"),
+      mean = set_units(mean, "g"),
+      sd = set_units(sd, "g")
+    ) %>% 
+    select(-c(feed, mean_biomass, sd_biomass, cohorts))
+}
+
+daily_vals.food_prov_stat <- file.path(data_analysis_path, "daily_vals.food_prov_stat.qs")
+daily_vals.P_excr_stat <- file.path(data_analysis_path, "daily_vals.P_excr_stat.qs")
+daily_vals.P_uneat_stat <- file.path(data_analysis_path, "daily_vals.P_uneat_stat.qs")
+daily_vals.total_excr_stat <- file.path(data_analysis_path, "daily_vals.total_excr_stat.qs")
+daily_vals.total_P_lost_stat <- file.path(data_analysis_path, "daily_vals.total_P_lost_stat.qs")
+daily_vals.total_uneat_stat <- file.path(data_analysis_path, "daily_vals.total_uneat_stat.qs")
+daily_vals.total_waste_stat <- file.path(data_analysis_path, "daily_vals.total_waste_stat.qs")
+daily_props <- file.path(data_analysis_path, "daily_props.qs")
+
+if (any(!file.exists(c(daily_vals.food_prov_stat, daily_vals.P_excr_stat, daily_vals.P_uneat_stat, daily_vals.total_excr_stat, daily_vals.total_P_lost_stat, daily_vals.total_uneat_stat, daily_vals.total_waste_stat, daily_props))) | overwrite) {
+
+  daily_files <- c(
+    file.path(output_path, "cohort_results_food_prov_stat.qs"),
+    file.path(output_path, "cohort_results_P_excr_stat.qs"),
+    file.path(output_path, "cohort_results_P_uneat_stat.qs"),
+    file.path(output_path, "cohort_results_total_uneat_stat.qs"),
+    file.path(output_path, "cohort_results_total_excr_stat.qs")
+  )
+
+  daily_vals <- map_dfr(daily_files, function(filename) {
+    qread(filename) %>% 
+      cleanup_daily_vals()
+  }) %>% 
+    pivot_wider(
+      names_from = measure, names_sep = ".",
+      values_from = c(mean_per_biom, sd_per_biom, mean, sd)
+    ) %>% 
+    mutate(
+      mean_per_biom.total_waste_stat = mean_per_biom.total_excr_stat + mean_per_biom.total_uneat_stat,
+      mean_per_biom.total_P_lost_stat = mean_per_biom.P_excr_stat + mean_per_biom.P_uneat_stat,
+      mean.total_waste_stat = mean.total_excr_stat + mean.total_uneat_stat,
+      mean.total_P_lost_stat = mean.P_excr_stat + mean.P_uneat_stat,
+      sd_per_biom.total_waste_stat = mean_per_biom.total_waste_stat * 
+        ((sd_per_biom.total_excr_stat/mean_per_biom.total_excr_stat) + 
+         (sd_per_biom.total_uneat_stat/mean_per_biom.total_uneat_stat)),
+      sd_per_biom.total_P_lost_stat = mean_per_biom.total_P_lost_stat * 
+        ((sd_per_biom.P_excr_stat/mean_per_biom.P_excr_stat) + 
+         (sd_per_biom.P_uneat_stat/mean_per_biom.P_uneat_stat)),
+      sd.total_excr_stat = mean.total_excr_stat * 
+        ((sd.total_excr_stat/mean.total_excr_stat) + 
+         (sd.total_uneat_stat/mean.total_uneat_stat)),
+      sd.total_P_lost_stat = mean.total_P_lost_stat * 
+        ((sd.P_excr_stat/mean.P_excr_stat) + 
+         (sd.P_uneat_stat/mean.P_uneat_stat)),
+    ) %>% 
+    pivot_longer(
+      cols = contains("stat"),
+      names_to = c(".value", "measure"), 
+      names_transform = list(measure = as.factor),
+      names_sep = "\\.",
+    )
+
+  daily_vals %>% 
+    filter(measure == "food_prov_stat") %>% mutate(measure = droplevels(measure)) %>% 
+    qsave(., daily_vals.food_prov_stat)
+
+  daily_vals %>% 
+    filter(measure == "P_excr_stat") %>% mutate(measure = droplevels(measure)) %>% 
+    qsave(., daily_vals.P_excr_stat)
+
+  daily_vals %>% 
+    filter(measure == "P_uneat_stat") %>% mutate(measure = droplevels(measure)) %>% 
+    qsave(., daily_vals.P_uneat_stat)
+
+  daily_vals %>% 
+    filter(measure == "total_excr_stat") %>% mutate(measure = droplevels(measure)) %>% 
+    qsave(., daily_vals.total_excr_stat)
+
+  daily_vals %>% 
+    filter(measure == "total_P_lost_stat") %>% mutate(measure = droplevels(measure)) %>% 
+    qsave(., daily_vals.total_P_lost_stat)
+
+  daily_vals %>% 
+    filter(measure == "total_uneat_stat") %>% mutate(measure = droplevels(measure)) %>% 
+    qsave(., daily_vals.total_uneat_stat)
+
+  daily_vals %>% 
+    filter(measure == "total_waste_stat") %>% mutate(measure = droplevels(measure)) %>% 
+    qsave(., daily_vals.total_waste_stat)
+
+  daily_props <- daily_vals %>% 
+    pivot_wider(
+      names_from = measure, names_sep = ".",
+      values_from = c(mean_per_biom, sd_per_biom, mean, sd)
+    ) %>% 
+    mutate(
+      mean_per_biom.prop_excr_stat = mean_per_biom.total_excr_stat/mean_per_biom.total_waste_stat, # The proportion of total waste (feed+faeces) that comes from excreted faeces
+      mean_per_biom.prop_P_stat = mean_per_biom.P_excr_stat/mean_per_biom.total_P_lost_stat, # The proportion of total protein lost (feed+faeces) that is lost through excretion
+      mean_per_biom.prop_uneat_stat = mean_per_biom.total_uneat_stat/mean_per_biom.food_prov_stat, # The proportion of feed provided that is lost to the environment
+      mean.prop_excr_stat = mean.total_excr_stat/mean.total_waste_stat, 
+      mean.prop_P_stat = mean.P_excr_stat/mean.total_P_lost_stat, 
+      mean.prop_uneat_stat = mean.total_uneat_stat/mean.food_prov_stat, 
+      sd_per_biom.prop_excr_stat = mean_per_biom.prop_excr_stat * 
+        ((sd_per_biom.total_excr_stat/mean_per_biom.total_excr_stat) + 
+        (sd_per_biom.total_waste_stat/mean_per_biom.total_waste_stat)), 
+      sd_per_biom.prop_P_stat = mean_per_biom.prop_P_stat * 
+        ((sd_per_biom.P_excr_stat/mean_per_biom.P_excr_stat) + 
+        (sd_per_biom.total_P_lost_stat/mean_per_biom.total_P_lost_stat)), 
+      sd_per_biom.prop_uneat_stat = mean_per_biom.prop_uneat_stat * 
+        ((sd_per_biom.total_uneat_stat/mean_per_biom.total_uneat_stat) + 
+        (sd_per_biom.food_prov_stat/mean_per_biom.food_prov_stat)), 
+      sd.prop_excr_stat = mean.prop_excr_stat * 
+        ((sd.total_excr_stat/mean.total_excr_stat) + 
+        (sd.total_waste_stat/mean.total_waste_stat)), 
+      sd.prop_P_stat = mean.prop_P_stat * 
+        ((sd.P_excr_stat/mean.P_excr_stat) + 
+        (sd.total_P_lost_stat/mean.total_P_lost_stat)), 
+      sd.prop_uneat_stat = mean.prop_uneat_stat * 
+        ((sd.total_uneat_stat/mean.total_uneat_stat) + 
+        (sd.food_prov_stat/mean.food_prov_stat)), 
+    ) %>% 
+    select(farm_ID, feed_group, feed_type, prod_t, t, contains("prop")) %>% 
+    pivot_longer(
+      cols = contains("stat"),
+      names_to = c(".value", "measure"), 
+      names_transform = list(measure = as.factor),
+      names_sep = "\\.",
+    )
+
+    qsave(daily_props, file.path(data_analysis_path, "daily_props.qs"))
+    rm(daily_vals, daily_props)
+}
+```
+
+The structure of these data are as follows:
+
+```{r}
+daily_vals.total_P_lost_stat %>% 
+  qread() %>% 
+  str()
+```
+
+```{r}
+daily_props %>% 
+  qread() %>% 
+  str()
+```
+
+# Daily values
+
+## Temporal patterns over a production year
+
+```{r fig-daily-waste-total}
+#| fig-cap: "Mean daily total waste production across all farms over one production cycle (548 days). Feed groups shown as: MD = marine-dominant (purple), PD = plant-dominant (green), AD = animal-dominant (orange). Digestibility levels shown by line types: solid = mean, dotted = minimum, dashed = maximum."
+
+daily_vals.total_waste_stat %>%
+  qread() %>% 
+  group_by(prod_t, feed_group, feed_type) %>%
+  summarise(
+    mean_val = mean(mean),
+    .groups = "drop"
+  ) %>%
+  mutate(mean_val = mean_val %>% set_units("kg") %>% drop_units()) %>% 
+  ggplot(aes(x = prod_t, y = mean_val, color = feed_group, linetype = feed_type)) +
+  geom_line(linewidth = 0.8) +
+  scale_color_manual(values = feed_pal) +
+  scale_linetype_manual(values = level_lines) +
+  labs(
+    x = "Production day",
+    y = expression("Mean total waste (kg)"),
+    color = "Feed group",
+    linetype = "Digestibility"
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "right")
+```
+
+```{r fig-daily-waste-components}
+#| fig-cap: "Daily patterns of waste components (excreted faeces in top panel, uneaten feed in bottom panel) for mean digestibility. Feed groups shown as: MD = marine-dominant (purple), PD = plant-dominant (green), AD = animal-dominant (orange)."
+
+rbind(
+  daily_vals.total_excr_stat %>% qread(),
+  daily_vals.total_uneat_stat %>% qread()
+) %>%
+  filter(feed_type == "Mean") %>%
+  group_by(prod_t, feed_group, measure) %>%
+  summarise(
+    mean_val = mean(mean),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    measure_label = factor(measure,
+                          levels = c("total_excr_stat", "total_uneat_stat"),
+                          labels = c("Excreted", "Uneaten")),
+    mean_val = mean_val %>% set_units("kg") %>% drop_units()
+  ) %>%
+  ggplot(aes(x = prod_t, y = mean_val, color = feed_group)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~ measure_label, ncol = 1, scales = "free_y") +
+  scale_color_manual(values = feed_pal) +
+  labs(
+    x = "Production day",
+    y = expression("Mean waste component (kg)"),
+    color = "Feed group"
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "right")
+```
+
+```{r fig-daily-waste-digestibility-comparison}
+#| fig-cap: "Effect of digestibility on daily waste production patterns within each feed group (MD, PD, AD shown in separate panels). Digestibility levels shown by color: Minimum, Mean, and Maximum."
+
+daily_vals.total_waste_stat %>%
+  qread() %>% 
+  group_by(prod_t, feed_group, feed_type) %>%
+  summarise(
+    mean_val = mean(mean),
+    .groups = "drop"
+  ) %>%
+  mutate(mean_val = mean_val %>% set_units("kg") %>% drop_units()) %>% 
+  ggplot(aes(x = prod_t, y = mean_val, color = feed_type)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~ feed_group, ncol = 1) +
+  scale_color_manual(values = level_pal) +
+  labs(
+    x = "Production day",
+    y = expression("Mean total waste (kg)"),
+    color = "Digestibility"
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "right")
+```
+
+```{r fig-daily-protein-losses}
+#| fig-cap: "Mean daily protein losses over production year (548 days). Feed groups shown as: MD = marine-dominant (purple), PD = plant-dominant (green), AD = animal-dominant (orange). Digestibility levels shown by line types: solid = mean, dotted = minimum, dashed = maximum."
+#| fig-height: 5
+
+daily_vals.total_P_lost_stat %>%
+  qread() %>% 
+  group_by(prod_t, feed_group, feed_type) %>%
+  summarise(
+    mean_val = mean(mean),
+    .groups = "drop"
+  ) %>%
+  mutate(mean_val = mean_val %>% set_units("kg") %>% drop_units()) %>% 
+  pivot_wider(names_from = feed_type, values_from = mean_val) %>% 
+  # pull(Maximum) %>% max()
+
+
+  ggplot(aes(
+    x = prod_t, 
+    y = Mean * 6.25, ymin = Minimum * 6.25, ymax = Maximum * 6.25,
+    color = feed_group, fill = feed_group
+  )) +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = 0.2, linewidth = 0.1) +
+  scale_x_continuous(breaks = seq(0, 550, by = 50)) +
+  scale_y_continuous(
+    breaks = seq(4.5*10^8, 4.5*10^9, length.out = 10),
+    labels = function(x) {
+      parse(text = gsub("e", " %*% 10^", scales::scientific(x, digits = 2)))
+    }
+  ) +
+  scale_color_manual(values = feed_pal) +
+  scale_fill_manual(values = feed_pal) +
+  labs(
+    x = "Production day",
+    y = expression("Mean nitrogen loss (kg)"),
+    color = "Feed group"
+  ) +
+  prettyplot_600()
+
+daily_vals.total_P_lost_stat %>%
+  qread() %>% 
+  group_by(prod_t, feed_group, feed_type) %>%
+  summarise(
+    mean_val = mean(mean_per_biom),
+    .groups = "drop"
+  ) %>%
+  mutate(mean_val = mean_val %>% set_units("kg t_fish-1") %>% drop_units()) %>% 
+  pivot_wider(names_from = feed_type, values_from = mean_val) %>% 
+  # head()
+  ggplot(aes(
+    x = prod_t, 
+    y = Mean * 6.25, ymin = Minimum * 6.25, ymax = Maximum * 6.25,
+    color = feed_group, fill = feed_group
+  )) +
+  geom_line(linewidth = 1) +
+  geom_ribbon(alpha = 0.25, linewidth = 0.1, linetype = "dashed") +
+  scale_x_continuous(breaks = seq(0, 550, by = 50)) +
+  scale_y_continuous(limits = c(0.5, 3), breaks = seq(0, 3, by = 0.5)) +
+  scale_color_manual(values = feed_pal) +
+  scale_fill_manual(values = feed_pal) +
+  labs(
+    x = "Production day",
+    y = expression("Mean nitrogen loss (kg"~t[fish]^{-1}*")"),
+    color = "Feed group"
+  ) +
+  prettyplot_600()
+```
+
+```{r fig-daily-protein-components}
+#| fig-cap: "Daily patterns of protein loss components (protein excreted in top panel, protein uneaten in bottom panel) for mean digestibility. Feed groups shown as: MD = marine-dominant (purple), PD = plant-dominant (green), AD = animal-dominant (orange)."
+
+rbind(
+  daily_vals.P_excr_stat %>% qread(),
+  daily_vals.P_uneat_stat %>% qread()
+ ) %>%
+  filter(feed_type == "Mean") %>%
+  group_by(prod_t, feed_group, measure) %>%
+  summarise(
+    mean_val = mean(mean),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    measure_label = factor(measure,
+                          levels = c("P_excr_stat", "P_uneat_stat"),
+                          labels = c("P excreted", "P uneaten")),
+    mean_val = mean_val %>% set_units("kg") %>% drop_units()
+  ) %>%
+  ggplot(aes(x = prod_t, y = mean_val, color = feed_group)) +
+  geom_line(linewidth = 1) +
+  facet_wrap(~ measure_label, ncol = 1, scales = "free_y") +
+  scale_color_manual(values = feed_pal) +
+  labs(
+    x = "Production day",
+    y = expression("Mean protein loss (kg)"),
+    color = "Feed group"
+  ) +
+  prettyplot_600()
+```
+
+# Daily proportions
+
+```{r fig-daily-prop-excr}
+#| fig-cap: "Daily proportion of waste from excretion (vs uneaten feed) over production year (365 days). Feed groups shown as: MD = marine-dominant (purple), PD = plant-dominant (green), AD = animal-dominant (orange). Digestibility levels shown by line types: solid = mean, dotted = minimum, dashed = maximum."
+
+daily_props %>%
+  qread() %>% 
+  filter(measure == "prop_excr_stat") %>%
+  group_by(prod_t, feed_group, feed_type) %>%
+  summarise(
+    mean_val = mean(mean),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = prod_t, y = drop_units(mean_val), color = feed_group, linetype = feed_type)) +
+  geom_line(linewidth = 0.8) +
+  scale_color_manual(values = feed_pal) +
+  scale_linetype_manual(values = level_lines) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    x = "Production day",
+    y = "Proportion of waste from excretion (%)",
+    color = "Feed group",
+    linetype = "Digestibility"
+  ) +
+  prettyplot_600()
+```
+
+```{r fig-daily-prop-protein-excr}
+#| fig-cap: "Daily proportion of protein lost via excretion (vs uneaten) over production year (365 days). Feed groups shown as: MD = marine-dominant (purple), PD = plant-dominant (green), AD = animal-dominant (orange). Digestibility levels shown by line types: solid = mean, dotted = minimum, dashed = maximum."
+
+daily_props %>%
+  qread() %>% 
+  filter(measure == "prop_P_stat") %>%
+  group_by(prod_t, feed_group, feed_type) %>%
+  summarise(
+    mean_val = mean(mean),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = prod_t, y = drop_units(mean_val), color = feed_group, linetype = feed_type)) +
+  geom_line(linewidth = 0.8) +
+  scale_color_manual(values = feed_pal) +
+  scale_linetype_manual(values = level_lines) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    x = "Production day",
+    y = "Proportion of protein lost via excretion (%)",
+    color = "Feed group",
+    linetype = "Digestibility"
+  ) +
+  prettyplot_600()
+```
+
+# Feed group comparison summary
+
+# Daily values: Spatial results
+
+In order to map daily results spatially, I have chosen to represent 3 time periods: the trough day (the day when outputs are lowest), the peak day (the day when outputs are highest) and the median day (the day where outputs are closest to the median value). 
+
+```{r peak-trough-median days}
+#| code-summary: Get production days where excretion (and basically everything else) are at their minimum, maximum, and median.
+
+# pd = peak days
+# td = trough days
+
+dtw <- daily_vals.total_P_lost_stat %>% 
+  qread() %>% 
+  filter(feed_group == "PD" & feed_type == "Mean") %>% 
+  left_join(farm_locs, by = "farm_ID")
+
+temp_peak <- dtw %>% 
+  filter(prod_t < 400) %>% 
+  group_by(country, t, prod_t) %>% 
+  reframe(sum = sum(mean)) %>% 
+  group_by(country) %>% 
+  slice_max(sum)
+
+temp_trough <- dtw %>% 
+  filter(prod_t < 400) %>% 
+  group_by(country, t, prod_t) %>% 
+  reframe(sum = sum(mean)) %>% 
+  group_by(country) %>% 
+  slice_min(sum)
+
+pds_S <- 813
+pds_N <- 641
+```
+
+The peak/trough days are on similar days in the production cycle, but on different actual days in the southern and northern hemispheres.
+
+```{r}
+
+base_formap <- daily_vals.total_P_lost_stat %>% 
+  qread() %>% 
+  filter(feed_group == "PD" & feed_type == "Mean") %>% 
+  group_by(farm_ID) %>% 
+  slice_max(t) %>% 
+  distinct(farm_ID, t) %>% 
+  rename(peak_t = t)
+
+data_formap <- daily_vals.total_P_lost_stat %>% 
+  qread() %>% 
+  left_join(base_formap, by = "farm_ID") %>% 
+  filter(t == peak_t) %>% 
+  left_join(farm_locs, by = "farm_ID") %>% 
+  mutate(mean_per_biom = mean_per_biom %>% set_units("kg t_fish-1") %>% drop_units())
+
+p_bigmap_robinson +
+  geom_sf(
+    data = data_formap %>% 
+      st_as_sf(crs = 4326) %>% 
+      st_transform(crs = "+proj=robin"), 
+    aes(color = mean_per_biom*6.25, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(
+    option = "turbo", 
+    # limits = c(350, 550)
+  ) + 
+  guides(color = guide_colourbar(
+    title = expression("Total nitrogen lost (kg"~t[fish]^{-1}*")"),
+    direction = "horizontal", position = "bottom",
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  labs(y = "Latitude", x = "Longitude") +
+  prettyplot_600() +
+  theme(legend.position = "bottom") +
+  remove_map_axes()
+```
+

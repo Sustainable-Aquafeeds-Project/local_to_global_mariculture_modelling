@@ -1,0 +1,27 @@
+---
+title: "Local-to-Global Mariculture Modelling"
+subtitle: "Project Documentation - Index of files"
+author: "Tormey Reimer"
+date: today
+---
+
+# Table of Contents
+
+All code and processes for this project are linked below. Note that some scripts require access to raw data which is not stored on Github. 
+
+## Main scripts
+
+The main scripts for this project focus on setting up the model to examine the differences in total protein, carbohydrate, lipid and nitrogen losses between feeds. 
+
+| Page | Description |
+|---------|:-------------------------------------------------|
+| **[Tidying data](docs-working/01_tidying_data.html)** | Initial data tidying and preparation |
+| **[Extracting production locations](docs-working/02_extracting_production_locations.html)** | Identification of mariculture production site locations |
+| **[Assessing species potential](docs-working/03_assessing_species_potential.html)** | Evaluation of species suitability for different locations |
+| **[Extracting farm temperature data](docs-working/04_extracting_temperatures.html)** | SST data extraction and processing into a "typical year" for model inputs |
+| **[Formulating experimental feeds](docs-working/05_formulating_feeds.html)** | Feed composition formulation for model runs |
+| **[Assigning Production](docs-working/06_assigning production.html)** | Calculating typical harvest size per farm, assigning production and calculating population per farm to meet production data targets |
+| **[How many runs per farm?](docs-working/07_how_many_runs_per_farm.html)** | Determining how many Monte-Carlo runs is enough for acceptable variation |
+| **[Run Atlantic salmon model](docs-working/08_run_atlantic_salmon_model.html)** | Atlantic salmon growth model execution |
+| **[Data exploration](docs-working/09_data_analysis_total_vals.html)** | Visualising the outputs of the Atlantic salmon growth model |
+| **[Figures for manuscript](docs-working/10_figures_for_paper.html)** | Code used to generate the specific figures used in the manuscript |

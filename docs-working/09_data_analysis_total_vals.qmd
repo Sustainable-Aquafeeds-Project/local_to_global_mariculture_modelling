@@ -1,0 +1,1006 @@
+---
+title: "Data exploration"
+author: 
+  - "Tormey Reimer"
+date: last-modified
+execute:
+  eval: true
+---
+
+# Introduction
+
+```{r setup}
+#| cache: false
+#| include: false
+
+library(tidyverse)
+library(arrow)
+library(sf)
+library(terra)
+library(magrittr)
+library(furrr)
+library(future)
+library(tictoc)
+library(fs)
+library(conflicted)
+library(readxl)
+library(units)
+library(qs)
+library(here)
+library(scales)
+library(targets)
+library(ggforce)
+
+conflicted::conflicts_prefer(
+  dplyr::filter(), 
+  dplyr::select(), 
+  scales::rescale(), 
+  .quiet = T
+)
+
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  walk(source)
+
+remove_unit("g_fish")
+remove_unit("kg_fish")
+remove_unit("t_fish")
+install_unit("g_fish")
+install_unit("kg_fish", "1000 g_fish")
+install_unit("t_fish", "1000 kg_fish")
+```
+
+# Get outputs
+
+These are the outputs that I want to view and analyse.
+
+```{r location-globals-farm}
+#| code-summary: Get locations of farms for mapping
+
+farm_locs <- file.path(input_farm_coords_path, "farm_static_data.qs") %>% 
+  qread() %>% 
+  rename(farm_ID = farm_id) %>%
+  mutate(
+    longitude = st_coordinates(geometry)[, 1],
+    latitude = st_coordinates(geometry)[, 2]
+  ) %>% 
+  mutate(
+    country = as.factor(country),
+    region = case_when(
+      country %in% c("Canada", "United States of America") & longitude < -100 ~ "North America (WC)", 
+      country %in% c("Canada", "United States of America") & longitude < -50 ~ "North America (EC)", 
+      country %in% c("Ireland", "United Kingdom") ~ "UK & Ireland",
+      country %in% c("Iceland", "Faroe Islands") ~ "Iceland & FI",
+      country %in% c("Norway", "Finland") ~ "Scandinavia",
+      country == "Australia" ~ "Australia",
+      country == "Chile" ~ "Chile", 
+      country == "Russian Federation" ~ NA
+    ) %>% as.factor()
+  )
+```
+
+## Total (summed) values
+
+The total values describe selected output variables (measures) summed over the entire period of a salmon growing period (548 days). The data were generated from a suite of model runs which cover several dimensions:
+
+- 2705 unique farms
+- 3 different feed groups, representing different formulations of salmon feed: MD (marine-dominant), AD (animal-dominant) and PD (plant-dominant)
+- 3 different feed types representing levels of digestibility of each of the three different feeds: mean digestibility, minimum digestibility, and maximum digestibility
+
+The output values are expressed per biomass of salmon produced.
+
+```{r total-values}
+#| code-summary: Get total values data. These data give the total (summed) values of each response metric over 1 complete production period.
+
+total_vals <- file.path(data_analysis_path, "total_vals.qs") %>% 
+  qread()
+total_props <- file.path(data_analysis_path, "total_props.qs") %>% 
+  qread()
+CN_vals <- file.path(data_analysis_path, "total_CN_vals.qs") %>% 
+  qread()
+```
+
+The structure of these data are as follows:
+
+```{r}
+total_vals %>% 
+  str()
+```
+
+```{r}
+total_props %>% 
+  str()
+```
+
+```{r}
+CN_vals %>% 
+  str()
+```
+
+# Figures for paper
+
+```{r fig-total-CN-lost}
+#| fig-cap: Total carbon (a) and nitrogel (b) loading to the environment with different feeds and digestibility levels.
+
+nutrient_labels <- data.frame(
+  nutrient = levels(CN_vals$nutrient),
+  label = letters[1:2]
+)
+
+CN_vals %>%
+  filter(measure == "total_lost") %>% 
+  mutate(mean_per_biom = mean_per_biom %>% 
+    set_units("g g_fish-1") %>% 
+    set_units("kg t_fish-1") %>% 
+    drop_units()
+  ) %>% 
+  ggplot(aes(x = feed_type, y = mean_per_biom, fill = feed_group)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = feed_pal) +
+  facet_grid(
+    rows = vars(nutrient), 
+    scales = "free"
+  ) +
+  geom_text(
+    data = nutrient_labels, 
+    aes(x = -Inf, y = Inf, label = label),
+    hjust = -1, vjust = 1.5,
+    size = 6, fontface = "bold",
+    inherit.aes = FALSE
+  ) +
+  labs(
+    x = "Feed digestibility",
+    y = expression("Nutrient loading (kg"~t[fish]^{-1}*")")
+  ) +
+  prettyplot_600() +
+  theme(
+    legend.position = "none", 
+    strip.text = element_blank(), 
+    strip.background = element_blank()
+  )
+```
+
+```{r CN-ratio}
+#| fig-cap: C:N ratio of excreted waste1
+#| fig-height: 4.5
+
+CN_ratio_vals <- CN_vals %>% 
+  left_join(farm_locs, by = "farm_ID") %>% 
+  filter(measure %in% c("total_lost", "excr")) %>% 
+  select(farm_ID, feed_group, feed_type, measure, mean, nutrient, country, region) %>% 
+  pivot_wider(names_from = c(nutrient, measure), values_from = mean, names_sep = ".") %>% 
+  mutate(
+    N.excr = N.excr/14.007,
+    N.total_lost = N.total_lost/14.007,
+    C.excr = C.excr/12.011,
+    C.total_lost = C.total_lost/12.011,
+    CN_ratio.excr = C.excr/N.excr,
+    CN_ratio.total_lost = C.total_lost/N.total_lost
+  ) %>% 
+  group_by(feed_group, feed_type) %>% 
+  reframe(
+    CN_ratio_mean.excr = mean(CN_ratio.excr),
+    CN_ratio_sd.excr = sd(CN_ratio.excr),
+    CN_ratio_mean.total_lost = mean(CN_ratio.total_lost),
+    CN_ratio_sd.total_lost = sd(CN_ratio.total_lost)
+  ) %>% 
+  pivot_longer(
+    cols = contains("CN"),
+    names_to = c(".value", "measure"),
+    names_sep = "\\."
+  ) %>% 
+  mutate(measure = factor(measure, levels = c("excr", "total_lost")))
+
+CN_ratio_vals %>% 
+  ggplot(aes(x = feed_type, y = CN_ratio_mean, fill = feed_group, shape = measure)) +
+  geom_point(size = 4, position = position_dodge(width = 0.9), colour = "black") +
+  scale_fill_manual(values = feed_pal) +
+  scale_shape_manual(values = c("excr" = 21, "total_lost" = 24)) +
+  prettyplot_600() +
+  # theme(legend.position = "right") +
+  labs(x = "Feed digestibility", y = "C:N")
+
+# CN_ratio_vals %>% 
+#   select(-CN_ratio_sd) %>% 
+#   pivot_wider(names_from = feed_type, values_from = CN_ratio_mean) %>% 
+#   arrange(measure, feed_group)
+```
+
+```{r fig-map-total-CN-lost-PD}
+#| fig-cap: Map showing spatial distribution of total protein losses for PD feed at mean digestibility.1
+#| fig-height: 5
+
+data_basemap_C <- CN_vals %>% 
+  filter(feed_type == "Mean", feed_group == "PD") %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  mutate(
+    mean = set_units(mean, "g") %>% set_units("kg") %>% drop_units(),
+    mean_per_biom = set_units(mean_per_biom, "g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
+  ) %>% 
+  filter(measure == "total_lost" & nutrient == "C") %>% 
+  st_as_sf(crs = 4326) %>% 
+  st_transform(crs = "+proj=robin")
+
+p_bigmap_robinson +
+# p_bigmap_robinson_boxes +
+  geom_sf(
+    data = data_basemap_C, 
+    aes(color = mean_per_biom, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(75, 115, 10), limits = c(75, 116)) + 
+  guides(color = guide_colourbar(
+    title = expression(atop("C loading", paste("(kg"~t[fish]^{-1}*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barwidth = 1.5, barheight = 12,
+  )) +
+  labs(y = "Latitude", x = "Longitude") +
+  prettyplot_600() +
+  theme(legend.position = "bottom") +
+  remove_map_axes()
+
+data_basemap_N <- CN_vals %>% 
+  filter(feed_type == "Mean", feed_group == "PD") %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  mutate(
+    mean = set_units(mean, "g") %>% set_units("kg") %>% drop_units(),
+    mean_per_biom = set_units(mean_per_biom, "g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
+  ) %>% 
+  filter(measure == "total_lost" & nutrient == "N") %>% 
+  st_as_sf(crs = 4326) %>% 
+  st_transform(crs = "+proj=robin")
+
+p_bigmap_robinson +
+# p_bigmap_robinson_boxes +
+  geom_sf(
+    data = data_basemap_N, 
+    aes(color = mean_per_biom, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", limits = c(9, 15)) + 
+  guides(color = guide_colourbar(
+    title = expression(atop("N loading", paste("(kg"~t[fish]^{-1}*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barwidth = 1.5, barheight = 12,
+  )) +
+  labs(y = "Latitude", x = "Longitude") +
+  prettyplot_600() +
+  theme(legend.position = "bottom") +
+  remove_map_axes()
+```
+
+```{r fig-mapping-total-CN-lost-chile}
+#| fig-cap: Total N lost across all feeds and digestibility levels in Chile.1
+#| fig-height: 8.5
+
+data_formap <- CN_vals %>% 
+  filter(measure == "total_lost" & nutrient == "N") %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  mutate(
+    mean = mean %>% set_units("g") %>% set_units("t") %>% drop_units(),
+    feed_type = factor(
+      feed_type,
+      levels = c("Minimum", "Mean", "Maximum"),
+      labels = c("Min. digestibility", "Mean digestibility", "Max. digestibility")
+    )
+  )
+
+ggplot() +
+  geom_sf(data = worldmap_mercator, fill = "white", color = "dimgray") +
+  geom_sf(
+    data = data_formap, 
+    aes(color = mean/10^6, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf(
+    xlim = inset_boxes_sm[["CHI"]][["xlims"]], 
+    ylim = inset_boxes_sm[["CHI"]][["ylims"]]
+  ) +
+  facet_grid(
+    rows = vars(feed_type), 
+    cols = vars(feed_group)
+  ) +
+  prettyplot_600() +
+  scale_color_viridis_c(
+    option = "turbo", 
+    breaks = seq(0, 3.5e1, 5),
+    limits = c(0, 3.55e1),
+  ) + 
+  scale_x_continuous(breaks = seq(5, -92.5, -10)) +
+  guides(color = guide_colorbar()) +
+  guides(color = guide_colourbar(
+    title = expression(atop("N loading", paste("(t " %*% " 10"^6*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 20, barwidth = 1.5
+  )) +
+  labs(y = "Latitude", x = "Longitude") +
+  theme(legend.position = "right")
+
+data_formap <- CN_vals %>% 
+  filter(measure == "total_lost" & nutrient == "C") %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  mutate(
+    mean = mean %>% set_units("g") %>% set_units("t") %>% drop_units(),
+    feed_type = factor(
+      feed_type,
+      levels = c("Minimum", "Mean", "Maximum"),
+      labels = c("Min. digestibility", "Mean digestibility", "Max. digestibility")
+    )
+  )
+
+ggplot() +
+  geom_sf(data = worldmap_mercator, fill = "white", color = "dimgray") +
+  geom_sf(
+    data = data_formap, 
+    aes(color = mean/10^6, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf(
+    xlim = inset_boxes_sm[["CHI"]][["xlims"]], 
+    ylim = inset_boxes_sm[["CHI"]][["ylims"]]
+  ) +
+  facet_grid(
+    rows = vars(feed_type), 
+    cols = vars(feed_group)
+  ) +
+  prettyplot_600() +
+  scale_color_viridis_c(
+    option = "turbo", 
+    breaks = seq(0, 2.6e2, 50),
+    limits = c(0, 2.7e2),
+  ) + 
+  scale_x_continuous(breaks = seq(5, -92.5, -10)) +
+  guides(color = guide_colorbar()) +
+  guides(color = guide_colourbar(
+    title = expression(atop("C loading", paste("(t " %*% " 10"^6*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 20, barwidth = 1.5
+  )) +
+  labs(y = "Latitude", x = "Longitude") +
+  theme(legend.position = "right")
+```
+
+# Rogue farms
+
+There are some farms that have "gone rogue" - ie they are getting much higher waste production results than their mean temperature would suggest.
+
+```{r identify-rogues}
+tarstore <- here("targets/_targets_farmruns")
+
+farm_temp_data <- targets::tar_read(farm_ts_data, store = tarstore) %>% 
+  group_by(farm_ID) %>% 
+  reframe(
+    mean_temp = mean(temp_c),
+    median_temp = median(temp_c),
+    min_temp = min(temp_c),
+    max_temp = max(temp_c)
+  ) %>% 
+  left_join(
+    total_vals,
+    by = "farm_ID"
+  ) %>% 
+  filter(measure %in% c("P_excr_stat", "P_uneat_stat") & feed_type == "Mean" & feed_group == "PD") %>% 
+  mutate(
+    mean_per_biom = mean_per_biom %>% set_units("kg t_fish-1") %>% drop_units()
+  )
+  
+farm_temp_data %>% 
+  ggplot(aes(x = mean_temp, y = mean_per_biom/6.25)) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = seq(0, 20, 2), limits = c(6, 12)) +
+  scale_color_brewer(palette = "Dark2") + 
+  prettyplot_600() +
+  theme(legend.position = "right") +
+  labs(
+    x = expression("Mean farm temperature ("*degree*"C)"), 
+    y = expression("Total protein lost (kg"~t[fish]^{-1}*")")
+  ) +
+  ggtitle("Total N lost per farm by mean farm temperature") +
+  facet_wrap(~measure)
+```
+
+# Feed provided and total waste
+
+```{r fig-total-food-provision}
+#| fig-cap: "Total food provided per unit biomass produced across feed groups (MD shown in purple, PD in green, AD in orange) and three digestibility levels (minimum, mean, and maximum)."
+
+total_vals %>%
+  filter(measure == "food_prov_stat") %>%
+  mutate(mean_per_biom = set_units(mean_per_biom, "kg t_fish-1")) %>% 
+  ggplot(aes(x = feed_type, y = drop_units(mean_per_biom), fill = feed_group)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = feed_pal) +
+  labs(
+    x = "Feed digesbility level",
+    y = expression("Food provided (kg"~t[fish]^{-1}*")")
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "none")
+```
+
+```{r fig-total-waste}
+#| fig-cap: "Total waste (excreted faeces + uneaten feed) per unit biomass produced across feed groups (MD shown in purple, PD in green, AD in orange) and three digestibility levels (minimum, mean, and maximum)."
+
+(p_total_waste <- total_vals %>%
+  filter(measure == "total_waste_stat") %>%
+  mutate(mean_per_biom = set_units(mean_per_biom, "kg t_fish-1")) %>% 
+  ggplot(aes(x = feed_type, y = drop_units(mean_per_biom), fill = feed_group)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = feed_pal) +
+  labs(
+    x = "Feed digestibility level",
+    y = expression("Total waste (kg"~t[fish]^{-1}*")")
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "none"))
+```
+
+```{r fig-waste-components}
+#| fig-cap: "Components of waste: excreted faeces (red) vs uneaten feed (blue) across feed groups (MD, PD, AD). Each panel shows a different digestibility level."
+
+total_vals %>%
+  filter(measure %in% c("total_excr_stat", "total_uneat_stat")) %>%
+  mutate(mean_per_biom = set_units(mean_per_biom, "kg t_fish-1")) %>% 
+  ggplot(aes(x = feed_group, y = mean_per_biom, fill = measure)) +
+  geom_boxplot(alpha = 0.7, position = "dodge") +
+  facet_wrap(~ feed_type, labeller = label_both) +
+  scale_fill_manual(
+    values = c("total_excr_stat" = "#c73535ff", "total_uneat_stat" = "#4682B4"),
+    labels = c("Excreted", "Uneaten")
+  ) +
+  labs(
+    x = "Feed",
+    y = expression("Waste component (kg"~t[fish]^{-1}*")"),
+    fill = "Waste type"
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "right")
+```
+
+```{r fig-prop-uneaten}
+#| fig-cap: "Proportion of provided feed that is uneaten (lost to environment) across feed groups (MD shown in purple, PD in green, AD in orange) and digestibility levels (minimum, mean, and maximum). Points show median values while error bars show range from minimum to maximum."
+
+total_props %>%
+  filter(measure == "prop_uneat_stat") %>%
+  group_by(feed_group, feed_type, measure) %>%
+  summarise(
+    median_val = median(mean_prop),
+    min_val = min(mean_prop),
+    max_val = max(mean_prop),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = feed_type, y = median_val, ymin = min_val, ymax = max_val, color = feed_group)) +
+  geom_point(position = position_dodge(width = 0.35), size = 2.5) +
+  geom_errorbar(position = position_dodge(width = 0.35), width = 0.25) +
+  scale_color_manual(values = feed_pal) +
+  scale_y_continuous(
+    breaks = seq(0, 0.05, 0.0025),
+    limits = c(0.0275, 0.045),
+    labels = scales::percent_format()
+  ) +
+  labs(
+    x = "Feed digestibility level",
+    y = "Proportion of feed uneaten (%)"
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "none")
+```
+
+# Protein loss to the environment
+
+```{r fig-protein-losses}
+#| fig-cap: "Total protein losses (excreted + uneaten) per unit biomass produced across feed groups (MD shown in purple, PD in green, AD in orange) and three digestibility levels (minimum, mean, and maximum)."
+
+(p_protein_lost <- total_vals %>%
+  filter(measure == "total_P_lost_stat") %>%
+  mutate(mean_per_biom = set_units(mean_per_biom, "kg t_fish-1")) %>% 
+  ggplot(aes(x = feed_type, y = drop_units(mean_per_biom), fill = feed_group)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = feed_pal) +
+  labs(
+    x = "Feed digestibility",
+    y = expression("Total protein lost (kg"~t[fish]^{-1}*")")
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "none"))
+```
+
+```{r fig-protein-components}
+#| fig-cap: "Components of protein loss: excreted protein (red) vs uneaten protein (blue) across feed groups (MD, PD, AD). Each panel shows a different digestibility level (minimum, mean, and maximum)."
+
+total_vals %>%
+  filter(measure %in% c("P_excr_stat", "P_uneat_stat")) %>%
+  mutate(mean_per_biom = set_units(mean_per_biom, "kg t_fish-1") %>% drop_units()) %>% 
+  ggplot(aes(x = feed_group, y = mean_per_biom, fill = measure)) +
+  geom_boxplot(alpha = 0.7, position = "dodge") +
+  facet_wrap(~ feed_type, labeller = label_both) +
+  scale_fill_manual(
+    values = c("P_excr_stat" = "#c73535ff", "P_uneat_stat" = "#4682B4"),
+    labels = c("P excreted", "P uneaten")
+  ) +
+  labs(
+    x = "Feed group",
+    y = expression("Total protein lost (kg"~t[fish]^{-1}*")"),
+    fill = "Loss type"
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "right")
+```
+
+# C/N environment loading
+
+
+```{r fig-total-CN-lost-regions}
+#| fig-cap: Total N (a) and C (b) loading to the environment with different feeds and digestibility levels.
+
+CN_vals_forplot <- CN_vals %>% 
+  left_join(farm_locs, by = "farm_ID")
+
+nutrient_labels <- CN_vals_forplot %>%
+  distinct(region, nutrient) %>% 
+  mutate(label = c(letters[1:14]))
+
+(p_CN_lost <- CN_vals_forplot %>%
+  filter(measure == "total_lost") %>% 
+  mutate(mean_per_biom = set_units(mean_per_biom, "kg t_fish-1") %>% drop_units()) %>% 
+  ggplot(aes(x = feed_type, y = mean_per_biom, fill = feed_group)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = feed_pal) +
+  facet_grid(
+    rows = vars(nutrient), 
+    cols = vars(region),
+    scales = "free"
+  ) +
+  geom_text(
+    data = nutrient_labels, 
+    aes(x = -Inf, y = Inf, label = label),
+    hjust = -1, vjust = 1.5,
+    size = 6, fontface = "bold",
+    inherit.aes = FALSE
+  ) +
+  labs(
+    x = "Feed digestibility",
+    y = expression("Total loading (kg"~t[fish]^{-1}*")")
+  ) +
+  prettyplot_600() +
+  theme(
+    legend.position = "none",
+    strip.background = element_blank(),
+    strip.text = element_blank()
+    )
+  )
+```
+
+```{r fig-CN-excr}
+#| fig-cap: l;skdjfoi
+
+CN_vals %>%
+  mutate(mean_per_biom = set_units(mean_per_biom, "kg t_fish-1")) %>% 
+  ggplot(aes(x = feed_type, y = drop_units(mean_per_biom), fill = feed_group)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = feed_pal) +
+  facet_grid(
+    rows = vars(nutrient), 
+    labeller = label_both,
+    scales = "free"
+  ) +
+  labs(
+    x = "Feed digestibility",
+    y = expression("Total loading (kg"~t[fish]^{-1}*")")
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "none")
+```
+
+# Waste composition
+
+```{r fig-prop-excr-vs-total-waste}
+#| fig-cap: "Proportion of total and protein waste that is lost through excreted faeces (vs uneaten feed) across feeds (MD shown in purple, PD in green, AD in orange) and digestibility levels. Points show median values while error bars show range from minimum to maximum."
+
+total_props %>%
+  filter(measure %in% c("prop_excr_stat", "prop_P_stat")) %>%
+  group_by(feed_group, feed_type, measure) %>%
+  summarise(
+    median_val = median(mean_prop),
+    min_val = min(mean_prop),
+    max_val = max(mean_prop),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = measure, y = median_val, ymin = min_val, ymax = max_val, color = feed_group)) +
+  geom_point(position = position_dodge(width = 0.5), size = 3) +
+  geom_errorbar(position = position_dodge(width = 0.5), width = 0.3) +
+  scale_color_manual(values = feed_pal) +
+  scale_y_continuous(
+    breaks = seq(0.6, 0.9, 0.05),
+    limits = c(0.6, 0.9),
+    labels = scales::percent_format()
+  ) +
+  scale_x_discrete(
+    labels = c("Total", "Protein")
+  ) +
+  facet_wrap(~feed_type) +
+  labs(
+    x = "Feed digestibility level",
+    y = "Proportion of waste from excretion (%)"
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "none")
+```
+
+```{r protein-composition-of-faeces}
+#| code-summary: Get the protein composition of excreted faeces. These are consistent across farms (no impact of temperature) and time (no impact of fish size).
+
+total_props %>% 
+  filter(measure == "prop_comp_excr_P_stat") %>%
+  group_by(feed_group, feed_type, measure) %>%
+  summarise(
+    median_val = median(mean_prop),
+    .groups = "drop"
+  )
+```
+
+# Comparison across measures
+
+```{r fig-all-metrics-heatmap}
+#| fig-cap: "Heatmap showing median values of all metrics across feed groups (MD, PD, AD) and digestibility levels (minimum, mean, and maximum). Values have been scaled between -1 and 1 within each metric; blue indicates lower values, red indicates higher values, and white indicates mid-range values."
+
+total_vals %>%
+  group_by(feed_group, feed_type, measure) %>%
+  summarise(median_val = median(mean_per_biom), .groups = "drop") %>%
+  group_by(measure) %>%
+  mutate(scaled_val = rescale(median_val, c(-1,1))) %>%
+  ungroup() %>%
+  mutate(
+    measure_label = factor(
+      measure,
+      levels = c("food_prov_stat", "total_waste_stat", "total_excr_stat", "total_uneat_stat", "total_P_lost_stat", "P_excr_stat", "P_uneat_stat"),
+      labels = c("Food provided", "Total waste", "Excreted faeces", "Uneaten feed", "Total P lost", "P excreted", "P uneaten"))
+  ) %>%
+  ggplot(aes(x = feed_group, y = measure_label, fill = scaled_val)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  geom_text(aes(label = sprintf("%.2f", scaled_val)), size = 3) +
+  facet_wrap(~feed_type, nrow = 1) +
+  scale_fill_gradient2(low = "#4682B4", mid = "white", high = "#c73535ff", midpoint = 0) +
+  labs(
+    x = "Feed digestibility level",
+    y = "Metric",
+    fill = "Scaled\nvalue"
+  ) +
+  prettyplot_600() +
+  theme(
+    legend.position = "right",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+# Feed group comparison summary
+
+## Pairwise comparisons of feed groups
+
+```{r fig-feed-group-differences}
+#| fig-cap: "Distribution of differences in waste metrics between feed groups relative to MD. Panels show different digestibility levels. Green boxes show PD vs MD comparison, orange boxes show AD vs MD comparison. Positive values indicate higher waste in the alternative feed group compared to MD."
+
+total_vals %>%
+  mutate(
+    measure = factor(measure,
+    levels = c(
+      "food_prov_stat", "total_uneat_stat", "P_uneat_stat", 
+      "total_waste_stat", "total_P_lost_stat", 
+      "total_excr_stat", "P_excr_stat"
+    ),
+    labels = c(
+      "Feed provided", "Total uneaten", "Protein uneaten", 
+      "Total waste", "Total P lost", 
+      "Total excreted", "P excreted"
+      )
+    )
+  ) %>% 
+  filter(measure %in% c("P excreted", "Total excreted", "Total P lost", "Total waste")) %>% 
+  select(farm_ID, feed_group, mean_per_biom, feed_type, measure) %>%
+  pivot_wider(names_from = c(feed_group, feed_type), values_from = mean_per_biom) %>%
+  drop_na() %>%
+  mutate(
+    ADvsMD_Mean = AD_Mean - MD_Mean, 
+    PDvsMD_Mean = PD_Mean - MD_Mean,
+    ADvsMD_Maximum = AD_Maximum - MD_Maximum, 
+    PDvsMD_Maximum = PD_Maximum - MD_Maximum,
+    ADvsMD_Minimum = AD_Minimum - MD_Minimum, 
+    PDvsMD_Minimum = PD_Minimum - MD_Minimum
+  ) %>%
+  select(farm_ID, measure, contains("vs")) %>%
+  pivot_longer(cols = contains("vs"), names_to = c("comparison", "feed_type"), names_sep = "_", values_to = "difference") %>% 
+  mutate(
+    difference = difference %>% set_units("kg t_fish-1") %>% drop_units(),
+    comparison = factor(comparison, levels = c("PDvsMD", "ADvsMD"), labels = c("PD vs MD", "AD vs MD"))
+  ) %>% 
+  ggplot(aes(x = feed_type, y = difference, fill = comparison)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = c("#1B9E77", "#D95F02")) +
+  labs(
+    x = "Feed digestibility",
+    y = expression("Difference in total waste (kg"~t[fish]^{-1}*")")
+  ) +
+  facet_grid(rows = vars(measure)) +
+  prettyplot_600() +
+  theme(legend.position = "none")
+```
+
+```{r fig-feed-group-percent-differences-MD}
+#| fig-cap: "Percent differences between feed groups relative to MD feed across three digestibility levels (minimum, mean, and maximum). Green bars show PD vs MD comparison, orange bars show AD vs MD comparison. Error bars show the range from minimum to maximum difference across all farms."
+
+total_vals %>%
+  select(farm_ID, feed_group, feed_type, measure, mean_per_biom) %>%
+  pivot_wider(
+    names_from = c(feed_group, feed_type), 
+    values_from = mean_per_biom
+  ) %>%
+  drop_na() %>%
+  mutate(
+    `ADvsMD_Mean` = ((AD_Mean - MD_Mean) / MD_Mean * 100),
+    `PDvsMD_Mean` = ((PD_Mean - MD_Mean) / MD_Mean * 100),
+    `ADvsMD_Minimum` = ((AD_Minimum - MD_Minimum) / MD_Minimum * 100),
+    `PDvsMD_Minimum` = ((PD_Minimum - MD_Minimum) / MD_Minimum * 100),
+    `ADvsMD_Maximum` = ((AD_Maximum - MD_Maximum) / MD_Maximum * 100),
+    `PDvsMD_Maximum` = ((PD_Maximum - MD_Maximum) / MD_Maximum * 100)
+  ) %>%
+  select(farm_ID, measure, contains("vs")) %>%
+  pivot_longer(
+    cols = contains("vs"), 
+    names_to = c("comparison", "feed_type"), names_sep = "_",
+    values_to = "percent_diff"
+  ) %>%
+  mutate(
+    measure = factor(measure,
+      levels = c(
+        "food_prov_stat", 
+        "total_waste_stat", "total_excr_stat", "total_uneat_stat", 
+        "total_P_lost_stat", "P_excr_stat", "P_uneat_stat"
+      ),
+      labels = c(
+        "Food provided", 
+        "Total waste", "Excreted waste", "Uneaten feed", 
+        "Total protein lost", "Protein excreted", "Protein uneaten"
+      )),
+    comparison = factor(comparison, levels = c("PDvsMD", "ADvsMD"))
+  ) %>%
+  group_by(comparison, feed_type, measure) %>% 
+  reframe(
+    mean = mean(percent_diff),
+    min = min(percent_diff),
+    max = max(percent_diff)
+  ) %>% 
+  filter(measure %in% c("Total waste", "Total protein lost", "Excreted waste", "Uneaten feed", "Protein excreted", "Protein uneaten")) %>% 
+  ggplot(aes(x = feed_type, y = mean, ymin = min, ymax = max, fill = comparison)) +
+  geom_col(position = position_dodge(), width = 0.9, alpha = 0.7, colour = "black") +
+  geom_errorbar(position = position_dodge(0.9), width = 0.3, colour = "black") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  scale_fill_manual(values = c("ADvsMD" = "#D95F02", "PDvsMD" = "#1B9E77")) +
+  facet_wrap(facets = vars(measure), ncol = 3) +
+  labs(
+    x = "Feed digestibility",
+    y = "Percent difference from MD (%)",
+    fill = "Comparison"
+  ) +
+  prettyplot_600()
+```
+
+```{r fig-feed-group-percent-differences-PD}
+#| fig-cap: "Percent differences between feed groups relative to PD feed across three digestibility levels (minimum, mean, and maximum). Purple bars show MD vs PD comparison, orange bars show AD vs PD comparison. Error bars show the range from minimum to maximum difference across all farms."
+
+total_vals %>%
+  select(farm_ID, feed_group, feed_type, measure, mean_per_biom) %>%
+  pivot_wider(
+    names_from = c(feed_group, feed_type), 
+    values_from = mean_per_biom
+  ) %>%
+  drop_na() %>%
+  mutate(
+    `ADvsPD_Mean` = ((AD_Mean - PD_Mean) / PD_Mean * 100),
+    `MDvsPD_Mean` = ((MD_Mean - PD_Mean) / PD_Mean * 100),
+    `ADvsPD_Minimum` = ((AD_Minimum - PD_Minimum) / PD_Minimum * 100),
+    `MDvsPD_Minimum` = ((MD_Minimum - PD_Minimum) / PD_Minimum * 100),
+    `ADvsPD_Maximum` = ((AD_Maximum - PD_Maximum) / PD_Maximum * 100),
+    `MDvsPD_Maximum` = ((MD_Maximum - PD_Maximum) / PD_Maximum * 100)
+  ) %>%
+  select(farm_ID, measure, contains("vs")) %>%
+  pivot_longer(
+    cols = contains("vs"), 
+    names_to = c("comparison", "feed_type"), names_sep = "_",
+    values_to = "percent_diff"
+  ) %>%
+  mutate(
+    measure = factor(measure,
+      levels = c(
+        "food_prov_stat", 
+        "total_waste_stat", "total_excr_stat", "total_uneat_stat", 
+        "total_P_lost_stat", "P_excr_stat", "P_uneat_stat"
+      ),
+      labels = c(
+        "Food provided", 
+        "Total waste", "Excreted waste", "Uneaten feed", 
+        "Total protein lost", "Protein excreted", "Protein uneaten"
+      )),
+    comparison = factor(comparison, levels = c("MDvsPD", "ADvsPD"))
+  ) %>%
+  group_by(comparison, feed_type, measure) %>% 
+  reframe(
+    mean = mean(percent_diff),
+    min = min(percent_diff),
+    max = max(percent_diff)
+  ) %>% 
+  filter(measure %in% c("Total waste", "Total protein lost", "Excreted waste", "Uneaten feed", "Protein excreted", "Protein uneaten")) %>% 
+  ggplot(aes(x = feed_type, y = mean, ymin = min, ymax = max, fill = comparison)) +
+  geom_col(position = position_dodge(), width = 0.95, alpha = 0.7, colour = "black") +
+  geom_errorbar(position = position_dodge(0.95), width = 0.3, colour = "black") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  scale_fill_manual(values = c("ADvsPD" = "#D95F02", "MDvsPD" = "#7570B3")) +
+  facet_wrap(facets = vars(measure), ncol = 3) +
+  labs(
+    x = "Feed digestibility",
+    y = "Percent difference from MD (%)",
+    fill = "Comparison"
+  ) +
+  prettyplot_600()
+```
+
+# Farm-level variability
+
+```{r fig-farm-variability-total-waste}
+#| fig-cap: "Distribution of total waste across farms for each combination of feed group (MD = purple, PD = green, AD = orange) and digestibility level (rows show minimum, mean, and maximum). Histograms show the variability in outcomes across the 2697 farms."
+
+total_vals %>%
+  filter(measure == "total_waste_stat") %>%
+  mutate(mean_per_biom = mean_per_biom %>% set_units("kg t_fish-1") %>% drop_units()) %>% 
+  ggplot(aes(x = mean_per_biom, fill = feed_group)) +
+  geom_histogram(bins = 50, alpha = 0.7, position = "identity") +
+  facet_grid(feed_type ~ feed_group) +
+  scale_fill_manual(values = feed_pal) +
+  labs(
+    x = expression("Total waste (kg"~t[fish]^{-1}*")"),
+    y = "Number of farms"
+  ) +
+  prettyplot_600() +
+  theme(legend.position = "none")
+```
+
+# Spatial results
+
+## Global base (plant-dominant, mean digestibility)
+
+```{r basemap-data}
+#| code-summary: Get data for base map visualisation (plant-dominant, mean digestibility)
+
+data_basemap <- CN_vals %>% 
+  filter(feed_type == "Mean", feed_group == "PD") %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  mutate(
+    mean = set_units(mean, "g") %>% set_units("kg") %>% drop_units(),
+    mean_per_biom = set_units(mean_per_biom, "g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
+  )
+```
+
+```{r fig-map-total-P-lost-pd-mean-patchwork}
+#| fig-cap: Patchwork map showing spatial distribution of total protein losses for PD feed at mean digestibility.
+
+map1 <- p_bigmap_mercator +
+  geom_sf(
+    data = data_basemap_C, 
+    aes(color = mean_per_biom, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", limits = c(75, 116)) + 
+  guides(color = guide_colourbar(
+    title = expression("C loading (kg"~t[fish]^{-1}*")"),
+    direction = "horizontal", 
+    label.position = "bottom", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barheight = 1.5, barwidth = 20,
+  )) +
+  labs(y = "Latitude", x = "Longitude") +
+  prettyplot_600()
+
+patchwork_mercator_1(map1)
+patchwork_mercator_2(map1)
+```
+
+```{r fig-total-P-lost-farm-location}
+#| fig-cap: Total feed lost vs various aspects of farm location (latitude, temperature).
+
+tarstore <- here("targets/_targets_farmruns")
+farm_temp_data <- targets::tar_read(farm_ts_data, store = tarstore)
+
+farm_temp_data <- farm_temp_data %>% 
+  group_by(farm_ID) %>% 
+  reframe(
+    mean_temp = mean(temp_c),
+    median_temp = median(temp_c),
+    min_temp = min(temp_c),
+    max_temp = max(temp_c)
+  ) %>% 
+  left_join(
+    data_basemap,
+    by = "farm_ID"
+  ) %>% 
+  filter(measure == "total_P_lost_stat") %>% 
+  mutate(mean_per_biom = mean_per_biom %>% set_units("kg t_fish-1") %>% drop_units())
+  
+farm_temp_data %>% 
+  ggplot(aes(x = mean_temp, y = mean_per_biom*6.25, colour = region)) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = seq(0, 20, 2), limits = c(6, 18)) +
+  scale_color_brewer(palette = "Dark2") + 
+  prettyplot_600() +
+  theme(legend.position = "right") +
+  labs(
+    x = expression("Mean farm temperature ("*degree*"C)"), 
+    y = expression("Total protein lost (kg"~t[fish]^{-1}*")")
+  ) +
+  ggtitle("Total N lost per farm by mean farm temperature")
+
+farm_temp_data %>% 
+  distinct(farm_ID, mean_temp, latitude, country, region) %>% 
+  ggplot(aes(x = abs(latitude), y = mean_temp, colour = region)) +
+  geom_point(size = 2.5) +
+  scale_color_brewer(palette = "Dark2") + 
+  prettyplot_600() +
+  labs(
+    x = expression("Farm latitude ("*degree*"E)"), 
+    y = expression("Mean farm temperature ("*degree*"C)")
+  ) +
+  theme(legend.position = "right") +
+  ggtitle("Mean farm temperature by farm latitude")
+```
+
+```{r}
+#| fig-height: 5
+
+tarstore <- here("targets/_targets_farmruns")
+farm_temp_data <- targets::tar_read(farm_ts_data, store = tarstore)
+
+farm_temp_data <- farm_temp_data %>% 
+  group_by(farm_ID) %>% 
+  reframe(
+    mean_temp = mean(temp_c),
+    median_temp = median(temp_c),
+    min_temp = min(temp_c),
+    max_temp = max(temp_c)
+  ) %>% 
+  left_join(
+    total_vals,
+    by = "farm_ID"
+  ) %>% 
+  filter(measure == "total_P_lost_stat") %>% 
+  mutate(mean_per_biom = mean_per_biom %>% set_units("kg t_fish-1") %>% drop_units())
+
+farm_temp_data %>% 
+  filter(feed_type == "Mean") %>% 
+  ggplot(aes(x = mean_temp, y = mean_per_biom*6.25, colour = feed_group)) +
+  geom_point(size = 2) +
+  scale_x_continuous(breaks = seq(0, 20, 2), limits = c(6, 18)) +
+  scale_color_manual(values = feed_pal) + 
+  # facet_grid(rows = vars(feed_type)) +
+  prettyplot_600() +
+  theme(legend.position = "none") +
+  labs(
+    x = expression("Mean farm temperature ("*degree*"C)"), 
+    y = expression("Total nitrogen lost (kg"~t[fish]^{-1}*")")
+  ) +
+  ggtitle("Total N lost per farm by mean farm temperature")
+```
+

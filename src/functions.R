@@ -3,7 +3,6 @@ suppressPackageStartupMessages(suppressWarnings({
 library(devtools)
 library(yaml)
 library(gitcreds)
-
 library(qs)
 library(arrow)
 library(stringr)

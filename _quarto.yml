@@ -9,22 +9,24 @@ project:
     - docs-working/03_assessing_species_potential.qmd
     - docs-working/04_extracting_temperatures.qmd
     - docs-working/05_formulating_feeds.qmd
-    - docs-working/06_how_many_runs_per_farm.qmd
-    # - docs-working/07_run_atlantic_salmon_model.qmd
-    - docs-working/08_data_analysis.qmd
-    - docs-working/08_data_analysis_2.qmd
+    - docs-working/06_assigning production.qmd
+    - docs-working/07_how_many_runs_per_farm.qmd
+    - docs-working/08_run_atlantic_salmon_model.qmd
+    - docs-working/09_data_analysis_total_vals.qmd
+    - docs-working/10_figures_for_paper.qmd
 
 editor: source
 
 execute:
-  eval: true
-  cache: true
+  eval: false
+  warning: false
+  message: false
 
 format:
   html:
     theme: cosmo
     css: "docs-working/extra.css"
-    embed-resources: true
+    # embed-resources: true
     code-fold: false
     code-overflow: wrap
     toc: true
