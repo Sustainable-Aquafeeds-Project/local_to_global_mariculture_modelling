@@ -1,0 +1,434 @@
+---
+title: "Run Atlantic salmon model"
+format: html
+editor: source
+---
+
+# Introduction
+
+This document runs the aquaculture model for Atlantic salmon farms.
+
+```{r setup, include=F}
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(arrow)
+library(sf)
+library(terra)
+library(furrr)
+library(future)
+library(progressr)
+library(tictoc)
+library(fs)
+library(conflicted)
+library(readxl)
+library(units)
+library(qs)
+library(here)
+library(targets)
+conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  str_subset("map", negate = T) %>% 
+  walk(source)
+
+# remove_unit("g_fish")
+# remove_unit("kg_fish")
+# remove_unit("t_fish")
+# install_unit("g_fish")
+# install_unit("kg_fish", "1000 g_fish")
+# install_unit("t_fish", "1000 kg_fish")
+```
+
+# Run farms
+
+The pipeline was having difficulty with the large files, so I've changed it to do the bulk of the processing here.
+
+```{r set-up-decomposed-runs}
+overwrite <- F
+inds_per_farm <- 2500
+farm_sample <- 25
+
+# The decomposed runs are stored in one of three different potential places. The function uses this to check all possible filepaths before creating a new file.
+potential_paths <- c(
+  file.path(output_path, "decomposed_runs"),
+  file.path(output_path, "decomposed_runs", "processed"),
+  file.path(bigdata_path, "outputs", "decomposed_runs", "processed")
+)
+
+# Find out which farms are already done
+already_done <- list.files(file.path(output_path, "farm_ends")) %>% 
+  str_remove_all(".qs") %>% 
+  str_split_i("_", 3) %>% 
+  str_remove_all("ID") %>% 
+  unique() %>% 
+  as.numeric()
+
+# Sample remaining farms
+farm_IDs <- file.path(input_farm_coords_path, "farm_static_data_w_stocking.qs") %>% 
+  qread() %>% 
+  rename(farm_ID = farm_id) %>% 
+  distinct(farm_ID) %>% 
+  pull(farm_ID) %>% 
+  setdiff(., already_done) %>% 
+  sample(farm_sample)
+
+farm_static_data <- file.path(input_farm_coords_path, "farm_static_data_w_stocking.qs") %>% 
+  qread() %>% 
+  sf::st_drop_geometry() %>% 
+  rename(farm_ID = farm_id) %>% 
+  filter(farm_ID %in% farm_IDs) %>% 
+  group_by(farm_ID) %>% 
+  group_split()
+
+farm_temporal_data <- file.path(input_farm_coords_path, "farm_temporal_data.qs") %>% 
+  qread() %>% 
+  rename(farm_ID = farm_id) %>% 
+  filter(farm_ID %in% farm_IDs) %>% 
+  arrange(farm_ID, day) %>% 
+  group_by(farm_ID) %>% 
+  group_split()
+
+# Salmon params
+all_params <- c(
+  file.path(output_species_data_path, "species_params.qs") %>% qread(),
+  file.path(output_species_data_path, "pop_params.qs") %>% qread()
+)
+
+# Add population from stocking n
+farm_temporal_data <- purrr::map2(
+  farm_static_data, 
+  farm_temporal_data, 
+  function(static, ts) {
+    cbind(
+      ts %>% 
+        filter(day >= static$t_start & day <= static$t_end),
+      data.frame(Npop = generate_pop(
+          harvest_n = static$harvest_n,
+          mort = all_params['mortmyt'],
+          times = c(t_start = static$t_start, t_end = static$t_end, dt = 1)
+      ))
+    )
+  }
+)
+
+# Feed params
+feed_params <- c(
+  file.path(output_species_data_path, "feed_params_MD.qs") %>% qread(), 
+  file.path(output_species_data_path, "feed_params_PD.qs") %>% qread(), 
+  file.path(output_species_data_path, "feed_params_AD.qs") %>% qread()
+)
+```
+
+```{r bulk-decomposed-runs}
+plan(multisession, workers = 5)
+handlers(global = TRUE)  # auto-enables progress reporting
+handlers("cli")   
+
+# For testing
+# ts <- ts_data[[1]]
+# static <- static_data[[1]]
+
+# Run!
+with_progress({
+  p <- progressor(steps = length(feed_params)*length(farm_IDs))
+
+  for (i in seq_along(feed_params)) {
+    feed <- names(feed_params)[i]
+    if (!str_detect(feed, "_min|_max")) {
+      feed <- paste(feed, "mean", sep = "_")
+    }
+
+    cat("Starting", feed, "now...")
+
+    future_map2(
+      farm_static_data,
+      farm_temporal_data,
+      function(static, ts) {
+        p()
+        ID <- static$farm_ID
+        filename <- file.path(output_path, "decomposed_runs", str_c(feed, "_ID", fixnum(ID), "_", inds_per_farm, "_inds.qs"))
+
+        if (all(!file.exists(file.path(potential_paths, basename(filename)))) | overwrite) {
+          fg <- farm_growth_decomposed(
+              pop_params = all_params,
+              species_params = all_params,
+              water_temp = ts$temp_c,
+              feed_params = feed_params[[i]],
+              times = c(t_start = static$t_start, t_end = static$t_end, dt = 1),
+              N_pop = ts$Npop,
+              nruns = inds_per_farm
+            ) %>% 
+            mutate(
+              farm_ID = as.integer(ID),
+              feed = as.factor(feed)
+            )
+          qsave(fg, filename)
+        }
+      },
+      .options = furrr_options(seed = 123)
+    )
+  }
+})
+
+plan(sequential)
+gc()
+```
+
+## Processing
+
+```{r determine-new-files}
+last_run_file <- file.path(output_path, "processing_timestamp.qs")
+last_run <- if (file.exists(last_run_file)) qs::qread(last_run_file) else as.POSIXct(0, origin = "2026-02-25")
+
+decom_files <- data.frame(
+  filename = list.files(file.path(output_path, "decomposed_runs"), full.names = TRUE, pattern = ".qs")
+  ) %>%
+  mutate(
+    ID = str_split_i(basename(filename), "_", 5),
+    last_modified = file.info(filename)$mtime
+  ) %>%
+  group_by(ID) %>%
+  nest()
+
+modified_files <- decom_files %>%
+  filter(
+    map_lgl(data, ~ any(.x$last_modified > last_run)),
+    map_lgl(data, ~ nrow(.x) == 9)
+  )
+```
+
+```{r processing-functions}
+get_fish_ends <- function(df) {
+  fe_weight <- df %>% 
+    filter(measure == "weight" & prod_t == max(prod_t)) %>% 
+    mutate(value = value * N_pop) %>% 
+    select(-measure, -N_pop, -t, -prod_t) %>% 
+    rename(weight = value)
+
+  fe_outcomes <- df %>%
+    filter(prod_t != max(prod_t) & measure %in% c("total_excr", "total_uneat", "Nitrogen_excr", "Nitrogen_uneat", "Carbon_excr", "Carbon_uneat", "total_Carbon", "total_Nitrogen")) %>% 
+    mutate(value = value * N_pop) %>% 
+    group_by(farm_ID, feed, fish, measure) %>% 
+    reframe(value = sum(value))
+
+  full_join(fe_weight, fe_outcomes, by = join_by(farm_ID, feed, fish)) %>% 
+    mutate(measure = droplevels(measure)) %>% 
+    mutate(value_perbiom = value/weight) %>% 
+    select(-weight)
+}
+
+get_farm_run <- function(df) {
+  fr_weight <- df %>% 
+    filter(measure == "weight" & prod_t != max(prod_t)) %>% 
+    mutate(value = value * N_pop) %>% 
+    select(-measure, -N_pop) %>% 
+    rename(weight = value)
+
+  fr_outcomes <- df %>%
+    filter(prod_t != max(prod_t) & measure %in% c("weight", "total_excr", "total_uneat", "Nitrogen_excr", "Nitrogen_uneat", "Carbon_excr", "Carbon_uneat", "total_Carbon", "total_Nitrogen")) %>% 
+    mutate(value = value * N_pop) %>% 
+    group_by(farm_ID, feed, fish, measure, t, prod_t) %>% 
+    reframe(value = sum(value))
+
+  full_join(fr_weight, fr_outcomes, by = join_by(farm_ID, feed, fish, t, prod_t)) %>% 
+    mutate(measure = droplevels(measure)) %>% 
+    mutate(value_perbiom = value/weight) %>% 
+    select(-weight) %>% 
+    group_by(farm_ID, feed, prod_t, t, measure) %>% 
+    reframe(
+      mean_value = mean(value),
+      sd_value = sd(value),
+      mean_value_perbiom = mean(value_perbiom),
+      sd_value_perbiom = sd(value_perbiom)
+    )
+}
+
+get_farm_ends <- function(df) {
+  fa_weight <- df %>% 
+    filter(measure == "weight" & prod_t == max(prod_t)) %>% 
+    mutate(value = value * N_pop) %>% 
+    select(-measure, -N_pop, -t, -prod_t) %>% 
+    rename(weight = value)
+
+  fa_outcomes <- df %>%
+    filter(measure %in% c("total_excr", "total_uneat", "Nitrogen_excr", "Nitrogen_uneat", "Carbon_excr", "Carbon_uneat", "total_Carbon", "total_Nitrogen")) %>% 
+    mutate(value = value * N_pop) %>% 
+    group_by(farm_ID, feed, fish, measure) %>% 
+    reframe(value = sum(value))
+
+  full_join(fa_weight, fa_outcomes, by = join_by(farm_ID, feed, fish)) %>% 
+    mutate(measure = droplevels(measure)) %>% 
+    mutate(value_perbiom = value/weight) %>% 
+    select(-weight) %>% 
+    group_by(farm_ID, feed, measure) %>% 
+    reframe(
+      mean_value = mean(value),
+      sd_value = sd(value),
+      mean_value_perbiom = mean(value_perbiom),
+      sd_value_perbiom = sd(value_perbiom)
+    )
+}
+```
+
+```{r save-intermedia-outputs}
+# For testing
+# i <- 1
+# fnms <- modified_files$data[[i]]
+# ID <- modified_files$ID[i]
+
+plan(multisession, workers = 2)
+overwrite <- F
+
+walk2(
+  modified_files$data,
+  modified_files$ID,
+  function(fnms, ID) {
+
+    fish_ends_file <- file.path(output_path, "fish_ends", str_c("fish_ends_", ID, ".qs"))
+    farm_run_file <- file.path(output_path, "farm_run", str_c("farm_run_", ID, ".qs"))
+    farm_ends_file <- file.path(output_path, "farm_ends", str_c("farm_ends_", ID, ".qs"))
+
+    if (any(!file.exists(c(fish_ends_file, farm_run_file, farm_ends_file))) | overwrite) {
+      # Read in the raw files
+      fish_runs <- future_map(fnms$filename, function(fnm) {qread(fnm)}, .options = furrr_options(seed = 123))
+
+      if (!file.exists(fish_ends_file) | overwrite) {
+        # Keep fish seperate but take only the ends (sums) of measures, for statistics
+        fish_ends <- future_map_dfr(fish_runs, get_fish_ends, .options = furrr_options(seed = 123))
+        qsave(fish_ends, fish_ends_file)
+        rm(fish_ends)
+      }
+
+      if (!file.exists(farm_run_file) | overwrite) {
+        # Combine all fish into farm mean and sd, per t
+        farm_run <- future_map_dfr(fish_runs, get_farm_run, .options = furrr_options(seed = 123))
+        qsave(farm_run, farm_run_file)
+        rm(farm_run)
+      }
+
+      if (!file.exists(farm_ends_file) | overwrite) {
+        # Combine all fish into farm mean and sd
+        farm_ends <- future_map_dfr(fish_runs, get_farm_ends, .options = furrr_options(seed = 123))
+        qsave(farm_ends, farm_ends_file)
+        rm(farm_ends)
+      }
+
+      rm(fish_runs)
+      gc()
+
+    }
+  },
+  .progress = T
+)
+```
+
+```{r update-progress-and-move-files}
+qs::qsave(Sys.time(), last_run_file)
+
+# Move all files processed into a new folder
+modified_files %>%
+  unnest(data) %>%
+  mutate(
+    new_path = file.path(output_path, "decomposed_runs", "processed", basename(filename)),
+    file.rename(filename, new_path)
+  )
+
+gc()
+```
+
+Some random plots for the supplementaries.
+
+```{r random-plots}
+farm_run_files <- file.path(output_path, "farm_run") %>% 
+  list.files(full.names = T) %>% 
+  sample(5)
+
+dfs <- map_dfr(farm_run_files, function(fnm) {
+  qread(fnm)
+})
+
+ggplot(dfs, aes(x = prod_t, y = mean_value, colour = as.factor(feed))) +
+  geom_line() +
+  theme_classic() +
+  facet_grid(rows = vars(farm_ID), cols = vars(measure), scales = "free")
+```
+
+# Pipeline
+
+The following code runs the main pipeline.
+
+```{r run-farms-pipeline, eval=F}
+#| code-summary: Run the main pipeline
+
+Sys.setenv(TAR_PROJECT = "project_farmruns")
+
+# tar_validate()
+
+# Run whole pipeline
+tar_make(lm_tests)
+```
+
+Load objects from the targets pipeline and save them as .qs files, which are much quicker to load down the line. This takes a few minutes to gather all the targets.
+
+To get nitrogen:
+- N (g) = protein (g)/6.25
+
+To get carbon:
+- From protein: N (mol) = (1/3.7) * C (mol)
+- From lipid: lipid is 75% carbon
+- From carbohydrate: carbohydrate is around 40% carbon
+
+These are from Prasad, S. S., Cameron, D. D., Carter, C. G., Williamson, A., & Blanchard, J. L. (2025). Geometric stoichiometry model yields relevant insights for assessing nutrient-related environmental impacts of aquaculture. Conservation Physiology, 13(1). https://doi.org/10.1093/conphys/coaf066
+
+```{r all-farms-results}
+#| code-summary: Save pipeline objects as files
+#| eval: false
+
+Sys.setenv(TAR_PROJECT = "project_farmruns")
+
+# These are the raw results - they're huge and take a couple minutes to load/save
+tar_load(farm_run_MD_chunked)
+qsave(farm_run_MD_chunked, file.path(output_path, "farm_run_MD_chunked.qs"))
+tar_load(farm_run_AD_chunked)
+qsave(farm_run_AD_chunked, file.path(output_path, "farm_run_AD_chunked.qs"))
+tar_load(farm_run_PD_chunked)
+qsave(farm_run_PD_chunked, file.path(output_path, "farm_run_PD_chunked.qs"))
+
+tar_load(farm_results)
+qsave(farm_results, file.path(data_analysis_path, "total_vals.qs"))
+
+tar_load(total_props)
+qsave(total_props, file.path(data_analysis_path, "total_props.qs"))
+
+tar_load(CN_vals)
+qsave(CN_vals, file.path(data_analysis_path, "total_CN_vals.qs"))
+```
+
+# Run sensitivities
+
+```{r check-sensitivities-pipeline}
+#| code-summary: Check that the pipeline will run correctly
+
+Sys.setenv(TAR_PROJECT = "project_sensitivities")
+
+tar_make(test_reference_feed)
+tar_read(test_reference_feed) # if weight < 1000g then feeds aren't processing properly! Fix it!
+```
+
+```{r}
+Sys.setenv(TAR_PROJECT = "project_sensitivities")
+
+# Run whole pipeline
+tar_make(seconds_meta_append = 300)
+```
+
+```{r sens-results}
+tar_load(sens_results_pop)
+tar_load(sens_results_spec)
+
+sens <- rbind(sens_results_pop, sens_results_spec)
+qsave(sens, file.path(output_sens_data_path, "sens_all.qs"))
+```

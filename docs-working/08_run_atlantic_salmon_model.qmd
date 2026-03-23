@@ -18,7 +18,7 @@ library(sf)
 library(terra)
 library(furrr)
 library(future)
-library(tictoc)
+library(progressr)
 library(fs)
 library(conflicted)
 library(readxl)
@@ -26,117 +26,110 @@ library(units)
 library(qs)
 library(here)
 library(targets)
+library(lme4)
+library(MuMIn)
 conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
 here("src") %>% 
   list.files(pattern = "\\.R$", full.names = TRUE) %>% 
   str_subset("map", negate = T) %>% 
+  str_subset("pipeline", negate = T) %>% 
   walk(source)
-
-remove_unit("g_fish")
-remove_unit("kg_fish")
-remove_unit("t_fish")
-install_unit("g_fish")
-install_unit("kg_fish", "1000 g_fish")
-install_unit("t_fish", "1000 kg_fish")
 ```
 
-# Run farms
-
-First, let's test the pipeline to make sure that the feed input data is being processed correctly.
-
-```{r check-farmrun-pipeline}
-#| code-summary: Check that the pipeline will run correctly
-
-Sys.setenv(TAR_PROJECT = "project_farmruns")
-
-tar_make(test_reference_feed)
-tar_read(test_reference_feed) # if weight < 1000g then feeds aren't processing properly! Fix it!
-```
+# Run the farms pipeline
 
 The following code runs the main pipeline.
 
-```{r run-farms-pipeline, eval=F}
+```{r run-farms-pipeline}
 #| code-summary: Run the main pipeline
-
-Sys.setenv(TAR_PROJECT = "project_farmruns")
-
-tar_validate()
-
-# Run whole pipeline
-tar_make(seconds_meta_append = 300)
-```
-
-Load objects from the targets pipeline and save them as .qs files, which are much quicker to load down the line. This takes a few minutes to gather all the targets.
-
-```{r all-farms-results}
-#| code-summary: Save pipeline objects as files
 #| eval: false
 
-Sys.setenv(TAR_PROJECT = "project_farmruns")
-
-tar_load(farm_results)
-qsave(farm_results, file.path(output_path, "total_ends.qs"))
-
-tar_load(total_vals)
-qsave(total_vals, file.path(data_analysis_path, "total_vals.qs"))
-
-tar_load(total_props)
-qsave(total_props, file.path(data_analysis_path, "total_props.qs"))
+source(here("src", "run_farmruns_pipeline.R"))
 ```
 
-## Further processing - C and N
+Collate the pipeline objects.
 
-To get nitrogen:
-- N (g) = protein (g)/6.25
+- The only purpose of `fish_ends` is for variance partitioning
+- `farm_ends` is the read output
 
-To get carbon:
-- From protein: N (mol) = (1/3.7) * C (mol)
-- From lipid: assume that lipid is 75% carbon
-- From carbohydrate: assume that carb is around 40% carbon
+```{r save-fish-ends-results}
+#| code-summary: Save fish_ends objects as files
 
-These are from Prasad, S. S., Cameron, D. D., Carter, C. G., Williamson, A., & Blanchard, J. L. (2025). Geometric stoichiometry model yields relevant insights for assessing nutrient-related environmental impacts of aquaculture. Conservation Physiology, 13(1). https://doi.org/10.1093/conphys/coaf066
+fish_ends_files <- here("outputs/model_run_outputs/fish_ends") %>% 
+  list.files(full.names = T, recursive = T, pattern = ".qs")
 
-```{r conversion-to-CN}
-get_nitrogen <- function(P) {
-  P/6.25
+fish_ends_measures <- c("weight", "total_carbon", "total_nitrogen")
+
+for (m in fish_ends_measures) {
+  if (m == "weight") {
+    fish_ends <- fish_ends_files %>% 
+      map_dfr(function(fnm) {
+        qread(fnm) %>% 
+          filter(measure == m) %>% 
+          select(-value_perbiom, -measure, -fish) %>% 
+          mutate(farm_ID = as.factor(farm_ID))
+      })
+  } else {
+    fish_ends <- fish_ends_files %>% 
+      map_dfr(function(fnm) {
+        qread(fnm) %>% 
+          filter(measure == m) %>% 
+          select(-value, -measure, -fish) %>% 
+          mutate(farm_ID = as.factor(farm_ID))
+      })
+  }
+  qsave(fish_ends, here("outputs/model_run_outputs", str_c("fish_ends_", m, ".qs")))
 }
 
-get_carbon <- function(P, L, C) {
-  carbon_1 <- L * 0.75
-  carbon_2 <- C * 0.41
-  carbon_3 <- get_nitrogen(P=P)/14.007
-  carbon_3 <- (carbon_3 * 3.7) * 12.011
-  carbon_1 + carbon_2 + carbon_3
+rm(fish_ends)
+gc()
+```
+
+```{r save-farms-results}
+#| code-summary: Save farm_ends objects as files
+
+farm_ends_files <- here("outputs/model_run_outputs/farm_ends") %>% 
+  list.files(full.names = T, recursive = T, pattern = ".qs")
+
+farm_ends_measures <- farm_ends_files %>% 
+  first() %>% qread() %>% pull(measure) %>% sort() %>% unique()
+
+for (m in farm_ends_measures) {
+  farm_ends <- farm_ends_files %>% 
+    map_dfr(function(fnm) {
+      qread(fnm) %>% 
+        filter(measure == m) %>% 
+        mutate(measure = as.factor(measure))
+    })
+  qsave(farm_ends, here("outputs/model_run_outputs", str_c("farm_ends_", m, ".qs")))
 }
 
-CN_vals <- total_vals %>% 
-  select(farm_ID, feed_group, measure, feed_type, mean, mean_per_biom) %>% 
-  filter(measure %in% c("total_P_lost_stat", "total_C_lost_stat", "total_L_lost_stat", "C_excr_stat", "L_excr_stat", "P_excr_stat")) %>% 
-  pivot_wider(names_from = "measure", values_from = c(mean, mean_per_biom), names_sep = ".") %>% 
-  mutate(
-    mean.N_excr = get_nitrogen(mean.P_excr_stat),
-    mean.C_excr = get_carbon(P = mean.P_excr_stat, L = mean.L_excr_stat, C = mean.C_excr_stat),
-    mean_per_biom.N_excr = get_nitrogen(mean.P_excr_stat),
-    mean_per_biom.C_excr = get_carbon(P = mean_per_biom.P_excr_stat, L = mean_per_biom.L_excr_stat, C = mean_per_biom.C_excr_stat),
-    mean.N_total_lost = get_nitrogen(mean.total_P_lost_stat),
-    mean.C_total_lost = get_carbon(L = mean.total_L_lost_stat, C = mean.total_C_lost_stat, P = mean.total_P_lost_stat),
-    mean_per_biom.N_total_lost = get_nitrogen(mean_per_biom.total_P_lost_stat),
-    mean_per_biom.C_total_lost = get_carbon(P = mean_per_biom.total_P_lost_stat, L = mean_per_biom.total_L_lost_stat, C = mean_per_biom.total_C_lost_stat)
-  ) %>% 
-  select(-contains("stat")) %>% 
-  pivot_longer(
-    cols = c(mean.N_excr, mean.C_excr, mean_per_biom.N_excr, mean_per_biom.C_excr, mean.N_total_lost, mean.C_total_lost, mean_per_biom.N_total_lost, mean_per_biom.C_total_lost),
-    names_to = c(".value", "measure"),
-    names_sep = "\\."
-  ) %>% 
-  mutate(
-    nutrient = case_when(str_detect(measure, "C_") ~ "C", T ~ "N"),
-    measure = str_remove(measure, "C_|N_") %>% as.factor(),
-    nutrient = as.factor(nutrient)
-  )
+rm(farm_ends)
+gc()
+```
 
-qsave(CN_vals, file.path(data_analysis_path, "total_CN_vals.qs"))
+```{r save-farm-runs-results}
+#| code-summary: Save farm_runs objects as files
+
+farm_runs_files <- here("outputs/model_run_outputs/farm_runs") %>% 
+  list.files(full.names = T, recursive = T, pattern = ".qs")
+
+farm_runs_measures <- farm_runs_files %>% 
+  first() %>% qread() %>% pull(measure) %>% sort() %>% unique()
+
+for (m in farm_runs_measures) {
+  farm_runs <- farm_runs_files %>% 
+    map_dfr(function(fnm) {
+      qread(fnm) %>% 
+        filter(measure == m) %>% 
+        mutate(measure = as.factor(measure), prod_t = as.integer(prod_t))
+    })
+  qsave(farm_runs, here("outputs/model_run_outputs", str_c("farm_runs_", m, ".qs")))
+}
+
+rm(farm_runs)
+gc()
 ```
 
 # Run sensitivities
