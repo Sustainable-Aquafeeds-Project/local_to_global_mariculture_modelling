@@ -223,3 +223,16 @@ coln <- function(x, pos_color = "red", neg_color = "green") {
     paste0('<span style="color: ', neg_color, ';">', x, '</span>')
   }
 }
+
+# Convert feed names to feed types + levels
+convert_feeds_to_levels <- function(df) {
+  df %>% 
+    mutate(
+      feed_level = case_when(
+        str_detect(feed, "_min") ~ "min",
+        str_detect(feed, "_max") ~ "max",
+        T ~ "mean"
+      ) %>% as.factor(),
+      feed = str_remove_all(feed, "_min|_max") %>% as.factor()
+    )
+}

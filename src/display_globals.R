@@ -38,10 +38,10 @@ short_feeds <- c("MD", "AD", "PD")
 feed_pal <- c(
   "PD" = "#1B9E77",
   "MD" = "#7570B3",
-  "AD" = "#D95F02"#,
-  # "plant_dominant_biomar" = "#1B9E77",
-  # "marine_dominant_biomar" = "#7570B3",
-  # "animal_dominant_biomar" = "#D95F02"
+  "AD" = "#D95F02",
+  "plant_dominant_biomar" = "#1B9E77",
+  "marine_dominant_biomar" = "#7570B3",
+  "animal_dominant_biomar" = "#D95F02"
 )
 cohort_pal <- c("1" = "#E41A1C", "2" = "#377EB8", "3" = "#4DAF4A", "all" = "black")
 
