@@ -1,0 +1,272 @@
+---
+title: "Data exploration"
+author: 
+  - "Tormey Reimer"
+date: last-modified
+execute:
+  eval: true
+---
+
+# Introduction
+
+```{r setup}
+#| cache: false
+#| include: false
+
+library(tidyverse)
+library(arrow)
+library(sf)
+library(terra)
+library(magrittr)
+library(furrr)
+library(future)
+library(tictoc)
+library(fs)
+library(conflicted)
+library(readxl)
+library(units)
+library(qs)
+library(here)
+library(scales)
+library(targets)
+library(ggforce)
+library(gt)
+library(lme4)
+
+conflicted::conflicts_prefer(
+  dplyr::filter(), 
+  dplyr::select(), 
+  scales::rescale(), 
+  .quiet = T
+)
+
+here("src") %>% 
+  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  str_subset("pipeline", negate = T) %>% 
+  walk(source)
+
+remove_unit("g_fish")
+remove_unit("kg_fish")
+remove_unit("t_fish")
+install_unit("g_fish")
+install_unit("kg_fish", "1000 g_fish")
+install_unit("t_fish", "1000 kg_fish")
+```
+
+# Get outputs
+
+These are the outputs that I want to view and analyse.
+
+```{r location-globals-farm}
+#| code-summary: Get locations of farms for mapping
+
+farm_locs <- file.path(input_farm_coords_path, "farm_static_data.qs") %>% 
+  qread() %>% 
+  rename(farm_ID = farm_id) %>%
+  mutate(
+    longitude = st_coordinates(geometry)[, 1],
+    latitude = st_coordinates(geometry)[, 2]
+  ) %>% 
+  mutate(
+    country = as.factor(country),
+    region = case_when(
+      country %in% c("Canada", "United States of America") & longitude < -100 ~ "North America (WC)", 
+      country %in% c("Canada", "United States of America") & longitude < -50 ~ "North America (EC)", 
+      country %in% c("Ireland", "United Kingdom") ~ "UK & Ireland",
+      country %in% c("Iceland", "Faroe Islands") ~ "Iceland & FI",
+      country %in% c("Norway", "Finland") ~ "Scandinavia",
+      country == "Australia" ~ "Australia",
+      country == "Chile" ~ "Chile", 
+      country == "Russian Federation" ~ NA
+    ) %>% as.factor()
+  )
+```
+
+## Total (summed) values
+
+The total values describe selected output variables (measures) summed over the entire period of a salmon growing period (548 days). The data were generated from a suite of model runs which cover several dimensions:
+
+- 2705 unique farms
+- 3 different feed groups, representing different formulations of salmon feed: MD (marine-dominant), AD (animal-dominant) and PD (plant-dominant)
+- 3 different feed types representing levels of digestibility of each of the three different feeds: mean digestibility, minimum digestibility, and maximum digestibility
+
+```{r get-data}
+#| code-summary: Get all data
+
+fish_ends_nitrogen <- file.path(output_path, "model_run_outputs", "fish_ends_total_nitrogen.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels()
+fish_ends_carbon <- file.path(output_path, "model_run_outputs", "fish_ends_total_carbon.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels()
+
+farm_ends_food_prov <- file.path(output_path, "model_run_outputs", "farm_ends_food_prov.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels()
+farm_ends_total_uneat <- file.path(output_path, "model_run_outputs", "farm_ends_total_uneat.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels()
+```
+
+# Variance partitioning
+
+For total nitrogen and carbon, we use the total value per biomass rather than total value. This is because total value is highly dependent on farm population, which gives too much weight to the random effect of farm location.
+
+Which model should I be using? 
+
+```{r}
+#| label: choose-model
+#| code-summary: Check if we should be accounting for random slope effects
+
+model1 <- file.path(data_analysis_path, "VP_model1_total_nitrogen.qs")
+model2 <- file.path(data_analysis_path, "VP_model2_total_nitrogen.qs")
+# model3 <- file.path(data_analysis_path, "VP_model3_total_nitrogen.qs")
+
+if (any(!file.exists(c(
+  model1, model2
+  #, model3
+  )))) {
+  fish_ends_nitrogen_subset <- fish_ends_nitrogen %>% 
+    filter(farm_ID %in% sample(1:2750, 1000)) %>% 
+    group_by(farm_ID, feed, feed_level) %>% 
+    slice_sample(n = 500) %>% 
+    ungroup() %>% 
+    mutate(farm_ID = droplevels(farm_ID))
+
+  # Farm identity is a random effect
+  model1 <- lmer(
+    value_perbiom ~ feed/feed_level + (1 | farm_ID), 
+    data = fish_ends_nitrogen_subset, 
+    REML = FALSE,
+    control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))
+  )
+  qsave(model1, file.path(data_analysis_path, "VP_model1_total_nitrogen.qs"))
+
+  # Farm identity x feed type is a random effect
+  model2 <- lmer(
+    value_perbiom ~ feed/feed_level + (1 + feed | farm_ID), 
+    data = fish_ends_nitrogen_subset, 
+    REML = FALSE,
+    control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))
+  )
+  qsave(model2, file.path(data_analysis_path, "VP_model2_total_nitrogen.qs"))
+
+  # # Farm identity x feed type (with nested levels) is a random effect
+  # model3 <- lmer(
+  #   value_perbiom ~ feed/feed_level + (1 + feed/feed_level | farm_ID), 
+  #   data = fish_ends_nitrogen_subset, 
+  #   REML = FALSE,
+  #   control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))
+  # )
+  # qsave(model3, file.path(data_analysis_path, "VP_model3_total_nitrogen.qs"))
+} else {
+  model1 <- qread(model1)
+  model2 <- qread(model2)
+  # model3 <- qread(model3)
+}
+
+anova(model1, model2)
+as.data.frame(VarCorr(model2))
+```
+
+The `VarCorr` shows extreme correlations between `feed_levelmean ~ feed_levelmin` for all feeds across farm_IDs (around 0.9). Therefore we can't cleanly seperate the feeds and their variances into random effects like farm_ID. Model3 (and probably also model2) are overparameterised. By just using model1:
+
+* Feed and nested feed_level effects are fixed effects
+* Farm_ID is controlled as a random intercept
+* The residual represents individual fish variation
+
+```{r}
+#| label: fit-model-value-nitrogen
+#| code-summary: Fit actual model for total_nitrogen
+
+VP_nitrogen <- file.path(data_analysis_path, "VP_modelfinal_total_nitrogen.qs")
+if (!file.exists(VP_nitrogen)) {
+  VP_nitrogen <- lmer(
+    value_perbiom ~ feed/feed_level + (1 | farm_ID), 
+    data = fish_ends_nitrogen, 
+    REML = TRUE,
+    control = lmerControl(optimizer = "bobyqa",optCtrl = list(maxfun = 2e5))
+  )
+  qsave(VP_nitrogen, file.path(data_analysis_path, "VP_modelfinal_total_nitrogen.qs"))
+} else {
+  VP_nitrogen <- qread(VP_nitrogen)
+}
+
+# Random effects variance (location + residual)
+vc <- as.data.frame(VarCorr(VP_nitrogen))
+vc$pct <- vc$vcov / sum(vc$vcov) * 100
+vc
+
+# Fixed effects variance — how much do feed and variant explain?
+# Use r.squaredGLMM for marginal (fixed, R2m) vs conditional (fixed + random, R2c) R²
+r2 <- as.data.frame(r.squaredGLMM(VP_nitrogen))
+r2$farm_ID <- r2$R2c - r2$R2m
+r2$ind_fish <- 1 - r2$R2c
+r2*100
+
+rm(VP_nitrogen)
+```
+
+```{r}
+#| label: fit-model-value-carbon
+#| code-summary: Fit actual model for total_carbon
+
+VP_carbon <- file.path(data_analysis_path, "VP_modelfinal_total_carbon.qs")
+if (!file.exists(VP_carbon)) {
+  VP_carbon <- lmer(
+    value_perbiom ~ feed/feed_level + (1 | farm_ID), 
+    data = fish_ends_carbon, 
+    REML = TRUE,
+    control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))
+  )
+  qsave(VP_carbon, file.path(data_analysis_path, "VP_modelfinal_total_carbon.qs"))
+} else {
+  VP_carbon <- qread(VP_carbon)
+}
+
+# Random effects variance (location + residual)
+vc <- as.data.frame(VarCorr(VP_carbon))
+vc$pct <- vc$vcov / sum(vc$vcov) * 100
+vc
+
+# Fixed effects variance — how much do feed and variant explain?
+# Use r.squaredGLMM for marginal (fixed, R2m) vs conditional (fixed + random, R2c) R²
+r2 <- as.data.frame(r.squaredGLMM(VP_carbon))
+r2$farm_ID <- r2$R2c - r2$R2m
+r2$ind_fish <- 1 - r2$R2c
+r2*100
+
+rm(VP_carbon)
+```
+
+# Numbers for paper
+
+```{r proportion-uneaten}
+uneat <- rbind(
+  farm_ends_food_prov,
+  farm_ends_total_uneat
+) %>% 
+  select(-sd_per_biom, -mean_value, -sd_value) %>% 
+  pivot_wider(names_from = measure, values_from = mean_value_perbiom) %>% 
+  mutate(prop_uneat = total_uneat/food_prov)
+
+100*mean(uneat$prop_uneat)
+100*sd(uneat$prop_uneat)
+```
+
+```{r total-uneaten}
+farm_ends_total_uneat %>% 
+  convert_feeds_to_levels() %>% 
+  select(-mean_value, -sd_value) %>% 
+  mutate(sd_per_biom = sd_per_biom/mean_value_perbiom) %>% 
+  group_by(feed, feed_level, measure) %>% 
+  reframe(
+    mean_perbiom = mean(mean_value_perbiom),
+    sd_perbiom = sqrt(sum(sd_per_biom^2)) * mean_perbiom
+  ) %>% 
+  mutate(
+    mean_perbiom = mean_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% round(2),
+    sd_perbiom = sd_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% round(2)
+  ) %>% 
+  gt()
+```

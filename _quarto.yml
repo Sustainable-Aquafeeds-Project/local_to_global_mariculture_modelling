@@ -12,7 +12,7 @@ project:
     - docs-working/06_assigning production.qmd
     - docs-working/07_how_many_runs_per_farm.qmd
     - docs-working/08_run_atlantic_salmon_model.qmd
-    - docs-working/09_data_analysis_total_vals.qmd
+    - docs-working/09_data_analysis.qmd
     - docs-working/10_figures_for_paper.qmd
 
 editor: source
