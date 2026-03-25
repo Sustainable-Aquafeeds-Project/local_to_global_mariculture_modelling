@@ -6,9 +6,12 @@ author:
 date: last-modified
 execute:
   eval: true
+format:
+  html:
+    code-fold: true
 ---
 
-[← Previous: Data analysis](09_data_analysis.qmd)
+[← Previous: Data analysis](docs-working/09_data_analysis.qmd)
 
 # Overview {#sec-overview}
 
@@ -20,23 +23,14 @@ This script generates all the figures (main and supplementary) used in the final
 #| include: false
 
 library(tidyverse)
-library(arrow)
 library(sf)
-library(terra)
-library(magrittr)
-library(furrr)
-library(future)
-library(tictoc)
-library(fs)
 library(conflicted)
-library(readxl)
 library(units)
 library(qs)
 library(here)
 library(scales)
-library(targets)
-library(ggforce)
 library(cowplot)
+library(patchwork)
 
 conflicted::conflicts_prefer(
   dplyr::filter(), 
@@ -96,28 +90,56 @@ The total values describe selected output variables (measures) summed over the e
 #| label: total-values
 #| code-summary: "Get farm ends data"
 
-farm_ends_carbon <- file.path(output_path, "model_run_outputs", "farm_ends_total_carbon.qs") %>% 
-  qread() %>% 
+clean_up <- function(df) {
+  df %>% 
+  convert_feeds_to_levels() %>% 
   mutate(
-    mean_value = set_units(mean_value, "g"),
-    sd_value = set_units(sd_value, "g"),
-    mean_value_perbiom = set_units(mean_value_perbiom, "g g_fish-1"),
-    sd_per_biom = set_units(sd_per_biom, "g g_fish-1"),
+    feed = factor(
+      feed, 
+      levels = c("marine_dominant_biomar", "plant_dominant_biomar", "animal_dominant_biomar"),
+      labels = c("MD", "PD", "AD")
+    ),
+    mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1"),
+    sd_per_biom = sd_per_biom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1"),
+    mean_value = mean_value %>% set_units("g") %>% set_units("kg"),
+    sd_value = sd_value %>% set_units("g") %>% set_units("kg")
   )
+}
+
+farm_ends_carbon <- file.path(output_path, "model_run_outputs", "farm_ends_total_carbon.qs") %>% 
+  qread() %>% clean_up() %>% 
+  mutate(nutrient = as.factor("C")) %>% 
+  select(-mean_value, -sd_value)
+
+farm_ends_carbon_uneat <- file.path(output_path, "model_run_outputs", "farm_ends_carbon_uneat.qs") %>% 
+  qread() %>% clean_up() %>% 
+  mutate(nutrient = as.factor("C")) %>% 
+  select(-mean_value, -sd_value)
+
+farm_ends_carbon_excr <- file.path(output_path, "model_run_outputs", "farm_ends_carbon_excr.qs") %>% 
+  qread() %>% clean_up() %>% 
+  mutate(nutrient = as.factor("C")) %>% 
+  select(-mean_value, -sd_value)
+
 
 farm_ends_nitrogen <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs") %>% 
-  qread() %>% 
-  mutate(
-    mean_value = set_units(mean_value, "g"),
-    sd_value = set_units(sd_value, "g"),
-    mean_value_perbiom = set_units(mean_value_perbiom, "g g_fish-1"),
-    sd_per_biom = set_units(sd_per_biom, "g g_fish-1"),
-  )
+  qread() %>% clean_up() %>% 
+  mutate(nutrient = as.factor("N")) %>% 
+  select(-mean_value, -sd_value)
 
-farm_ends_carbon_uneat <- file.path(output_path, "model_run_outputs", "farm_ends_carbon_uneat.qs") %>% qread()
-farm_ends_carbon_excr <- file.path(output_path, "model_run_outputs", "farm_ends_carbon_excr.qs") %>% qread()
-farm_ends_nitrogen_uneat <- file.path(output_path, "model_run_outputs", "farm_ends_nitrogen_uneat.qs") %>% qread()
-farm_ends_nitrogen_excr <- file.path(output_path, "model_run_outputs", "farm_ends_nitrogen_excr.qs") %>% qread()
+farm_ends_nitrogen_uneat <- file.path(output_path, "model_run_outputs", "farm_ends_nitrogen_uneat.qs") %>% 
+  qread() %>% clean_up() %>% 
+  mutate(nutrient = as.factor("N")) %>% 
+  select(-mean_value, -sd_value)
+
+farm_ends_nitrogen_excr <- file.path(output_path, "model_run_outputs", "farm_ends_nitrogen_excr.qs") %>% 
+  qread() %>% clean_up() %>% 
+  mutate(nutrient = as.factor("N")) %>% 
+  select(-mean_value, -sd_value)
+
+farm_ends_weight <- file.path(output_path, "model_run_outputs", "farm_ends_weight.qs") %>% 
+  qread() %>% clean_up() %>% 
+  select(-mean_value_perbiom, -sd_per_biom)
 ```
 
 # Main text figures {#sec-main-text-figures}
@@ -128,16 +150,13 @@ farm_ends_nitrogen_excr <- file.path(output_path, "model_run_outputs", "farm_end
 #| label: total-CN-data
 #| code-summary: "Prepare combined C and N data for plotting"
 
-farm_ends_CN <- rbind(
-  farm_ends_carbon %>% mutate(nutrient = as.factor("C")),
-  farm_ends_nitrogen %>% mutate(nutrient = as.factor("N"))
-) %>% 
-  select(-mean_value, -sd_value, -n) %>% 
+farm_ends_CN <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>%
   mutate(
-    mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units(),
-    sd_per_biom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
-  ) %>% 
-  convert_feeds_to_levels()
+    feed_level = factor(
+      feed_level, 
+      levels = c("min", "mean", "max"), 
+      labels = c("Minimum", "Mean", "Maximum"))
+  )
 
 nutrient_labels <- data.frame(
   nutrient = levels(farm_ends_CN$nutrient),
@@ -145,17 +164,15 @@ nutrient_labels <- data.frame(
 )
 ```
 
+@fig-nutrient-loading shows total carbon and nitrogen loading to the environment across different feeds and digestibility levels.
+
 ```{r}
-#| label: fig-total-CN-lost
+#| label: fig-nutrient-loading
 #| code-summary: "Plot total C and N loading to environment by feed and digestibility"
 #| fig-cap: "Total carbon (a) and nitrogen (b) loading to the environment with different feeds and digestibility levels."
 
-farm_ends_CN %>%
-  mutate(
-    feed = factor(feed, levels = c("marine_dominant_biomar", "plant_dominant_biomar", "animal_dominant_biomar")),
-    feed_level = factor(feed_level, levels = c("min", "mean", "max"), labels = c("Minimum", "Mean", "Maximum"))
-  ) %>% 
-  ggplot(aes(x = feed_level, y = mean_value_perbiom, fill = feed)) +
+p1 <- farm_ends_CN %>% 
+  ggplot(aes(x = feed_level, y = drop_units(mean_value_perbiom), fill = feed)) +
   geom_boxplot(alpha = 0.7) +
   scale_fill_manual(values = feed_pal) +
   facet_grid(
@@ -179,89 +196,26 @@ farm_ends_CN %>%
     strip.text = element_blank(), 
     strip.background = element_blank()
   )
-```
 
-## C:N ratio to environment {#sec-cn-ratio}
+legend_grob <- get_legend(
+  p1 +
+    guides(colour = guide_legend(ncol = 1)) +
+    theme(
+      legend.position = "right",
+      legend.background = element_rect(fill = "white", colour = "grey70", linewidth = 0.3),
+      legend.margin     = margin(5, 6, 5, 6),
+      legend.key.size   = unit(0.4, "cm"),
+      legend.text       = element_text(size = 10),
+      legend.title      = element_blank()
+    )
+)
 
-```{r}
-#| label: ratio-data
-#| code-summary: "Calculate C:N ratios for excreted and uneaten waste fractions"
-
-farm_ends_CN_ratio <- rbind(
-  farm_ends_carbon_uneat,
-  farm_ends_carbon_excr,
-  farm_ends_nitrogen_uneat,
-  farm_ends_nitrogen_excr
-) %>% 
-  select(-c(mean_value, sd_value, sd_per_biom, n)) %>% 
-  convert_feeds_to_levels() %>% 
-  mutate(
-    nutrient = case_when(str_detect(measure, "nitrogen") ~ "N", T ~ "C") %>% as.factor(),
-    measure = str_remove_all(measure, "nitrogen_|carbon_"),
-    mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
-  )
-
-farm_ends_CN_ratio <- rbind(
-  farm_ends_CN_ratio,
-  farm_ends_CN_ratio %>% 
-    pivot_wider(names_from = measure, values_from = mean_value_perbiom) %>% 
-    mutate(
-      measure = "total",
-      mean_value_perbiom = uneat + excr
-    ) %>% 
-    select(-c(uneat, excr))
-) %>% 
-  pivot_wider(names_from = nutrient, values_from = mean_value_perbiom) %>% 
-  mutate(
-    C = C/12.011,
-    N = N/14.007,
-    CN = C/N,
-    measure = as.factor(measure)
-  ) %>% 
-  select(-c(C, N)) 
-  
-farm_ends_CN_ratio_means <- farm_ends_CN_ratio %>% 
-  group_by(feed, feed_level, measure) %>% 
-  reframe(
-    CN_mean = mean(CN),
-    CN_min = min(CN),
-    CN_max = max(CN)
-  )
-```
-
-```{r}
-#| label: fig-CN-ratio
-#| code-summary: "Plot C:N ratio of excreted, uneaten, and total waste"
-#| fig-cap: "C:N ratio of total waste by feed type and digestibility level."
-#| fig-height: 4.5
-
-farm_ends_CN_ratio_means %>% 
-  mutate(
-    feed = factor(feed, levels = c("marine_dominant_biomar", "plant_dominant_biomar", "animal_dominant_biomar")),
-    feed_level = factor(feed_level, levels = c("min", "mean", "max"), labels = c("Minimum", "Mean", "Maximum")),
-    measure = factor(measure, levels = c("excr", "uneat", "total"), labels = c("Excreted faeces", "Uneaten Feed", "Total"))
-  ) %>% 
-  ggplot(aes(
-    x = feed_level, 
-    y = CN_mean, 
-    ymin = CN_min,
-    ymax = CN_max,
-    fill = feed,
-    shape = measure
-  )) +
-  geom_errorbar(linewidth = 1, position = position_dodge(width = 0.75), width = 0) +
-  geom_point(size = 4, position = position_dodge(width = 0.75), colour = "black") +
-  scale_fill_manual(values = feed_pal) +
-  scale_shape_manual(values = c(
-    "Excreted faeces" = 21, 
-    "Total" = 24, 
-    "Uneaten Feed" = 22
-  )) +
-  facet_wrap(~measure) +
-  prettyplot_600() +
-  # theme(legend.position = "right") +
-  scale_y_continuous(breaks = 1:15, limits = c(6,13.25)) +
-  labs(x = "Feed digestibility", y = "C:N")
+p1 + inset_element(
+  legend_grob,
+  left   = 0.85, right  = 0.95,  # x start, x end (fraction of plot width)
+  bottom = 0.85, top    = 0.95,   # y start, y end
+  align_to = "full"  # relative to full plot, not just panel area
+)
 ```
 
 ## Global loading of C and N {#sec-global-loading}
@@ -270,42 +224,37 @@ farm_ends_CN_ratio_means %>%
 #| label: global-loading-data
 #| code-summary: "Prepare global C and N loading data for mapping"
 
-global_data <- rbind(
-  farm_ends_carbon %>% mutate(nutrient = as.factor("C")),
-  farm_ends_nitrogen %>% mutate(nutrient = as.factor("N"))
-) %>% 
-  select(-mean_value, -sd_per_biom, -sd_value, -n) %>% 
-  mutate(mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()) %>% 
-  convert_feeds_to_levels() %>% 
-  filter(feed_level == "mean", feed == "plant_dominant_biomar") %>% 
+global_data <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
+  filter(feed_level == "mean" & feed == "MD") %>% 
   merge(farm_locs, by = "farm_ID") %>% 
   st_as_sf(crs = 4326) %>% 
   st_transform(crs = "+proj=robin") %>% 
   select(farm_ID, feed, measure, mean_value_perbiom, nutrient, feed_level, iso3c, fao_code, country, region)
 
-Cr <- range(global_data$mean_value[global_data$nutrient == "C"])
-Nr <- range(global_data$mean_value[global_data$nutrient == "N"])
+Cr <- range(global_data$mean_value_perbiom[global_data$nutrient == "C"])
+Nr <- range(global_data$mean_value_perbiom[global_data$nutrient == "N"])
 
 print(
   sprintf("Range of C: %f - %f Mt, range of N: %f - %f Mt", Cr[1], Cr[2], Nr[1], Nr[2])
 )
 ```
 
+@fig-map-nutrient-loading-MD maps the global distribution of total carbon and nitrogen loading for the marine-dominant feed at mean digestibility.
+
 ```{r}
-#| label: fig-map-total-CN-lost-PD
-#| code-summary: "Map global C and N loading for plant-dominant feed at mean digestibility"
-#| fig-cap: "Map showing global distribution of total nitrogen and carbon loading for PD feed at mean digestibility."
+#| label: fig-map-nutrient-loading-MD
+#| code-summary: "Map global C and N loading for marine-dominant feed at mean digestibility"
+#| fig-cap: "Map showing global distribution of total nitrogen and carbon loading for the MD feed at mean digestibility."
 #| fig-height: 7.5
 
 p1 <- p_bigmap_robinson +
   geom_sf(
     data = filter(global_data, nutrient == "C"), 
-    aes(color = mean_value_perbiom, geometry = geometry), 
+    aes(color = drop_units(mean_value_perbiom), geometry = geometry), 
     size = 2
   ) +
   coord_sf() +
-  scale_color_viridis_c(option = "turbo", breaks = seq(60, 90, 5), limits = c(60, 92)
-  ) + 
+  scale_color_viridis_c(option = "turbo", breaks = seq(50, 80, 5), limits = c(50, 81)) + 
   guides(color = guide_colourbar(
     title = expression(atop("C loading", paste("(kg"~t[fish]^{-1}*")"))),
     direction = "vertical", position = "right",
@@ -329,13 +278,13 @@ p1 <- p_bigmap_robinson +
 p2 <- p_bigmap_robinson +
   geom_sf(
     data = filter(global_data, nutrient == "N"), 
-    aes(color = mean_value_perbiom, geometry = geometry), 
+    aes(color = drop_units(mean_value_perbiom), geometry = geometry), 
     size = 2
   ) +
   coord_sf() +
   scale_x_continuous(expand = c(0,0)) +
   scale_y_continuous(expand = c(0,0)) +
-  scale_color_viridis_c(option = "turbo", breaks = seq(7, 12, 1), limits = c(7, 12)) + 
+  scale_color_viridis_c(option = "turbo", breaks = seq(6, 10, 1), limits = c(6, 10.25)) + 
   guides(color = guide_colourbar(
     title = expression(atop("N loading", paste("(kg"~t[fish]^{-1}*")"))),
     direction = "vertical", position = "right",
@@ -363,45 +312,191 @@ plot_grid(
 )
 ```
 
-## Chile loading of C and N {#sec-chile-loading}
+```{r global-diff-data}
+
+global_data_all <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
+  merge(farm_locs, by = "farm_ID") %>% 
+  st_as_sf(crs = 4326) %>% 
+  st_transform(crs = "+proj=robin") %>% 
+  select(farm_ID, feed, feed_level, nutrient, mean_value_perbiom)
+
+global_data_PD_diff <- global_data_all %>% 
+  filter(feed %in% c("MD", "PD") & feed_level == "mean") %>% 
+  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
+  mutate(diff = PD - MD) %>% 
+  select(-MD, -PD)
+
+global_data_AD_diff <- global_data_all %>% 
+  filter(feed %in% c("MD", "AD") & feed_level == "mean") %>% 
+  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
+  mutate(diff = AD - MD) %>% 
+  select(-MD, -AD)
+```
+
+```{r fig-global-diff-MD}
+plot_grid(
+  p1, p2,
+  ncol = 2,
+  align = "v"
+)
+```
+
+```{r fig-global-diff-carbon}
+
+p1 <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_PD_diff, nutrient == "C"), 
+    aes(color = drop_units(diff), geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 12, 2), limits = c(1, 11.25)) + 
+  guides(color = guide_colourbar(
+    title = expression(atop("C loading", paste("(kg"~t[fish]^{-1}*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barwidth = 1.5, barheight = 15,
+  )) +
+  annotate(
+    "text", label = "PD: Carbon",
+    x = -Inf, y = Inf, 
+    vjust = 1, hjust = 0,
+    size = 5.5, family = "serif"
+    ) +
+  labs(y = "Latitude", x = "Longitude") +
+  prettyplot_600() +
+  theme(legend.position = "bottom") +
+  remove_map_axes()
+
+p2 <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_AD_diff, nutrient == "C"), 
+    aes(color = drop_units(diff), geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 12, 2), limits = c(1, 11.25)) + 
+  guides(color = guide_colourbar(
+    title = expression(atop("C loading", paste("(kg"~t[fish]^{-1}*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barwidth = 1.5, barheight = 15,
+  )) +
+  annotate(
+    "text", label = "AD: Carbon",
+    x = -Inf, y = Inf, 
+    vjust = 1, hjust = 0,
+    size = 5.5, family = "serif"
+    ) +
+  labs(y = "Latitude", x = "Longitude") +
+  prettyplot_600() +
+  theme(legend.position = "bottom") +
+  remove_map_axes()
+
+plot_grid(
+  p1, p2,
+  ncol = 1,
+  align = "v"
+)
+```
+
+```{r fig-global-diff-nitrogen}
+
+p1 <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_PD_diff, nutrient == "N"), 
+    aes(color = drop_units(diff), geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 4, 0.5), limits = c(0.5, 3.12)) + 
+  guides(color = guide_colourbar(
+    title = expression(atop("N loading", paste("(kg"~t[fish]^{-1}*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barwidth = 1.5, barheight = 15,
+  )) +
+  annotate(
+    "text", label = "PD: Nitrogen",
+    x = -Inf, y = Inf, 
+    vjust = 1, hjust = 0,
+    size = 5.5, family = "serif"
+    ) +
+  labs(y = "Latitude", x = "Longitude") +
+  prettyplot_600() +
+  theme(legend.position = "bottom") +
+  remove_map_axes()
+
+p2 <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_AD_diff, nutrient == "N"), 
+    aes(color = drop_units(diff), geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 4, 0.5), limits = c(0.5, 3.12)) + 
+  guides(color = guide_colourbar(
+    title = expression(atop("N loading", paste("(kg"~t[fish]^{-1}*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barwidth = 1.5, barheight = 15,
+  )) +
+  annotate(
+    "text", label = "AD: Nitrogen",
+    x = -Inf, y = Inf, 
+    vjust = 1, hjust = 0,
+    size = 5.5, family = "serif"
+    ) +
+  labs(y = "Latitude", x = "Longitude") +
+  prettyplot_600() +
+  theme(legend.position = "bottom") +
+  remove_map_axes()
+
+plot_grid(
+  p1, p2,
+  ncol = 1,
+  align = "v"
+)
+```
+
+## Latitudinal loading of C and N {#sec-lat-loading}
 
 ```{r}
 #| label: chile-loading-data
 #| code-summary: "Prepare Chile-specific C and N loading data for mapping"
 
-chile_data <- rbind(
-  farm_ends_carbon %>% mutate(nutrient = as.factor("C")),
-  farm_ends_nitrogen %>% mutate(nutrient = as.factor("N"))
-) %>% 
-  select(-mean_value_perbiom, -sd_per_biom, -sd_value, -n) %>% 
-  convert_feeds_to_levels() %>% 
+chile_data <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
   mutate(
-    mean_value = mean_value %>% set_units("g") %>% set_units("Mt") %>% drop_units(),
     feed_level = factor(
       feed_level,
       levels = c("min", "mean", "max"),
       labels = c("Min. digestibility", "Mean digestibility", "Max. digestibility")
-    ),
-    feed = factor(
-      feed,
-      levels = c("marine_dominant_biomar", "plant_dominant_biomar", "animal_dominant_biomar"),
-      labels = c("MD", "PD", "AD")
     )
   ) %>% 
   merge(farm_locs, by = "farm_ID") %>% 
   st_as_sf(crs = 4326) %>% 
   st_transform(crs = "+proj=robin") %>% 
-  select(farm_ID, feed, measure, mean_value, nutrient, feed_level, iso3c, fao_code, country, region)
+  select(farm_ID, feed, measure, mean_value_perbiom, nutrient, feed_level, iso3c, fao_code, country, region)
 
-Cr <- range(chile_data$mean_value[chile_data$nutrient == "C"])
-Nr <- range(chile_data$mean_value[chile_data$nutrient == "N"])
+Cr <- range(chile_data$mean_value_perbiom[chile_data$nutrient == "C"])
+Nr <- range(chile_data$mean_value_perbiom[chile_data$nutrient == "N"])
 print(
   sprintf("Range of C: %f - %f Mt, range of N: %f - %f Mt", Cr[1], Cr[2], Nr[1], Nr[2])
 )
 ```
 
+@fig-mapping-nutrient-loading-chile shows the spatial distribution of total C and N loading across all feeds and digestibility levels in Chile.
+
 ```{r}
-#| label: fig-mapping-total-CN-lost-chile
+#| label: fig-mapping-nutrient-loading-chile
 #| code-summary: "Map total C and N loading across all feeds and digestibility levels in Chile"
 #| fig-cap: "Total N lost across all feeds and digestibility levels in Chile."
 #| fig-height: 8.5
@@ -410,7 +505,7 @@ p1 <- ggplot() +
   geom_sf(data = worldmap_mercator, fill = "white", color = "dimgray") +
   geom_sf(
     data = filter(chile_data, nutrient == "C"), 
-    aes(color = mean_value, geometry = geometry), 
+    aes(color = drop_units(mean_value_perbiom), geometry = geometry), 
     size = 2
   ) +
   coord_sf(
@@ -444,7 +539,7 @@ p2 <- ggplot() +
   geom_sf(data = worldmap_mercator, fill = "white", color = "dimgray") +
   geom_sf(
     data = filter(chile_data, nutrient == "N"), 
-    aes(color = mean_value, geometry = geometry), 
+    aes(color = drop_units(mean_value_perbiom), geometry = geometry), 
     size = 2
   ) +
   coord_sf(
@@ -478,9 +573,78 @@ p1
 p2
 ```
 
+@fig-lat-loading-shift shows how the change in nutrient loading when switching from MD feed to either PD or AD varies with absolute latitude across all farm locations globally.
+
+```{r}
+#| label: fig-lat-loading-shift
+#| code-summary: "Plot change in C and N loading vs absolute latitude when switching from MD to PD or AD feed"
+#| fig-cap: "Change in nutrient loading when changing from MD to PD (green) or from MD to AD (orange) at all farm locations globally."
+
+p1 <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
+  filter(feed_level == "mean") %>% 
+  left_join(farm_locs, by = join_by(farm_ID)) %>% 
+  mutate(latitute = st_coordinates(geometry)[, 2]) %>% 
+  select(farm_ID, feed, nutrient, mean_value_perbiom, feed_level, country, latitude) %>% 
+  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
+  mutate(
+    MD_PD_shift = PD - MD,
+    MD_AD_shift = AD - MD
+  ) %>% 
+  select(-contains("biomar")) %>% 
+  pivot_longer(
+    cols = contains("shift"),
+    names_to = "shift_to", 
+    values_to = "change_mean_perbiomass"
+  ) %>% 
+  mutate(
+    shift_to = factor(shift_to, 
+      levels = c("MD_PD_shift", "MD_AD_shift"),
+      labels = c("PD", "AD")),
+    nutrient = factor(nutrient, 
+      levels = c("C", "N"),
+      labels = c("Carbon", "Nitrogen")),
+    ) %>% 
+  ggplot(aes(
+    x = abs(latitude), 
+    y = drop_units(change_mean_perbiomass), 
+    colour = shift_to
+  )) +
+  geom_point() +
+  scale_colour_manual(values = feed_pal) +
+  scale_y_continuous(breaks = seq(0, 12, 2), limits = c(0,12)) +
+  facet_wrap(~nutrient) +
+  prettyplot_300() +
+  labs(
+    x = expression("Aboslute latitude ("*degree*")"),
+    y = expression("Change in loading (kg"~t[fish]^{-1}*")")
+  )
+
+legend_grob <- get_legend(
+  p1 +
+    guides(colour = guide_legend(ncol = 1)) +
+    theme(
+      legend.position = "right",
+      legend.background = element_rect(fill = "white", colour = "grey70", linewidth = 0.3),
+      legend.margin     = margin(5, 6, 5, 6),
+      legend.key.size   = unit(0.4, "cm"),
+      legend.text       = element_text(size = 10),
+      legend.title      = element_blank()
+    )
+)
+
+p1 + inset_element(
+  legend_grob,
+  left   = 0.85, right  = 0.95,  # x start, x end (fraction of plot width)
+  bottom = 0.85, top    = 0.95,   # y start, y end
+  align_to = "full"  # relative to full plot, not just panel area
+)
+```
+
 # Supplementary figures {#sec-supplementary}
 
 ## Harvest sizes {#sec-harvest-sizes}
+
+@fig-harvest-sizes shows the distribution of individual harvest weights across all farms.
 
 ```{r}
 #| label: fig-harvest-sizes
@@ -511,13 +675,9 @@ farm_runs <- map2_dfr(
   function(fnm, nutr) {
     fnm %>% 
       qread() %>% 
-      filter(feed == "plant_dominant_biomar") %>% 
-      select(-mean_value, sd_value) %>% 
-      mutate(
-        nutrient = as.factor(nutr),
-        mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units(),
-        sd_per_biom = sd_per_biom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units(),
-      )
+      clean_up() %>% 
+      filter(feed == "MD" & feed_level == "mean") %>% 
+      mutate(nutrient = as.factor(nutr))
     }
   ) %>% 
   left_join(farm_locs, by = join_by(farm_ID))
@@ -527,24 +687,26 @@ farm_runs <- farm_runs %>%
   group_by(country, prod_t, nutrient) %>% 
   reframe(
     n = n(),
-    mean = mean(mean_value_perbiom),
-    sd = sqrt(mean(sd_per_biom^2))
+    mean_value_perbiom = mean(mean_value_perbiom),
+    sd_per_biom = sqrt(mean(sd_per_biom^2))
   )
 ```
+
+@fig-daily-values shows daily carbon loading over the production cycle for the marine-dominant feed at mean digestibility, summarised by country.
 
 ```{r}
 #| label: fig-daily-values
 #| code-summary: "Plot daily C loading over the production cycle by country"
 #| fig-height: 7.5
-#| fig-cap: "Daily carbon loading over the production cycle for the plant-dominant feed, summarised by country."
+#| fig-cap: "Daily carbon loading over the production cycle for the marine-dominant feed at mean digestibility, summarised by country."
 
 farm_runs %>% 
   filter(nutrient == "C") %>% 
   ggplot(aes(
     x = prod_t, 
-    y = mean, 
-    ymin = mean - sd, 
-    ymax = mean + sd, 
+    y = mean_value_perbiom, 
+    ymin = mean_value_perbiom - sd_per_biom, 
+    ymax = mean_value_perbiom + sd_per_biom, 
     colour = country,
     fill = country
   )) +
@@ -559,6 +721,8 @@ farm_runs %>%
 ```
 
 ## Model sensitivity {#sec-model-sensitivity}
+
+@fig-sensitivity shows the sensitivity of individual weight and total excreted nutrient outputs to each model parameter.
 
 ```{r}
 #| label: fig-sensitivity
@@ -612,6 +776,83 @@ sens %>%
   facet_wrap(~measure) +
   prettyplot_600() +
   labs(x = "Adjusted parameter", y = "Sensitivity")
+```
+
+## C:N ratio to environment {#sec-cn-ratio}
+
+```{r}
+#| label: ratio-data
+#| code-summary: "Calculate C:N ratios for excreted and uneaten waste fractions"
+
+farm_ends_CN_ratio <- rbind(
+  file.path(output_path, "model_run_outputs", "farm_ends_total_carbon.qs") %>% 
+    qread() %>% clean_up() %>% mutate(nutrient = as.factor("C")),
+  file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs") %>% 
+    qread() %>% clean_up() %>% mutate(nutrient = as.factor("N")),
+  file.path(output_path, "model_run_outputs", "farm_ends_carbon_uneat.qs") %>% 
+    qread() %>% clean_up() %>% mutate(nutrient = as.factor("C")),
+  file.path(output_path, "model_run_outputs", "farm_ends_nitrogen_uneat.qs") %>% 
+    qread() %>% clean_up() %>% mutate(nutrient = as.factor("N")),
+  file.path(output_path, "model_run_outputs", "farm_ends_carbon_excr.qs") %>% 
+    qread() %>% clean_up() %>% mutate(nutrient = as.factor("C")),
+  file.path(output_path, "model_run_outputs", "farm_ends_nitrogen_excr.qs") %>% 
+    qread() %>% clean_up() %>% mutate(nutrient = as.factor("N"))
+) %>% 
+  mutate(measure = str_remove_all(measure, "nitrogen_|carbon_|_nitrogen|_carbon") %>% as.factor()) %>% 
+  select(-mean_value_perbiom, -sd_per_biom, -sd_value, -n)
+
+farm_ends_CN_ratio <- farm_ends_CN_ratio %>% 
+  pivot_wider(names_from = nutrient, values_from = mean_value) %>% 
+  mutate(
+    C = C/set_units(12.011, "g"),
+    N = N/set_units(14.007, "g"),
+    CN = C/N
+  ) %>% 
+  select(-c(C, N)) 
+  
+farm_ends_CN_ratio <- farm_ends_CN_ratio %>% 
+  group_by(feed, feed_level, measure) %>% 
+  reframe(
+    CN_mean = mean(CN),
+    CN_min = min(CN),
+    CN_max = max(CN)
+  )
+```
+
+@fig-CN-ratio shows the C:N ratio for excreted, uneaten, and total waste fractions by feed type and digestibility level.
+
+```{r}
+#| label: fig-CN-ratio
+#| code-summary: "Plot C:N ratio of excreted, uneaten, and total waste"
+#| fig-cap: "C:N ratio of total waste by feed type and digestibility level."
+#| fig-height: 4.5
+
+farm_ends_CN_ratio %>% 
+  mutate(
+    feed_level = factor(feed_level, levels = c("min", "mean", "max"), labels = c("Minimum", "Mean", "Maximum")),
+    measure = factor(measure, levels = c("uneat", "excr", "total"), labels = c("Uneaten feed", "Excreted faeces", "Total"))
+  ) %>% 
+  ggplot(aes(
+    x = feed_level, 
+    y = drop_units(CN_mean), 
+    ymin = drop_units(CN_min),
+    ymax = drop_units(CN_max),
+    fill = feed,
+    shape = measure
+  )) +
+  geom_errorbar(linewidth = 1, position = position_dodge(width = 0.75), width = 0) +
+  geom_point(size = 4, position = position_dodge(width = 0.75), colour = "black") +
+  scale_fill_manual(values = feed_pal) +
+  scale_shape_manual(values = c(
+    "Excreted faeces" = 21, 
+    "Total" = 24, 
+    "Uneaten Feed" = 22
+  )) +
+  facet_wrap(~measure) +
+  prettyplot_600() +
+  # theme(legend.position = "right") +
+  scale_y_continuous(breaks = 1:15, limits = c(6, 13.25)) +
+  labs(x = "Feed digestibility", y = "C:N")
 ```
 
 [Next: TBD →](index.qmd)
