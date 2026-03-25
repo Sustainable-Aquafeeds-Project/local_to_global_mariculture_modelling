@@ -14,40 +14,34 @@ execute:
 
 This document does some additional data analysis on the outputs before presenting numbers needed for the manuscript. In particular, we fit a series of mixed-effects models to determine how much of the variance can be attributed to fixed effects (different feeds), random effects (different farms) and residual effects (Monte-Carlo sampled individual fish).
 
-```{r}
-#| label: setup
+```{r setup}
 #| cache: false
 #| include: false
 
 library(tidyverse)
 library(sf)
-library(terra)
-library(magrittr)
-library(furrr)
-library(future)
-library(fs)
 library(conflicted)
-library(readxl)
 library(units)
 library(qs)
 library(here)
-library(scales)
-library(targets)
-library(ggforce)
 library(gt)
 library(lme4)
 library(MuMIn)
 
 conflicted::conflicts_prefer(
-  dplyr::filter(), 
-  dplyr::select(), 
-  scales::rescale(), 
+  dplyr::filter(),
+  dplyr::select(),
   .quiet = T
 )
+```
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
-  str_subset("pipeline", negate = T) %>% 
+```{r source-scripts}
+#| code-summary: "Source R scripts and set up custom units"
+#| output: false
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
+  str_subset("pipeline", negate = T) %>%
   walk(source)
 
 remove_unit("g_fish")
@@ -241,12 +235,13 @@ r2*100
 rm(VP_carbon)
 ```
 
-# Shifts in latitude
+# Shifts in latitude {#sec-shifts-in-latitude}
 
 From Julia: Can we say  With mean digestibolities there is X% more carbon/nitrogen loading per ton of fish produced per degree (either lat or temperature) for the reference MD feed. Shifts towards PD result in an equal/different? X % more C across all regions? with only X% more /less for PD (all based on mean digestibilty). Then N results follow slightly different  pattern with AD performing least best. (& MD best in terms of lowest N loadings). Then state whether the differences vary/d not vary across space.
 
-```{r}
-farm_ends_carbon %>% 
+```{r explore-latitude-shifts}
+#| code-summary: "Explore percentage change in carbon loading per biomass relative to MD feed"
+farm_ends_carbon %>%
   mutate(mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1")) %>% 
   filter(feed_level == "mean") %>% 
   select(-mean_value, -sd_value, -sd_per_biom, -n) %>% 
@@ -300,8 +295,8 @@ range(harvest_size$weight)
 mean(harvest_size$weight)
 ```
 
-```{r}
-#| label: total-waste
+```{r total-waste}
+#| code-summary: "Calculate total waste (uneaten + excreted) and compare across feeds"
 
 total_waste <- rbind(
   farm_ends_total_uneat,
@@ -346,7 +341,7 @@ uneat <- rbind(
 100*sd(uneat$prop_uneat)
 ```
 
-@tbl-total-uneaten shows mean uneaten feed per biomass by feed type and level.
+@tbl-total-uneaten shows mean uneaten feed per biomass by feed type and level. @tbl-total-provided shows mean feed provided per unit biomass by feed type and level.
 
 ```{r}
 #| label: tbl-total-uneaten
@@ -388,8 +383,10 @@ farm_ends_food_prov %>%
   gt()
 ```
 
-```{r}
-tmp <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs") %>% 
+```{r nitrogen-digestibility-range}
+#| code-summary: "Calculate percentage difference in nitrogen loading between mean and max digestibility for AD feed"
+
+tmp <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs") %>%
   qread() %>% 
   convert_feeds_to_levels() %>% 
   mutate(

@@ -22,9 +22,9 @@ All code and processes for this project are linked below. Note that some scripts
 | **[How many runs per farm?](docs-working/07_how_many_runs_per_farm.html)** | Determining how many Monte-Carlo runs is enough for acceptable variation |
 | **[Run Atlantic salmon model](docs-working/08_run_atlantic_salmon_model.html)** | Atlantic salmon growth model execution |
 
-# Visualisation scripts
+## Visualisation scripts
 
 | Page | Description |
 |---------|:-------------------------------------------------|
-| **[Data exploration](docs-working/09_data_analysis_total_vals.html)** | Visualising the outputs of the Atlantic salmon growth model |
+| **[Data analysis](docs-working/09_data_analysis.html)** | Additional data analysis on model outputs, including variance partitioning and key numbers for the manuscript |
 | **[Figures for manuscript](docs-working/10_figures_for_paper.html)** | Code used to generate the specific figures used in the manuscript |
