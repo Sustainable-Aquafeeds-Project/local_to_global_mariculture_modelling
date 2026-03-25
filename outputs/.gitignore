@@ -1,6 +1,11 @@
 # For managing big data files
 farm_data/farm_circles*
 farm_data/farm_ts_data*
+farm_run_*_chunked.qs
+decomposed_runs/*
+fish_ends/*
+farm_run/*
+farm_ends/*
 
 sensitivity_data/res*
 
