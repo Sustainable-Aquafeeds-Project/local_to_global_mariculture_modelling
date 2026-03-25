@@ -21,6 +21,7 @@ execute:
   eval: false
   warning: false
   message: false
+  cache: true
 
 format:
   html:
