@@ -1,15 +1,19 @@
 ---
-title: "Formulating experimental feeds"
-author: Tormey Reimer
-date: today
+title: "6: Assigning production"
+subtitle: "Local to global salmon aquaculture waste modelling"
+author: 
+  - "Tormey Reimer"
+date: last-modified
 ---
 
-# Introduction
+[← Previous: Formulating experimental feeds](05_formulating_feeds.qmd)
 
-The purpose of this markdown is to choose which farms will be used to grow salmon and assign each of those farms a "production quota".
+# Overview {#sec-overview}
 
-```{r setup, include=F, cache=F}
-#| code-summary: R setup
+The purpose of this document is to choose which farms will be used to grow salmon and assign each of those farms a "production quota".
+
+```{r setup}
+#| include: false
 
 library(tidyverse)
 library(arrow)
@@ -28,14 +32,18 @@ conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
 here("src") %>% 
   list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+  str_subset("map", negate = T) %>% 
+  str_subset("pipeline", negate = T) %>% 
   walk(source)
 ```
 
-# Get data
+# Get data {#sec-get-data}
 
 Get production and farm location data. This is grouped by country and FAO code (not farm).
 
-```{r}
+```{r load-prod-and-farm-data}
+#| code-summary: "Load production and farm location data"
+
 mariculture_prod_sal <- file.path(input_farm_coords_path, "mariculture_prod_salmonids.qs") %>% 
   qread() %>% 
   filter(model_name == "atlantic_salmon")
@@ -51,14 +59,17 @@ farm_list <- farm_list %>%
   group_split()
 ```
 
-# Assign production to farms
+# Assign production to farms {#sec-assign-production}
 
 What this does across each country, species group, and fishing region:
+
 - Counts the estimated number of farms (from mapping data)
 - Pulls the correct (matching) production data, groups by model_name (NOT farm_name), and estimates the number of farms that needs to be assigned to that model_name (based on proportionate salmonid production)
 - Assigns that model_name to a selection of farms in that country/region
 
-```{r}
+```{r assign-production-to-farms}
+#| code-summary: "Assign model species and production quotas to individual farm locations"
+
 # For testing
 # this_country_region <- farm_list[[3]]
 
@@ -136,7 +147,10 @@ qsave(farm_static_data, file.path(input_farm_coords_path, "farm_static_data.qs")
 qsave(farm_temporal_data, file.path(input_farm_coords_path, "farm_temporal_data.qs"))
 ```
 
-```{r}
+```{r fig-view-farm-locations}
+#| code-summary: "Map assigned farm locations by country"
+#| fig-cap: "Global distribution of salmonid farm locations coloured by country."
+
 p_bigmap_mercator +
   geom_sf(
     data = farm_static_data, 
@@ -147,10 +161,10 @@ p_bigmap_mercator +
   prettyplot_300()
 ```
 
-# Species and population parameters
+# Species and population parameters {#sec-species-pop-params}
 
 ```{r species-parameters}
-#| code-summary: Load species-specific parameters from Excel file
+#| code-summary: "Load species-specific parameters from Excel file"
 #| cache: true
 
 species_params <- readxl::read_excel(
@@ -164,7 +178,7 @@ qsave(species_params, file.path(output_species_data_path, "species_params.qs"))
 ```
 
 ```{r population-parameters}
-#| code-summary: Load population-specific parameters
+#| code-summary: "Load population-specific parameters"
 #| cache: true
 
 pop_params <- readxl::read_excel(path = c(file = file.path(input_species_param_path, "Population.xlsx"))["file"])
@@ -174,11 +188,13 @@ pop_params <- vals[!is.na(vals)]
 qsave(pop_params, file.path(output_species_data_path, "pop_params.qs"))
 ```
 
-# Grow salmon on default feed
+# Grow salmon on default feed {#sec-grow-default-feed}
 
 Grow salmon at each location using the default feed and the extracted temperature data.
 
-```{r params}
+```{r load-params}
+#| code-summary: "Load model parameters and farm data"
+
 feed_params <- file.path(output_species_data_path, "feed_params_PD.qs") %>% qread()
 
 all_params <- c(
@@ -204,19 +220,22 @@ farm_data <- farm_temporal_data %>%
 
 Get a representative harvest size for each farm.
 
-```{r farm-run-harvest-size, eval=F}
+```{r farm-run-harvest-size}
+#| code-summary: "Run fish growth model at each farm location to determine harvest size"
+#| eval: false
+
 # For testing
 # farm_data <- farm_data[1:50]
 
 # For testing:
 # temp <- farm_data[[106]]
 
-harvest_size <- purrr::map_dfr(
+plan(multisession)
+harvest_size <- futuremap_dfr(
   farm_data, 
   function(temp) {
     # Grow "ideal" fish
     fg <- fish_growth(
-      pop_params = all_params,
       species_params = all_params,
       water_temp = temp$temp_c,
       feed_params = feed_params[["plant_dominant_biomar"]],
@@ -234,13 +253,40 @@ harvest_size <- purrr::map_dfr(
       slice_max(weight) %>% 
       select(farm_ID, days, weight)
   },
-  .progress = T
+  .progress = T,
+  .options = future_options(seed = TRUE)
 )
+plan(paralell)
 
 qsave(harvest_size, file.path(gendata_path, "harvest_sizes", "farm_harvest_sizes.qs"))
 ```
 
-# Assign stocking population
+View harvest size.
+
+```{r fig-view-harvest-sizes}
+#| code-summary: "Plot distribution of harvest sizes and their spatial distribution"
+#| fig-cap: "Distribution of individual harvest weights across all farm locations."
+
+harvest_size <- qread(file.path(gendata_path, "harvest_sizes", "farm_harvest_sizes.qs"))
+
+harvest_size %>% 
+  ggplot(aes(x = weight)) +
+  geom_histogram(binwidth = 250, colour = "black", fill = "salmon", alpha = 0.35) +
+  theme_classic() +
+  labs(x = "Individual harvest weight", y = "Frequency")
+
+p_bigmap_mercator +
+  geom_sf(
+    data = full_join(farm_static_data, harvest_size, by = c("farm_id" = "farm_ID")), 
+    aes(color = weight, geometry = geometry), 
+    size = 2
+  ) +
+  coord_sf() +
+  prettyplot_300() +
+  theme(legend.position = "bottom")
+```
+
+# Assign stocking population {#sec-assign-stocking}
 
 Production needs to be assigned based on what the farm can actually handle. A country's production is the sum of all its farms harvest size * stocking population. For the sake of simplicity, lets assume that each country/fao_code uses the same stocking population in each of its farms. Therefore, we need to find the correct stocking density (population) for the farms in each country so that it will meet its projected production.
 
@@ -249,13 +295,13 @@ Prod_{national} = \sum{pop_{national} * indsize_{farm}}
 $$
 
 ```{r assign-stocking}
-#| code-summary: Calculate the required salmon population (per farm, country-specific) required to meet country-level production based on the individual harvest size they can acheive.
+#| code-summary: "Calculate the required salmon population (per farm, country-specific) required to meet country-level production based on the individual harvest size they can achieve."
 
 combs <- farm_static_data %>% distinct(iso3c, fao_code)
 
 farm_static_data <- file.path(input_farm_coords_path, "farm_static_data.qs") %>% 
   qread() %>% 
-  left_join(harvest_size, by = c("farm_id" = "farm_ID")) %>% 
+  full_join(harvest_size, by = c("farm_id" = "farm_ID")) %>% 
   mutate(harvest_size = set_units(weight, "g"))
 
 # For testing
@@ -290,3 +336,5 @@ stocking_info <- map_dfr(
 
 qsave(stocking_info, file.path(input_farm_coords_path, "farm_static_data_w_stocking.qs"))
 ```
+
+[Next: How many runs per farm? →](07_how_many_runs_per_farm.qmd)

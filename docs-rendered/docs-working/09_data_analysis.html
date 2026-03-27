@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Tormey Reimer">
-<meta name="dcterms.date" content="2026-03-25">
+<meta name="dcterms.date" content="2026-03-27">
 
-<title>Step 9: Data analysis</title>
+<title>9: Data analysis – Local to global inputs from changing feeds</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -60,29 +60,173 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="09_data_analysis_files/libs/clipboard/clipboard.min.js"></script>
-<script src="09_data_analysis_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="09_data_analysis_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="09_data_analysis_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="09_data_analysis_files/libs/quarto-html/popper.min.js"></script>
-<script src="09_data_analysis_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="09_data_analysis_files/libs/quarto-html/anchor.min.js"></script>
-<link href="09_data_analysis_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="09_data_analysis_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="09_data_analysis_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="09_data_analysis_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="09_data_analysis_files/libs/bootstrap/bootstrap-c84b4aade266d36fd11f3874713c8ac4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-42ef3aae9bddeafe1c3ad01278edd5ad.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
 
 
 <link rel="stylesheet" href="../docs-working/extra.css">
 </head>
 
-<body class="quarto-light">
+<body class="nav-sidebar docked quarto-light">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
-<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
-  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
-    <h2 id="toc-title">Table of contents</h2>
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs-working/09_data_analysis.html">Visualisation scripts</a></li><li class="breadcrumb-item"><a href="../docs-working/09_data_analysis.html">09: Data analysis</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Home</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Execution scripts</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/01_tidying_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">01: Tidying data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/02_extracting_production_locations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">02: Extracting production locations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/03_assessing_species_potential.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">03: Assessing species potential</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/04_extracting_temperatures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">04: Extracting farm temperature data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/05_formulating_feeds.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">05: Formulating experimental feeds</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/06_assigning production.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">06: Assigning production</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/07_how_many_runs_per_farm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">07: How many runs per farm?</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/08_run_atlantic_salmon_model.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">08: Run Atlantic salmon model</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Visualisation scripts</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/09_data_analysis.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">09: Data analysis</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/10_figures_for_paper.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">10: Figures for manuscript</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
    
   <ul>
   <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">1</span> Overview</a></li>
@@ -91,14 +235,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#sec-numbers-for-paper" id="toc-sec-numbers-for-paper" class="nav-link" data-scroll-target="#sec-numbers-for-paper"><span class="header-section-number">4</span> Numbers for paper</a></li>
   </ul>
 <div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://drtreimer.com/local_to_global_mariculture_modelling"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
-</div>
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-</div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs-working/09_data_analysis.html">Visualisation scripts</a></li><li class="breadcrumb-item"><a href="../docs-working/09_data_analysis.html">09: Data analysis</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Step 9: Data analysis</h1>
+<h1 class="title">9: Data analysis</h1>
 <p class="subtitle lead">Local to global salmon aquaculture waste modelling</p>
 </div>
 
@@ -116,7 +263,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">25 March 2026</p>
+      <p class="date">27 March 2026</p>
     </div>
   </div>
   
@@ -128,11 +275,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p><a href="docs-working/08_run_atlantic_salmon_model.qmd">← Previous: Run Atlantic salmon model</a></p>
+<p><a href="../docs-working/08_run_atlantic_salmon_model.html">← Previous: Run Atlantic salmon model</a></p>
 <section id="sec-overview" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
 <p>This document does some additional data analysis on the outputs before presenting numbers needed for the manuscript. In particular, we fit a series of mixed-effects models to determine how much of the variance can be attributed to fixed effects (different feeds), random effects (different farms) and residual effects (Monte-Carlo sampled individual fish).</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Source R scripts and set up custom units</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">here</span>(<span class="st">"src"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list.files</span>(<span class="at">pattern =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">.R$"</span>, <span class="at">full.names =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">str_subset</span>(<span class="st">"pipeline"</span>, <span class="at">negate =</span> T) <span class="sc">%&gt;%</span></span>
@@ -144,8 +293,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">install_unit</span>(<span class="st">"g_fish"</span>)</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">install_unit</span>(<span class="st">"kg_fish"</span>, <span class="st">"1000 g_fish"</span>)</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">install_unit</span>(<span class="st">"t_fish"</span>, <span class="st">"1000 kg_fish"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Get locations of farms for mapping</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>farm_locs <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"farm_static_data.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">farm_ID =</span> farm_id) <span class="sc">%&gt;%</span></span>
@@ -166,19 +318,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>      country <span class="sc">==</span> <span class="st">"Russian Federation"</span> <span class="sc">~</span> <span class="cn">NA</span></span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> <span class="fu">as.factor</span>()</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="sec-variance-partitioning" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Variance partitioning</h1>
 <div class="cell">
+<details class="code-fold">
+<summary>Get all data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>fish_ends_nitrogen <span class="ot">&lt;-</span> <span class="fu">file.path</span>(output_path, <span class="st">"model_run_outputs"</span>, <span class="st">"fish_ends_total_nitrogen.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">convert_feeds_to_levels</span>()</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>fish_ends_carbon <span class="ot">&lt;-</span> <span class="fu">file.path</span>(output_path, <span class="st">"model_run_outputs"</span>, <span class="st">"fish_ends_total_carbon.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">convert_feeds_to_levels</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Get all data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>farm_ends_nitrogen <span class="ot">&lt;-</span> <span class="fu">file.path</span>(output_path, <span class="st">"model_run_outputs"</span>, <span class="st">"farm_ends_total_nitrogen.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">convert_feeds_to_levels</span>()</span>
@@ -195,9 +353,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>farm_ends_total_excr <span class="ot">&lt;-</span> <span class="fu">file.path</span>(output_path, <span class="st">"model_run_outputs"</span>, <span class="st">"farm_ends_total_excr.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">convert_feeds_to_levels</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>For total nitrogen and carbon, we use the total value per biomass rather than total value. This is because total value is highly dependent on farm population, which is implied rather than measured and gives far too much weight to the random effect of farm location.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>fish_ends_nitrogen_subset <span class="ot">&lt;-</span> fish_ends_nitrogen <span class="sc">%&gt;%</span> </span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(farm_ID <span class="sc">%in%</span> <span class="fu">sample</span>(<span class="fu">unique</span>(fish_ends_nitrogen<span class="sc">$</span>farm_ID), <span class="dv">75</span>)) <span class="sc">%&gt;%</span> </span>
@@ -232,30 +393,49 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>model4 <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_analysis_path, <span class="st">"VP_model4_total_nitrogen.qs"</span>) <span class="sc">%&gt;%</span> <span class="fu">qread</span>()</span>
 <span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Singular fit models:"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Singular fit models:"</code></pre>
 </div>
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">isSingular</span>(model1)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">isSingular</span>(model2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">isSingular</span>(model3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] TRUE</code></pre>
 </div>
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">isSingular</span>(model4)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] FALSE</code></pre>
 </div>
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Compare models 4 and 3"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Compare models 4 and 3"</code></pre>
 </div>
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(model4, model3)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Data: fish_ends_nitrogen_subset
 Models:
@@ -267,11 +447,17 @@ model3   16 -240654 -240531 120343   -240686 2312.5  5  &lt; 2.2e-16 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="st">"Compare models 4 and 2"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Compare models 4 and 2"</code></pre>
 </div>
+<details class="code-fold">
+<summary>Check if we should be accounting for all random slope effects</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(model4, model2)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Data: fish_ends_nitrogen_subset
 Models:
@@ -291,6 +477,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <li>The residual represents individual fish variation</li>
 </ul>
 <div class="cell">
+<details class="code-fold">
+<summary>Fit actual model for total_nitrogen</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>VP_nitrogen <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_analysis_path, <span class="st">"VP_modelfinal_total_nitrogen.qs"</span>)</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(VP_nitrogen)) {</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  VP_nitrogen <span class="ot">&lt;-</span> <span class="fu">lmer</span>(</span>
@@ -307,24 +495,33 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">VarCorr</span>(VP_nitrogen))</span>
 <span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>vc<span class="sc">$</span>pct <span class="ot">&lt;-</span> vc<span class="sc">$</span>vcov <span class="sc">/</span> <span class="fu">sum</span>(vc<span class="sc">$</span>vcov) <span class="sc">*</span> <span class="dv">100</span></span>
 <span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>vc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>       grp        var1 var2         vcov        sdcor       pct
 1  farm_ID (Intercept) &lt;NA&gt; 3.440420e-07 0.0005865510 91.900049
 2 Residual        &lt;NA&gt; &lt;NA&gt; 3.032342e-08 0.0001741362  8.099951</code></pre>
 </div>
+<details class="code-fold">
+<summary>Fit actual model for total_nitrogen</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fixed effects variance — how much do feed and variant explain?</span></span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use r.squaredGLMM for marginal (fixed, R2m) vs conditional (fixed + random, R2c) R²</span></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>r2 <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">r.squaredGLMM</span>(VP_nitrogen))</span>
 <span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>r2<span class="sc">$</span>farm_ID <span class="ot">&lt;-</span> r2<span class="sc">$</span>R2c <span class="sc">-</span> r2<span class="sc">$</span>R2m</span>
 <span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>r2<span class="sc">$</span>ind_fish <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> r2<span class="sc">$</span>R2c</span>
 <span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>r2<span class="sc">*</span><span class="dv">100</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>       R2m     R2c  farm_ID  ind_fish
 1 94.73336 99.5734 4.840046 0.4265954</code></pre>
 </div>
+<details class="code-fold">
+<summary>Fit actual model for total_nitrogen</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(VP_nitrogen)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Fit actual model for total_carbon</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>VP_carbon <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_analysis_path, <span class="st">"VP_modelfinal_total_carbon.qs"</span>)</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(VP_carbon)) {</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  VP_carbon <span class="ot">&lt;-</span> <span class="fu">lmer</span>(</span>
@@ -342,28 +539,37 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>vc <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">VarCorr</span>(VP_carbon))</span>
 <span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>vc<span class="sc">$</span>pct <span class="ot">&lt;-</span> vc<span class="sc">$</span>vcov <span class="sc">/</span> <span class="fu">sum</span>(vc<span class="sc">$</span>vcov) <span class="sc">*</span> <span class="dv">100</span></span>
 <span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>vc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>       grp        var1 var2         vcov       sdcor       pct
 1  farm_ID (Intercept) &lt;NA&gt; 1.835571e-05 0.004284357 91.415881
 2 Residual        &lt;NA&gt; &lt;NA&gt; 1.723635e-06 0.001312873  8.584119</code></pre>
 </div>
+<details class="code-fold">
+<summary>Fit actual model for total_carbon</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fixed effects variance — how much do feed and variant explain?</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Use r.squaredGLMM for marginal (fixed, R2m) vs conditional (fixed + random, R2c) R²</span></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>r2 <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">r.squaredGLMM</span>(VP_carbon))</span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>r2<span class="sc">$</span>farm_ID <span class="ot">&lt;-</span> r2<span class="sc">$</span>R2c <span class="sc">-</span> r2<span class="sc">$</span>R2m</span>
 <span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>r2<span class="sc">$</span>ind_fish <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> r2<span class="sc">$</span>R2c</span>
 <span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>r2<span class="sc">*</span><span class="dv">100</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>      R2m      R2c farm_ID  ind_fish
 1 95.0753 99.57726 4.50196 0.4227423</code></pre>
 </div>
+<details class="code-fold">
+<summary>Fit actual model for total_carbon</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(VP_carbon)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 <section id="sec-shifts-in-latitude" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Shifts in latitude</h1>
 <p>From Julia: Can we say With mean digestibolities there is X% more carbon/nitrogen loading per ton of fish produced per degree (either lat or temperature) for the reference MD feed. Shifts towards PD result in an equal/different? X % more C across all regions? with only X% more /less for PD (all based on mean digestibilty). Then N results follow slightly different pattern with AD performing least best. (&amp; MD best in terms of lowest N loadings). Then state whether the differences vary/d not vary across space.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Explore percentage change in carbon loading per biomass relative to MD feed</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>farm_ends_carbon <span class="sc">%&gt;%</span></span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mean_value_perbiom =</span> mean_value_perbiom <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">"g g_fish-1"</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">"kg t_fish-1"</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(feed_level <span class="sc">==</span> <span class="st">"mean"</span>) <span class="sc">%&gt;%</span> </span>
@@ -376,10 +582,16 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">contains</span>(<span class="st">"biomar"</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">contains</span>(<span class="st">"change"</span>), <span class="at">names_to =</span> <span class="st">"feed"</span>, <span class="at">values_to =</span> <span class="st">"perc_change"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> farm_ID, <span class="at">y =</span> perc_change, <span class="at">colour =</span> feed)) <span class="sc">+</span> <span class="fu">geom_point</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="09_data_analysis_files/figure-html/explore-latitude-shifts-1.png" class="img-fluid figure-img"></p>
+<div id="fig-explore-latitude-shifts" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-explore-latitude-shifts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="09_data_analysis_files/figure-html/fig-explore-latitude-shifts-1.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-explore-latitude-shifts-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Percentage change in carbon loading per unit biomass relative to the MD feed, shown for each farm.
+</figcaption>
 </figure>
 </div>
 </div>
@@ -389,42 +601,56 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <h1 data-number="4"><span class="header-section-number">4</span> Numbers for paper</h1>
 <p>This section prints numbers to be used in the final manuscript.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Get number of farms from static farm data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>n_farms <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"farm_static_data.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">farm_ID =</span> farm_id) <span class="sc">%&gt;%</span> </span>
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(farm_ID) <span class="sc">%&gt;%</span> <span class="fu">unique</span>() <span class="sc">%&gt;%</span> <span class="fu">length</span>()</span>
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">"Number of farms: %f"</span>, n_farms)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Number of farms: 2750.000000"</code></pre>
 </div>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Get number of farms from temporal farm data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>farm_temp <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"farm_temporal_data.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">farm_ID =</span> farm_id) <span class="sc">%&gt;%</span> </span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(farm_ID) <span class="sc">%&gt;%</span> <span class="fu">unique</span>() <span class="sc">%&gt;%</span> <span class="fu">length</span>()</span>
 <span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sprintf</span>(<span class="st">"Number of farms: %f"</span>, n_farms)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "Number of farms: 2750.000000"</code></pre>
 </div>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Calculate range and mean harvest size</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>harvest_size <span class="ot">&lt;-</span> <span class="fu">file.path</span>(gendata_path, <span class="st">"harvest_sizes"</span>, <span class="st">"farm_harvest_sizes.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">weight =</span> weight<span class="sc">/</span><span class="dv">1000</span>)</span>
 <span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span>(harvest_size<span class="sc">$</span>weight)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1.375917 5.728213</code></pre>
 </div>
+<details class="code-fold">
+<summary>Calculate range and mean harvest size</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(harvest_size<span class="sc">$</span>weight)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 3.595059</code></pre>
 </div>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Calculate total waste (uneaten + excreted) and compare across feeds</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>total_waste <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  farm_ends_total_uneat,</span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  farm_ends_total_excr</span>
@@ -450,6 +676,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb42-23"><a href="#cb42-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-24"><a href="#cb42-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>animal_dominant_biomar, <span class="sc">-</span>marine_dominant_biomar, <span class="sc">-</span>plant_dominant_biomar) <span class="sc">%&gt;%</span> </span>
 <span id="cb42-25"><a href="#cb42-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output-display">
 <div id="sadymxbxsc" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
 <style>#sadymxbxsc table {
@@ -932,6 +1159,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Calculate mean and SD of proportion of feed that is uneaten</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>uneat <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  farm_ends_food_prov,</span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  farm_ends_total_uneat</span>
@@ -941,16 +1170,22 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">prop_uneat =</span> total_uneat<span class="sc">/</span>food_prov)</span>
 <span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a><span class="dv">100</span><span class="sc">*</span><span class="fu">mean</span>(uneat<span class="sc">$</span>prop_uneat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 2.791428</code></pre>
 </div>
+<details class="code-fold">
+<summary>Calculate mean and SD of proportion of feed that is uneaten</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="dv">100</span><span class="sc">*</span><span class="fu">sd</span>(uneat<span class="sc">$</span>prop_uneat)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.146488</code></pre>
 </div>
 </div>
 <p><a href="#tbl-total-uneaten" class="quarto-xref">Table&nbsp;1</a> shows mean uneaten feed per biomass by feed type and level. <a href="#tbl-total-provided" class="quarto-xref">Table&nbsp;2</a> shows mean feed provided per unit biomass by feed type and level.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Summarise and tabulate total uneaten feed per biomass by feed and level</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>farm_ends_total_uneat <span class="sc">%&gt;%</span> </span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>mean_value, <span class="sc">-</span>sd_value) <span class="sc">%&gt;%</span> </span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sd_per_biom =</span> sd_per_biom<span class="sc">/</span>mean_value_perbiom) <span class="sc">%&gt;%</span> </span>
@@ -964,6 +1199,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_perbiom =</span> sd_perbiom <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">"g g_fish-1"</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">"kg t_fish-1"</span>) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)</span>
 <span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
 <span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div id="tbl-total-uneaten" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-total-uneaten-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -1505,6 +1741,8 @@ Table&nbsp;1: Mean uneaten feed per unit biomass (kg per tonne of fish) by feed 
 </div>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Summarise and tabulate total feed provided per biomass by feed and level</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>farm_ends_food_prov <span class="sc">%&gt;%</span> </span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>mean_value, <span class="sc">-</span>sd_value) <span class="sc">%&gt;%</span> </span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sd_per_biom =</span> sd_per_biom<span class="sc">/</span>mean_value_perbiom) <span class="sc">%&gt;%</span> </span>
@@ -1518,6 +1756,7 @@ Table&nbsp;1: Mean uneaten feed per unit biomass (kg per tonne of fish) by feed 
 <span id="cb48-11"><a href="#cb48-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">sd_perbiom =</span> sd_perbiom <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">"g g_fish-1"</span>) <span class="sc">%&gt;%</span> <span class="fu">set_units</span>(<span class="st">"kg t_fish-1"</span>) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)</span>
 <span id="cb48-12"><a href="#cb48-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
 <span id="cb48-13"><a href="#cb48-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">gt</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div id="tbl-total-provided" class="cell quarto-float quarto-figure quarto-figure-center anchored">
 <figure class="quarto-float quarto-float-tbl figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-tbl" id="tbl-total-provided-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -2059,6 +2298,8 @@ Table&nbsp;2: Mean feed provided per unit biomass (kg per tonne of fish) by feed
 </div>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Calculate percentage difference in nitrogen loading between mean and max digestibility for AD feed</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> <span class="fu">file.path</span>(output_path, <span class="st">"model_run_outputs"</span>, <span class="st">"farm_ends_total_nitrogen.qs"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">convert_feeds_to_levels</span>() <span class="sc">%&gt;%</span> </span>
@@ -2074,15 +2315,17 @@ Table&nbsp;2: Mean feed provided per unit biomass (kg per tonne of fish) by feed
 <span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>(tmp<span class="sc">$</span>mean_value_perbiom[tmp<span class="sc">$</span>feed_level <span class="sc">==</span> <span class="st">"mean"</span>] <span class="sc">-</span> tmp<span class="sc">$</span>mean_value_perbiom[tmp<span class="sc">$</span>feed_level <span class="sc">==</span> <span class="st">"max"</span>]) <span class="sc">/</span> </span>
 <span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>  tmp<span class="sc">$</span>mean_value_perbiom[tmp<span class="sc">$</span>feed_level <span class="sc">==</span> <span class="st">"mean"</span>] <span class="sc">*</span> <span class="dv">100</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>33.39783 [1]</code></pre>
 </div>
 </div>
-<p><a href="docs-working/10_figures_for_paper.qmd">Next: Figures for paper →</a></p>
+<p><a href="../docs-working/10_figures_for_paper.html">Next: Figures for paper →</a></p>
+
+
 </section>
 
-</main>
-<!-- /main column -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

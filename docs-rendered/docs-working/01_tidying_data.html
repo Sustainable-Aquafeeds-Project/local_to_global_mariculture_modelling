@@ -8,9 +8,9 @@
 
 <meta name="author" content="Richard Cottrell">
 <meta name="author" content="Tormey Reimer">
-<meta name="dcterms.date" content="2026-02-13">
+<meta name="dcterms.date" content="2026-03-27">
 
-<title>Tidying data</title>
+<title>1: Tidying data – Local to global inputs from changing feeds</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -61,46 +61,195 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="01_tidying_data_files/libs/clipboard/clipboard.min.js"></script>
-<script src="01_tidying_data_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="01_tidying_data_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="01_tidying_data_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="01_tidying_data_files/libs/quarto-html/popper.min.js"></script>
-<script src="01_tidying_data_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="01_tidying_data_files/libs/quarto-html/anchor.min.js"></script>
-<link href="01_tidying_data_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="01_tidying_data_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="01_tidying_data_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="01_tidying_data_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="01_tidying_data_files/libs/bootstrap/bootstrap-c84b4aade266d36fd11f3874713c8ac4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-42ef3aae9bddeafe1c3ad01278edd5ad.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
 
 
 <link rel="stylesheet" href="../docs-working/extra.css">
 </head>
 
-<body class="quarto-light">
+<body class="nav-sidebar docked quarto-light">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
-<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
-  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
-    <h2 id="toc-title">Table of contents</h2>
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs-working/01_tidying_data.html">Execution scripts</a></li><li class="breadcrumb-item"><a href="../docs-working/01_tidying_data.html">01: Tidying data</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Home</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Execution scripts</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/01_tidying_data.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">01: Tidying data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/02_extracting_production_locations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">02: Extracting production locations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/03_assessing_species_potential.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">03: Assessing species potential</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/04_extracting_temperatures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">04: Extracting farm temperature data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/05_formulating_feeds.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">05: Formulating experimental feeds</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/06_assigning production.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">06: Assigning production</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/07_how_many_runs_per_farm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">07: How many runs per farm?</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/08_run_atlantic_salmon_model.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">08: Run Atlantic salmon model</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Visualisation scripts</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/09_data_analysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">09: Data analysis</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/10_figures_for_paper.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">10: Figures for manuscript</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#aquaculture-production" id="toc-aquaculture-production" class="nav-link active" data-scroll-target="#aquaculture-production"><span class="header-section-number">1</span> Aquaculture production</a></li>
-  <li><a href="#mariculture-locations" id="toc-mariculture-locations" class="nav-link" data-scroll-target="#mariculture-locations"><span class="header-section-number">2</span> Mariculture locations</a></li>
-  <li><a href="#daily-sst-data" id="toc-daily-sst-data" class="nav-link" data-scroll-target="#daily-sst-data"><span class="header-section-number">3</span> Daily SST data</a></li>
-  <li><a href="#vulnerability" id="toc-vulnerability" class="nav-link" data-scroll-target="#vulnerability"><span class="header-section-number">4</span> Vulnerability</a></li>
-  <li><a href="#distribution" id="toc-distribution" class="nav-link" data-scroll-target="#distribution"><span class="header-section-number">5</span> Distribution</a></li>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">1</span> Overview</a></li>
+  <li><a href="#sec-aquaculture-production" id="toc-sec-aquaculture-production" class="nav-link" data-scroll-target="#sec-aquaculture-production"><span class="header-section-number">2</span> Aquaculture production</a></li>
+  <li><a href="#sec-mariculture-locations" id="toc-sec-mariculture-locations" class="nav-link" data-scroll-target="#sec-mariculture-locations"><span class="header-section-number">3</span> Mariculture locations</a></li>
+  <li><a href="#sec-daily-sst" id="toc-sec-daily-sst" class="nav-link" data-scroll-target="#sec-daily-sst"><span class="header-section-number">4</span> Daily SST data</a></li>
+  <li><a href="#sec-vulnerability" id="toc-sec-vulnerability" class="nav-link" data-scroll-target="#sec-vulnerability"><span class="header-section-number">5</span> Vulnerability</a></li>
+  <li><a href="#sec-distribution" id="toc-sec-distribution" class="nav-link" data-scroll-target="#sec-distribution"><span class="header-section-number">6</span> Distribution</a></li>
   </ul>
 <div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://drtreimer.com/local_to_global_mariculture_modelling"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
-</div>
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-</div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs-working/01_tidying_data.html">Execution scripts</a></li><li class="breadcrumb-item"><a href="../docs-working/01_tidying_data.html">01: Tidying data</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Tidying data</h1>
+<h1 class="title">1: Tidying data</h1>
+<p class="subtitle lead">Local to global salmon aquaculture waste modelling</p>
 </div>
 
 
@@ -118,7 +267,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">13 February 2026</p>
+      <p class="date">27 March 2026</p>
     </div>
   </div>
   
@@ -130,14 +279,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
+<p><a href="../index.html">← Previous: Home</a></p>
+<section id="sec-overview" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
+<p>This document tidies the raw input data needed for the analysis. It processes FAO aquaculture production data, cleans farm location data for salmonids, downloads and processes daily SST rasters, and loads species vulnerability and distribution data.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Define species of interest</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Specify species of interest</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>species <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"atlantic_salmon"</span>, <span class="st">"general_salmonid"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-<section id="aquaculture-production" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Aquaculture production</h1>
+</section>
+<section id="sec-aquaculture-production" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Aquaculture production</h1>
 <p>Clean aquaculture production data from the FAO.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Load and clean raw FAO aquaculture quantity data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get aquaculture quantity in tonnes live weight</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>quantity <span class="ot">&lt;-</span> <span class="fu">file.path</span>(bigdata_path, <span class="st">"Aquaculture_2025.1.0"</span>, <span class="st">"Aquaculture_Quantity.csv"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
@@ -210,27 +369,31 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(quantity, <span class="fu">file.path</span>(species_path, <span class="st">"production"</span>, <span class="st">"aquaculture_quantity.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
-<section id="mariculture-locations" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Mariculture locations</h1>
+<section id="sec-mariculture-locations" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Mariculture locations</h1>
 <p>Pull in mariculture locations data from Clawson et al (2022) and save the species groups of interest.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#code-summary: Read in farm locations and save for salmonids only</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>farm_locations <span class="ot">&lt;-</span> <span class="fu">file.path</span>(bigdata_path, <span class="st">"all_marine_aquaculture_farms_sources_final.csv"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tonnes_per_farm =</span> <span class="fu">set_units</span>(tonnes_per_farm)) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(species_group <span class="sc">==</span> <span class="st">"Salmonidae fish"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(details, data_type_2, data_source, data_type, data_year))</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(farm_locations, <span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"salmon_marine_farm_locations.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<details class="code-fold">
+<summary>Read in farm locations and save for salmonids only</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>farm_locations <span class="ot">&lt;-</span> <span class="fu">file.path</span>(bigdata_path, <span class="st">"all_marine_aquaculture_farms_sources_final.csv"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tonnes_per_farm =</span> <span class="fu">set_units</span>(tonnes_per_farm)) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(species_group <span class="sc">==</span> <span class="st">"Salmonidae fish"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(details, data_type_2, data_source, data_type, data_year))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(farm_locations, <span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"salmon_marine_farm_locations.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
-<section id="daily-sst-data" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Daily SST data</h1>
+<section id="sec-daily-sst" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Daily SST data</h1>
 <p>From NASA - GHRSST Level 4 MUR 0.25deg Global Foundation Sea Surface Temperature Analysis</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Take daily means from raw data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>SST_files <span class="ot">&lt;-</span> <span class="fu">file.path</span>(bigdata_path, <span class="st">"NASA/GHRSST_L4_MUR_0.25_SST"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list.files</span>(<span class="at">full.names =</span> <span class="cn">TRUE</span>, <span class="at">pattern =</span> <span class="st">".nc"</span>)</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -269,8 +432,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>  },</span>
 <span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">.progress =</span> T</span>
 <span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Gapfill the saved rasters</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>raw_SST_files <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">file.path</span>(input_farm_sst_path, <span class="st">"SST_raw_rasters"</span>), <span class="at">full.names =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sort</span>()</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -291,12 +457,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  },</span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">.progress =</span> T</span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
-<section id="vulnerability" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Vulnerability</h1>
-<p>Pull in spp vulnerability to eutrophication data - save to salmon folder.</p>
+<section id="sec-vulnerability" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Vulnerability</h1>
+<p>Pull in species vulnerability to eutrophication data and save to the salmon folder.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Load species vulnerability to eutrophication data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>vuln_scores <span class="ot">&lt;-</span> <span class="fu">file.path</span>(bigdata_path, <span class="st">"butt_spp_vuln_framework-publication/_output/vuln_gapfilled_score.csv"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read.csv</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(vuln_gf_id, eutrophication_nutrient_pollution)</span>
@@ -315,12 +484,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(vuln_tx)</span>
 <span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(full_vuln_df, <span class="fu">here</span>(<span class="st">"data/_general_data/species_layers/vulnerabilities/marine_spp_vulnerabilities_eutrophication.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
-<section id="distribution" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> Distribution</h1>
-<p>Pull in spp distribution data from Aquamaps</p>
+<section id="sec-distribution" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Distribution</h1>
+<p>Pull in species distribution data from Aquamaps.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Load species distribution data from Aquamaps</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>aquamaps_0<span class="fl">.5</span>d <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">file.path</span>(rdsi_data_dir, <span class="st">"aquamaps/aquamaps_0.6_depth_prepped.csv"</span>)) </span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#all cells have an id. These id's can be used to isolate only the cells of relevance for the salmon farming locations.</span></span>
@@ -328,11 +500,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#save to project</span></span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(<span class="at">x =</span> aquamaps_0<span class="fl">.5</span>d, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/_general_data/species_layers/distribution/aquamaps_0.5d.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
+<p><a href="../docs-working/02_extracting_production_locations.html">Next: Extract production locations →</a></p>
+
+
 </section>
 
-</main>
-<!-- /main column -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

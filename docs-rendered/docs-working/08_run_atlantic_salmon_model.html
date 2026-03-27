@@ -6,8 +6,10 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Tormey Reimer">
+<meta name="dcterms.date" content="2026-03-27">
 
-<title>Run Atlantic salmon model</title>
+<title>8: Run Atlantic salmon model – Local to global inputs from changing feeds</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -58,54 +60,211 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="08_run_atlantic_salmon_model_files/libs/clipboard/clipboard.min.js"></script>
-<script src="08_run_atlantic_salmon_model_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="08_run_atlantic_salmon_model_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="08_run_atlantic_salmon_model_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="08_run_atlantic_salmon_model_files/libs/quarto-html/popper.min.js"></script>
-<script src="08_run_atlantic_salmon_model_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="08_run_atlantic_salmon_model_files/libs/quarto-html/anchor.min.js"></script>
-<link href="08_run_atlantic_salmon_model_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="08_run_atlantic_salmon_model_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="08_run_atlantic_salmon_model_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="08_run_atlantic_salmon_model_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="08_run_atlantic_salmon_model_files/libs/bootstrap/bootstrap-c84b4aade266d36fd11f3874713c8ac4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-42ef3aae9bddeafe1c3ad01278edd5ad.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
 
 
 <link rel="stylesheet" href="../docs-working/extra.css">
 </head>
 
-<body class="quarto-light">
+<body class="nav-sidebar docked quarto-light">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
-<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
-  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
-    <h2 id="toc-title">Table of contents</h2>
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs-working/01_tidying_data.html">Execution scripts</a></li><li class="breadcrumb-item"><a href="../docs-working/08_run_atlantic_salmon_model.html">08: Run Atlantic salmon model</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Home</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Execution scripts</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/01_tidying_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">01: Tidying data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/02_extracting_production_locations.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">02: Extracting production locations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/03_assessing_species_potential.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">03: Assessing species potential</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/04_extracting_temperatures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">04: Extracting farm temperature data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/05_formulating_feeds.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">05: Formulating experimental feeds</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/06_assigning production.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">06: Assigning production</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/07_how_many_runs_per_farm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">07: How many runs per farm?</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/08_run_atlantic_salmon_model.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">08: Run Atlantic salmon model</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Visualisation scripts</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/09_data_analysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">09: Data analysis</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/10_figures_for_paper.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">10: Figures for manuscript</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction"><span class="header-section-number">1</span> Introduction</a></li>
-  <li><a href="#run-farms" id="toc-run-farms" class="nav-link" data-scroll-target="#run-farms"><span class="header-section-number">2</span> Run farms</a>
-  <ul>
-  <li><a href="#further-processing---c-and-n" id="toc-further-processing---c-and-n" class="nav-link" data-scroll-target="#further-processing---c-and-n"><span class="header-section-number">2.1</span> Further processing - C and N</a></li>
-  </ul></li>
-  <li><a href="#run-sensitivities" id="toc-run-sensitivities" class="nav-link" data-scroll-target="#run-sensitivities"><span class="header-section-number">3</span> Run sensitivities</a></li>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">1</span> Overview</a></li>
+  <li><a href="#sec-run-pipeline" id="toc-sec-run-pipeline" class="nav-link" data-scroll-target="#sec-run-pipeline"><span class="header-section-number">2</span> Run the farms pipeline</a></li>
+  <li><a href="#sec-run-sensitivities" id="toc-sec-run-sensitivities" class="nav-link" data-scroll-target="#sec-run-sensitivities"><span class="header-section-number">3</span> Run sensitivities</a></li>
   </ul>
 <div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://drtreimer.com/local_to_global_mariculture_modelling"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
-</div>
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-</div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs-working/01_tidying_data.html">Execution scripts</a></li><li class="breadcrumb-item"><a href="../docs-working/08_run_atlantic_salmon_model.html">08: Run Atlantic salmon model</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Run Atlantic salmon model</h1>
+<h1 class="title">8: Run Atlantic salmon model</h1>
+<p class="subtitle lead">Local to global salmon aquaculture waste modelling</p>
 </div>
 
 
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Tormey Reimer </p>
+          </div>
+  </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">27 March 2026</p>
+    </div>
+  </div>
   
     
   </div>
@@ -115,114 +274,141 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="introduction" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Introduction</h1>
+<p><a href="../docs-working/07_how_many_runs_per_farm.html">← Previous: How many runs per farm?</a></p>
+<section id="sec-overview" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
 <p>This document runs the aquaculture model for Atlantic salmon farms.</p>
 </section>
-<section id="run-farms" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Run farms</h1>
-<p>First, let’s test the pipeline to make sure that the feed input data is being processed correctly.</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">TAR_PROJECT =</span> <span class="st">"project_farmruns"</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_make</span>(test_reference_feed)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_read</span>(test_reference_feed) <span class="co"># if weight &lt; 1000g then feeds aren't processing properly! Fix it!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<section id="sec-run-pipeline" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Run the farms pipeline</h1>
 <p>The following code runs the main pipeline.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">TAR_PROJECT =</span> <span class="st">"project_farmruns"</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_validate</span>()</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Run whole pipeline</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_make</span>(<span class="at">seconds_meta_append =</span> <span class="dv">300</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<details class="code-fold">
+<summary>Run the main pipeline</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"src"</span>, <span class="st">"run_farmruns_pipeline.R"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-<p>Load objects from the targets pipeline and save them as .qs files, which are much quicker to load down the line. This takes a few minutes to gather all the targets.</p>
+<p>Collate the pipeline objects.</p>
+<ul>
+<li>The only purpose of <code>fish_ends</code> is for variance partitioning</li>
+<li><code>farm_ends</code> is the read output</li>
+</ul>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">TAR_PROJECT =</span> <span class="st">"project_farmruns"</span>)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_load</span>(farm_results)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(farm_results, <span class="fu">file.path</span>(output_path, <span class="st">"total_ends.qs"</span>))</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_load</span>(total_vals)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(total_vals, <span class="fu">file.path</span>(data_analysis_path, <span class="st">"total_vals.qs"</span>))</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_load</span>(total_props)</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(total_props, <span class="fu">file.path</span>(data_analysis_path, <span class="st">"total_props.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<details class="code-fold">
+<summary>Save fish_ends objects as files</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fish_ends_files <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"outputs/model_run_outputs/fish_ends"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list.files</span>(<span class="at">full.names =</span> T, <span class="at">recursive =</span> T, <span class="at">pattern =</span> <span class="st">".qs"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>fish_ends_measures <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"weight"</span>, <span class="st">"total_carbon"</span>, <span class="st">"total_nitrogen"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (m <span class="cf">in</span> fish_ends_measures) {</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (m <span class="sc">==</span> <span class="st">"weight"</span>) {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    fish_ends <span class="ot">&lt;-</span> fish_ends_files <span class="sc">%&gt;%</span> </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">map_dfr</span>(<span class="cf">function</span>(fnm) {</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        <span class="fu">qread</span>(fnm) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>          <span class="fu">filter</span>(measure <span class="sc">==</span> m) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>          <span class="fu">select</span>(<span class="sc">-</span>value_perbiom, <span class="sc">-</span>measure, <span class="sc">-</span>fish) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>          <span class="fu">mutate</span>(<span class="at">farm_ID =</span> <span class="fu">as.factor</span>(farm_ID))</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>      })</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    fish_ends <span class="ot">&lt;-</span> fish_ends_files <span class="sc">%&gt;%</span> </span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">map_dfr</span>(<span class="cf">function</span>(fnm) {</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        <span class="fu">qread</span>(fnm) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>          <span class="fu">filter</span>(measure <span class="sc">==</span> m) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>          <span class="fu">select</span>(<span class="sc">-</span>value, <span class="sc">-</span>measure, <span class="sc">-</span>fish) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>          <span class="fu">mutate</span>(<span class="at">farm_ID =</span> <span class="fu">as.factor</span>(farm_ID))</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>      })</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qsave</span>(fish_ends, <span class="fu">here</span>(<span class="st">"outputs/model_run_outputs"</span>, <span class="fu">str_c</span>(<span class="st">"fish_ends_"</span>, m, <span class="st">".qs"</span>)))</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(fish_ends)</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-<section id="further-processing---c-and-n" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="further-processing---c-and-n"><span class="header-section-number">2.1</span> Further processing - C and N</h2>
-<p>To get nitrogen: - N (g) = protein (g)/6.25</p>
-<p>To get carbon: - From protein: N (mol) = (1/3.7) * C (mol) - From lipid: assume that lipid is 75% carbon - From carbohydrate: assume that carb is around 40% carbon</p>
-<p>These are from Prasad, S. S., Cameron, D. D., Carter, C. G., Williamson, A., &amp; Blanchard, J. L. (2025). Geometric stoichiometry model yields relevant insights for assessing nutrient-related environmental impacts of aquaculture. Conservation Physiology, 13(1). https://doi.org/10.1093/conphys/coaf066</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>get_nitrogen <span class="ot">&lt;-</span> <span class="cf">function</span>(P) {</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  P<span class="sc">/</span><span class="fl">6.25</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>get_carbon <span class="ot">&lt;-</span> <span class="cf">function</span>(P, L, C) {</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  carbon_1 <span class="ot">&lt;-</span> L <span class="sc">*</span> <span class="fl">0.75</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  carbon_2 <span class="ot">&lt;-</span> C <span class="sc">*</span> <span class="fl">0.41</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  carbon_3 <span class="ot">&lt;-</span> <span class="fu">get_nitrogen</span>(<span class="at">P=</span>P)<span class="sc">/</span><span class="fl">14.007</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  carbon_3 <span class="ot">&lt;-</span> (carbon_3 <span class="sc">*</span> <span class="fl">3.7</span>) <span class="sc">*</span> <span class="fl">12.011</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  carbon_1 <span class="sc">+</span> carbon_2 <span class="sc">+</span> carbon_3</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>CN_vals <span class="ot">&lt;-</span> total_vals <span class="sc">%&gt;%</span> </span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(farm_ID, feed_group, measure, feed_type, mean, mean_per_biom) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(measure <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"total_P_lost_stat"</span>, <span class="st">"total_C_lost_stat"</span>, <span class="st">"total_L_lost_stat"</span>, <span class="st">"C_excr_stat"</span>, <span class="st">"L_excr_stat"</span>, <span class="st">"P_excr_stat"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">"measure"</span>, <span class="at">values_from =</span> <span class="fu">c</span>(mean, mean_per_biom), <span class="at">names_sep =</span> <span class="st">"."</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean.N_excr =</span> <span class="fu">get_nitrogen</span>(mean.P_excr_stat),</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean.C_excr =</span> <span class="fu">get_carbon</span>(<span class="at">P =</span> mean.P_excr_stat, <span class="at">L =</span> mean.L_excr_stat, <span class="at">C =</span> mean.C_excr_stat),</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_per_biom.N_excr =</span> <span class="fu">get_nitrogen</span>(mean.P_excr_stat),</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_per_biom.C_excr =</span> <span class="fu">get_carbon</span>(<span class="at">P =</span> mean_per_biom.P_excr_stat, <span class="at">L =</span> mean_per_biom.L_excr_stat, <span class="at">C =</span> mean_per_biom.C_excr_stat),</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean.N_total_lost =</span> <span class="fu">get_nitrogen</span>(mean.total_P_lost_stat),</span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean.C_total_lost =</span> <span class="fu">get_carbon</span>(<span class="at">L =</span> mean.total_L_lost_stat, <span class="at">C =</span> mean.total_C_lost_stat, <span class="at">P =</span> mean.total_P_lost_stat),</span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_per_biom.N_total_lost =</span> <span class="fu">get_nitrogen</span>(mean_per_biom.total_P_lost_stat),</span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_per_biom.C_total_lost =</span> <span class="fu">get_carbon</span>(<span class="at">P =</span> mean_per_biom.total_P_lost_stat, <span class="at">L =</span> mean_per_biom.total_L_lost_stat, <span class="at">C =</span> mean_per_biom.total_C_lost_stat)</span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">contains</span>(<span class="st">"stat"</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(mean.N_excr, mean.C_excr, mean_per_biom.N_excr, mean_per_biom.C_excr, mean.N_total_lost, mean.C_total_lost, mean_per_biom.N_total_lost, mean_per_biom.C_total_lost),</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="fu">c</span>(<span class="st">".value"</span>, <span class="st">"measure"</span>),</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_sep =</span> <span class="st">"</span><span class="sc">\\</span><span class="st">."</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">nutrient =</span> <span class="fu">case_when</span>(<span class="fu">str_detect</span>(measure, <span class="st">"C_"</span>) <span class="sc">~</span> <span class="st">"C"</span>, T <span class="sc">~</span> <span class="st">"N"</span>),</span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">measure =</span> <span class="fu">str_remove</span>(measure, <span class="st">"C_|N_"</span>) <span class="sc">%&gt;%</span> <span class="fu">as.factor</span>(),</span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">nutrient =</span> <span class="fu">as.factor</span>(nutrient)</span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(CN_vals, <span class="fu">file.path</span>(data_analysis_path, <span class="st">"total_CN_vals.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<details class="code-fold">
+<summary>Save farm_ends objects as files</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>farm_ends_files <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"outputs/model_run_outputs/farm_ends"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list.files</span>(<span class="at">full.names =</span> T, <span class="at">recursive =</span> T, <span class="at">pattern =</span> <span class="st">".qs"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>farm_ends_measures <span class="ot">&lt;-</span> farm_ends_files <span class="sc">%&gt;%</span> </span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">first</span>() <span class="sc">%&gt;%</span> <span class="fu">qread</span>() <span class="sc">%&gt;%</span> <span class="fu">pull</span>(measure) <span class="sc">%&gt;%</span> <span class="fu">sort</span>() <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (m <span class="cf">in</span> farm_ends_measures) {</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  farm_ends <span class="ot">&lt;-</span> farm_ends_files <span class="sc">%&gt;%</span> </span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map_dfr</span>(<span class="cf">function</span>(fnm) {</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">qread</span>(fnm) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">filter</span>(measure <span class="sc">==</span> m) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(<span class="at">measure =</span> <span class="fu">as.factor</span>(measure))</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qsave</span>(farm_ends, <span class="fu">here</span>(<span class="st">"outputs/model_run_outputs"</span>, <span class="fu">str_c</span>(<span class="st">"farm_ends_"</span>, m, <span class="st">".qs"</span>)))</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(farm_ends)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Save farm_runs objects as files</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>farm_runs_files <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"outputs/model_run_outputs/farm_runs"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list.files</span>(<span class="at">full.names =</span> T, <span class="at">recursive =</span> T, <span class="at">pattern =</span> <span class="st">".qs"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>farm_runs_measures <span class="ot">&lt;-</span> farm_runs_files <span class="sc">%&gt;%</span> </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">first</span>() <span class="sc">%&gt;%</span> <span class="fu">qread</span>() <span class="sc">%&gt;%</span> <span class="fu">pull</span>(measure) <span class="sc">%&gt;%</span> <span class="fu">sort</span>() <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (m <span class="cf">in</span> farm_runs_measures) {</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  farm_runs <span class="ot">&lt;-</span> farm_runs_files <span class="sc">%&gt;%</span> </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">map_dfr</span>(<span class="cf">function</span>(fnm) {</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">qread</span>(fnm) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">filter</span>(measure <span class="sc">==</span> m) <span class="sc">%&gt;%</span> </span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(<span class="at">measure =</span> <span class="fu">as.factor</span>(measure), <span class="at">prod_t =</span> <span class="fu">as.integer</span>(prod_t))</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qsave</span>(farm_runs, <span class="fu">here</span>(<span class="st">"outputs/model_run_outputs"</span>, <span class="fu">str_c</span>(<span class="st">"farm_runs_"</span>, m, <span class="st">".qs"</span>)))</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(farm_runs)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="fu">gc</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
-</section>
-<section id="run-sensitivities" class="level1" data-number="3">
+<section id="sec-run-sensitivities" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Run sensitivities</h1>
 <div class="cell">
+<details class="code-fold">
+<summary>Check that the pipeline will run correctly</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">TAR_PROJECT =</span> <span class="st">"project_sensitivities"</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_make</span>(test_reference_feed)</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_read</span>(test_reference_feed) <span class="co"># if weight &lt; 1000g then feeds aren't processing properly! Fix it!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Run the full sensitivities pipeline</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.setenv</span>(<span class="at">TAR_PROJECT =</span> <span class="st">"project_sensitivities"</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Run whole pipeline</span></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_make</span>(<span class="at">seconds_meta_append =</span> <span class="dv">300</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Load and save sensitivity analysis results</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_load</span>(sens_results_pop)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">tar_load</span>(sens_results_spec)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>sens <span class="ot">&lt;-</span> <span class="fu">rbind</span>(sens_results_pop, sens_results_spec)</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(sens, <span class="fu">file.path</span>(output_sens_data_path, <span class="st">"sens_all.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
+<p><a href="../docs-working/09_data_analysis.html">Next: Data analysis →</a></p>
+
+
 </section>
 
-</main>
-<!-- /main column -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

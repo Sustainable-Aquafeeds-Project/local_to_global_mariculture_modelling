@@ -1,12 +1,21 @@
 ---
-title: "Tidying data"
+title: "1: Tidying data"
+subtitle: "Local to global salmon aquaculture waste modelling"
 author: 
-  - Richard Cottrell
-  - Tormey Reimer
-date: today
+  - "Richard Cottrell"
+  - "Tormey Reimer"
+date: last-modified
 ---
 
-```{r setup, include=F, cache=F}
+[← Previous: Home](../index.qmd)
+
+# Overview {#sec-overview}
+
+This document tidies the raw input data needed for the analysis. It processes FAO aquaculture production data, cleans farm location data for salmonids, downloads and processes daily SST rasters, and loads species vulnerability and distribution data.
+
+```{r setup}
+#| include: false
+
 library(tidyverse)
 library(here)
 library(terra)
@@ -18,15 +27,19 @@ here("src") %>%
 ```
 
 ```{r globals}
+#| code-summary: "Define species of interest"
+
 # Specify species of interest
 species <- c("atlantic_salmon", "general_salmonid")
 ```
 
-# Aquaculture production
+# Aquaculture production {#sec-aquaculture-production}
 
 Clean aquaculture production data from the FAO.
 
 ```{r clean-raw-data}
+#| code-summary: "Load and clean raw FAO aquaculture quantity data"
+
 # Get aquaculture quantity in tonnes live weight
 quantity <- file.path(bigdata_path, "Aquaculture_2025.1.0", "Aquaculture_Quantity.csv") %>% 
   read.csv() %>% 
@@ -101,12 +114,12 @@ quantity <- quantity %>%
 qsave(quantity, file.path(species_path, "production", "aquaculture_quantity.qs"))
 ```
 
-# Mariculture locations
+# Mariculture locations {#sec-mariculture-locations}
 
 Pull in mariculture locations data from Clawson et al (2022) and save the species groups of interest.
 
 ```{r locations}
-#code-summary: Read in farm locations and save for salmonids only
+#| code-summary: "Read in farm locations and save for salmonids only"
 
 farm_locations <- file.path(bigdata_path, "all_marine_aquaculture_farms_sources_final.csv") %>% 
   read.csv() %>% 
@@ -117,12 +130,12 @@ farm_locations <- file.path(bigdata_path, "all_marine_aquaculture_farms_sources_
 qsave(farm_locations, file.path(input_farm_coords_path, "salmon_marine_farm_locations.qs"))
 ```
 
-# Daily SST data 
+# Daily SST data {#sec-daily-sst}
 
 From NASA - GHRSST Level 4 MUR 0.25deg Global Foundation Sea Surface Temperature Analysis
 
 ```{r sst-raw-files}
-#| code-summary: Take daily means from raw data
+#| code-summary: "Take daily means from raw data"
 
 SST_files <- file.path(bigdata_path, "NASA/GHRSST_L4_MUR_0.25_SST") %>% 
   list.files(full.names = TRUE, pattern = ".nc")
@@ -165,7 +178,7 @@ map(
 ```
 
 ```{r gapfill-SST}
-#| code-summary: Gapfill the saved rasters
+#| code-summary: "Gapfill the saved rasters"
 
 raw_SST_files <- list.files(file.path(input_farm_sst_path, "SST_raw_rasters"), full.names = TRUE) %>% 
   sort()
@@ -189,11 +202,13 @@ map(
 )
 ```
 
-# Vulnerability
+# Vulnerability {#sec-vulnerability}
 
-Pull in spp vulnerability to eutrophication data - save to salmon folder.
+Pull in species vulnerability to eutrophication data and save to the salmon folder.
 
-```{r}
+```{r vulnerability-data}
+#| code-summary: "Load species vulnerability to eutrophication data"
+
 vuln_scores <- file.path(bigdata_path, "butt_spp_vuln_framework-publication/_output/vuln_gapfilled_score.csv") %>% 
   read.csv() %>% 
   select(vuln_gf_id, eutrophication_nutrient_pollution)
@@ -214,11 +229,13 @@ full_vuln_df <-
 qsave(full_vuln_df, here("data/_general_data/species_layers/vulnerabilities/marine_spp_vulnerabilities_eutrophication.qs"))
 ```
 
-# Distribution
+# Distribution {#sec-distribution}
 
-Pull in spp distribution data from Aquamaps
+Pull in species distribution data from Aquamaps.
 
-```{r}
+```{r distribution-data}
+#| code-summary: "Load species distribution data from Aquamaps"
+
 aquamaps_0.5d <- data.table::fread(file.path(rdsi_data_dir, "aquamaps/aquamaps_0.6_depth_prepped.csv")) 
 
 #all cells have an id. These id's can be used to isolate only the cells of relevance for the salmon farming locations.
@@ -227,3 +244,5 @@ filter(aquamaps_0.5d, is.na(cell_id))
 #save to project
 qsave(x = aquamaps_0.5d, file = here("data/_general_data/species_layers/distribution/aquamaps_0.5d.qs"))
 ```
+
+[Next: Extract production locations →](02_extracting_production_locations.qmd)

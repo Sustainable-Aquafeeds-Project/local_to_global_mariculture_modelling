@@ -1,5 +1,5 @@
 ---
-title: "Step 9: Data analysis"
+title: "9: Data analysis"
 subtitle: "Local to global salmon aquaculture waste modelling"
 author: 
   - "Tormey Reimer"
@@ -8,7 +8,7 @@ execute:
   eval: true
 ---
 
-[← Previous: Run Atlantic salmon model](docs-working/08_run_atlantic_salmon_model.qmd)
+[← Previous: Run Atlantic salmon model](08_run_atlantic_salmon_model.qmd)
 
 # Overview {#sec-overview}
 
@@ -38,6 +38,7 @@ conflicted::conflicts_prefer(
 ```{r source-scripts}
 #| code-summary: "Source R scripts and set up custom units"
 #| output: false
+#| cache: false
 
 here("src") %>%
   list.files(pattern = "\\.R$", full.names = TRUE) %>%
@@ -239,8 +240,9 @@ rm(VP_carbon)
 
 From Julia: Can we say  With mean digestibolities there is X% more carbon/nitrogen loading per ton of fish produced per degree (either lat or temperature) for the reference MD feed. Shifts towards PD result in an equal/different? X % more C across all regions? with only X% more /less for PD (all based on mean digestibilty). Then N results follow slightly different  pattern with AD performing least best. (& MD best in terms of lowest N loadings). Then state whether the differences vary/d not vary across space.
 
-```{r explore-latitude-shifts}
+```{r fig-explore-latitude-shifts}
 #| code-summary: "Explore percentage change in carbon loading per biomass relative to MD feed"
+#| fig-cap: "Percentage change in carbon loading per unit biomass relative to the MD feed, shown for each farm."
 farm_ends_carbon %>%
   mutate(mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1")) %>% 
   filter(feed_level == "mean") %>% 
@@ -403,4 +405,4 @@ tmp <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs"
   tmp$mean_value_perbiom[tmp$feed_level == "mean"] * 100
 ```
 
-[Next: Figures for paper →](docs-working/10_figures_for_paper.qmd)
+[Next: Figures for paper →](10_figures_for_paper.qmd)

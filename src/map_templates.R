@@ -89,7 +89,7 @@ p_bigmap_robinson <- ggplot() +
   theme_void()
 
 p_bigmap_robinson_boxes <- ggplot() +
-  geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
+  # geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
   geom_sf(data = worldmap_robinson, fill = "white", color = "dimgray") +
   coord_sf() +
   geom_sf(data = boxes_robinson, fill = NA, color = "grey2", size = 0.75) +
@@ -100,6 +100,49 @@ p_bigmap_robinson_boxes <- ggplot() +
     hjust = 0.5, vjust = 0.5
   ) +
   theme_void()
+
+## Broken axis map -----------------------------------------------------------
+library(patchwork)
+
+# Define the lat bands in Robinson projection
+# We need to transform bbox coords to Robinson first
+band_bbox <- function(lat_min, lat_max) {
+  bbox_sf <- st_sfc(
+    st_polygon(list(matrix(c(
+      -180, lat_min,
+       180, lat_min,
+       180, lat_max,
+      -180, lat_max,
+      -180, lat_min
+    ), ncol = 2, byrow = TRUE))),
+    crs = 4326
+  ) %>% st_transform(crs = "+proj=robin")
+  st_bbox(bbox_sf)
+}
+
+bbox_north <- band_bbox( 30,  70)  # slight buffer around 30-60N
+bbox_south <- band_bbox(-70, -30) # slight buffer around 30-60S
+
+# Helper to build a panel
+make_band_panel <- function(bbox) {
+  ggplot() +
+    geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
+    geom_sf(data = worldmap_robinson, fill = "white", color = "dimgray") +
+    coord_sf(
+      xlim = c(bbox["xmin"], bbox["xmax"]),
+      ylim = c(bbox["ymin"], bbox["ymax"]),
+      expand = FALSE
+    ) +
+    theme_void()
+}
+
+p_north <- make_band_panel(bbox_north)
+p_south <- make_band_panel(bbox_south)
+
+p_combined <- p_north / p_south +
+  plot_layout(heights = c(1, 1))  # equal height since same lat span
+
+p_combined
 
 # The Mercator projection --------------------------------------------------------------------------------------------------------------
 worldmap_mercator <- ne_countries(scale = "large", returnclass = "sf")

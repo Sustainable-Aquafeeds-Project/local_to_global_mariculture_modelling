@@ -1,15 +1,19 @@
 ---
-title: "Formulating experimental feeds"
-author: Tormey Reimer
-date: today
+title: "5: Formulating experimental feeds"
+subtitle: "Local to global salmon aquaculture waste modelling"
+author: 
+  - "Tormey Reimer"
+date: last-modified
 ---
 
-# Introduction
+[← Previous: Extracting farm temperature data](04_extracting_temperatures.qmd)
 
-The purpose of this markdown is to formulate all the feeds that will be used in the analysis. This needs to be done before 
+# Overview {#sec-overview}
 
-```{r setup, include=F, cache=F}
-#| code-summary: R setup
+The purpose of this document is to formulate all the feeds that will be used in the analysis. This needs to be done before the model pipeline is run.
+
+```{r setup}
+#| include: false
 
 library(tidyverse)
 library(arrow)
@@ -31,26 +35,26 @@ here("src") %>%
   walk(source)
 ```
 
-# Import ingredients
+# Import ingredients {#sec-import-ingredients}
 
 There is no check or correction here to ensure that protein + lipid + ash + carb = 1 in the incoming ingredient data. This needs to be checked manually prior to import. 
 
 ``` {r import-ingredients}
-#| code-summary: Get ingredient details (PLC composition, digestibility)
+#| code-summary: "Get ingredient details (PLC composition, digestibility)"
 
-ingreds <- file.path(bigdata_path, "all_ingredients.xlsx") %>% 
+ingreds <- file.path(input_feed_profile_path, "all_ingredients.xlsx") %>% 
   read_excel(sheet = "all_ingredients") %>% 
   mutate(ingredient = as.factor(ingredient))
 
 ingred_nms <- levels(ingreds$ingredient)
 ```
 
-# Import feeds
+# Import feeds {#sec-import-feeds}
 
 Unlike ingredients, the feeds do not need to be checked for sum = 1 prior to import. That check is done here.
 
 ``` {r import-feeds}
-#| code-summary: Feed compositions
+#| code-summary: "Feed compositions"
 
 feed_inputs <- file.path(input_feed_profile_path, "all_feeds.xlsx") %>% 
   read_excel(sheet = "all_feeds")
@@ -68,25 +72,38 @@ feed_inputs <- feed_inputs %>%
 Check that ingredient proportions sum to 1.
 
 ```{r check-proportions}
-#| code-summary: Composition proportions
+#| code-summary: "Check composition proportions sum to 1"
 
-feed_inputs <- feed_inputs %>% 
-  filter(!is.na(proportion) & proportion != 0) %>% 
+# Any missing ingredients?
+feed_inputs %>% 
+  filter(!str_detect(feed, regex("original", ignore_case = TRUE))) %>% 
+  filter(str_detect(feed, regex("biomar", ignore_case = TRUE))) %>% 
+  filter(proportion != 0 & is.na(protein)) %>% 
+  pull(ingredient)
+
+# Sum ingredients to 1
+feed_inputs <- feed_inputs %>%
+  filter(!str_detect(feed, regex("original", ignore_case = TRUE))) %>% 
+  filter(!is.na(proportion) & proportion != 0 & str_detect(feed, regex("biomar", ignore_case = TRUE))) %>%
   group_by(feed) %>% 
   mutate(
     sum = sum(proportion),
     proportion = proportion/sum
   ) %>% 
   ungroup() %>% 
-  select(-sum, -ash)
+  mutate(
+    ingredient = droplevels(ingredient),
+    feed = droplevels(feed)
+  ) %>% 
+  select(-c(sum, ash, in_use, in_MS, exp_data, `SUM CHECK`))
 ```
 
-# Prepare for pipeline
+# Prepare for pipeline {#sec-prepare-pipeline}
 
 The following chunk allows as many ingredients and feeds to be added to the incoming data as needed, it will still be formatted into a form that the `targets` pipelines can use. 
 
 ```{r formulate-feeds}
-#| code-summary: Format feeds as lists to give to targets
+#| code-summary: "Format feeds as lists to give to targets"
 
 feed_types <- levels(feed_inputs$feed)
 
@@ -127,7 +144,9 @@ feed_params_all <- purrr::map(feed_types, function(ft) {
 This next chunk creates the mean, minimum and maximum digestibility variants of each of the feeds. 
 
 ```{r min-max-values}
+#| code-summary: "Split into mean, min, max digestibility"
 
+# Functions
 make_mean_digest <- function(df) {
   df %>% 
     mutate(digest = mean_digest) %>% 
@@ -148,17 +167,17 @@ feed_params <- list(
   "marine_dominant_biomar"     = feed_params_all[["marine_dominant_biomar"]] %>% lapply(make_mean_digest),
   "marine_dominant_biomar_min" = feed_params_all[["marine_dominant_biomar"]] %>% lapply(make_min_digest),
   "marine_dominant_biomar_max" = feed_params_all[["marine_dominant_biomar"]] %>% lapply(make_max_digest),
-  "animal_inclusive_biomar"     = feed_params_all[["animal_inclusive_biomar"]] %>% lapply(make_mean_digest),
-  "animal_inclusive_biomar_min" = feed_params_all[["animal_inclusive_biomar"]] %>% lapply(make_min_digest),
-  "animal_inclusive_biomar_max" = feed_params_all[["animal_inclusive_biomar"]] %>% lapply(make_max_digest),
-  "novel_inclusive_biomar"     = feed_params_all[["novel_inclusive_biomar"]] %>% lapply(make_mean_digest),
-  "novel_inclusive_biomar_min" = feed_params_all[["novel_inclusive_biomar"]] %>% lapply(make_min_digest),
-  "novel_inclusive_biomar_max" = feed_params_all[["novel_inclusive_biomar"]] %>% lapply(make_max_digest)
+  "animal_dominant_biomar"     = feed_params_all[["animal_dominant_biomar"]] %>% lapply(make_mean_digest),
+  "animal_dominant_biomar_min" = feed_params_all[["animal_dominant_biomar"]] %>% lapply(make_min_digest),
+  "animal_dominant_biomar_max" = feed_params_all[["animal_dominant_biomar"]] %>% lapply(make_max_digest),
+  "plant_dominant_biomar"     = feed_params_all[["plant_dominant_biomar"]] %>% lapply(make_mean_digest),
+  "plant_dominant_biomar_min" = feed_params_all[["plant_dominant_biomar"]] %>% lapply(make_min_digest),
+  "plant_dominant_biomar_max" = feed_params_all[["plant_dominant_biomar"]] %>% lapply(make_max_digest)
   )
 ```
 
-```{r save}
-#| code-summary: Save feed params file
+```{r save-feed-params}
+#| code-summary: "Save feed params file"
 
 qsave(feed_params, file.path(output_species_data_path, "feed_params_all.qs"))
 
@@ -166,20 +185,20 @@ feed_params_MD <- feed_params[1:3]
 feed_params_PD <- feed_params[7:9]
 feed_params_AD <- feed_params[4:6]
 
-names(feed_params_PD) <- c("plant_dominant_biomar", "plant_dominant_biomar_min", "plant_dominant_biomar_max")
-names(feed_params_AD) <- c("animal_dominant_biomar", "animal_dominant_biomar_min", "animal_dominant_biomar_max")
-
 qsave(feed_params_MD, file.path(output_species_data_path, "feed_params_MD.qs"))
 qsave(feed_params_PD, file.path(output_species_data_path, "feed_params_PD.qs"))
 qsave(feed_params_AD, file.path(output_species_data_path, "feed_params_AD.qs"))
 ```
 
-# For exploring C/N
+# Exploring C/N {#sec-exploring-cn}
 
-```{r temporary-CN-exploring}
+```{r explore-CN}
+#| code-summary: "Explore the top lipid-providing ingredients across feeds"
+
 feed_params_MD <- qread(file.path(output_species_data_path, "feed_params_MD.qs"))
 feed_params_PD <- qread(file.path(output_species_data_path, "feed_params_PD.qs"))
 feed_params_AD <- qread(file.path(output_species_data_path, "feed_params_AD.qs"))
+feed_params <- c(feed_params_MD, feed_params_PD, feed_params_AD)
 
 # Look at the most important lipid ingredients
 rbind(
@@ -204,24 +223,11 @@ rbind(
 # soy-protein-concentrate
 ```
 
-These are the top ten lipid-providing ingredients in the feeds:
+# Feed information {#sec-feed-information}
 
-   ingredient                total
-   <fct>                     <dbl>
- 1 canola-oil              0.579  
- 2 fish-oil-forage         0.138  
- 3 poultry-oil             0.120  
- 4 algal-oil               0.0880 
- 5 fish-oil-trimmings      0.0460 
- 6 fishmeal-forage         0.0341 
- 7 poultry-meal            0.0164 
- 8 fishmeal-trimmings      0.0102 
- 9 wheat                   0.00884
-10 soy-protein-concentrate 0.00792
+```{r feed-macros}
+#| code-summary: "Calculate total macronutrient content of each feed"
 
-# Feed information
-
-```{r}
 proteins <- feed_params %>% 
   lapply(function(ls) {
     ls$Proteins %>% 
@@ -255,7 +261,9 @@ proteins %>%
   mutate(total = protein+lipid+carbohydrate)
 ```
 
-```{r}
+```{r feed-apparent-digestibility}
+#| code-summary: "Calculate apparent digestibility of each macronutrient per feed"
+
 proteins <- feed_params %>% 
   lapply(function(ls) {
     ls$Proteins %>% 
@@ -291,12 +299,12 @@ proteins %>%
   left_join(carbs, by = "feed")
 ```
 
-# Comparing feeds
+# Comparing feeds {#sec-comparing-feeds}
 
 The three "biomar" feeds were designed to be isoenergetic.
 
 ```{r feed-stats}
-#| code-summary: Calculate energy stats about the feeds
+#| code-summary: "Calculate energy stats about the feeds"
 
 feed_params[[1]] %>% 
   lapply(function(ls) {
@@ -304,9 +312,9 @@ feed_params[[1]] %>%
       pull(total) %>% sum()
   }) %>% as.data.frame() %>% 
     mutate(
-      Proteins = Proteins * 17,
-      Carbohydrates = Carbohydrates * 37.6,
-      Lipids = Lipids * 16.8,
+      Proteins = Proteins * 23.6,
+      Carbohydrates = Carbohydrates * 17.2,
+      Lipids = Lipids * 36.2,
       total = Proteins + Carbohydrates + Lipids
     )
 
@@ -323,9 +331,9 @@ feed_stats <-
     ing_macro = proportion * macro,
     digest_macro = ing_macro * digest,
     E = case_when(
-      component == "Proteins" ~ digest_macro * 17,
-      component == "Lipids" ~ digest_macro * 37.6,
-      T ~ digest_macro * 16.8
+      component == "Proteins" ~ digest_macro * 23.6,
+      component == "Lipids" ~ digest_macro * 36.2,
+      T ~ digest_macro * 17.2
     )
   ) %>% 
   group_by(feed) %>% 
@@ -343,10 +351,9 @@ feed_stats %>%
   filter(component == "Proteins")
 ```
 
-```{r feed-macro-digestibility}
-#| code-summary: Code to generate plot
-#| eval: false
-#| fig-cap: Total protein, carbohydrate and lipid composition of each feed, with the undigestible portion shown as the lighter bars on top. 
+```{r fig-feed-macro-digestibility}
+#| code-summary: "Plot total macronutrient composition and digestibility of each feed"
+#| fig-cap: "Total protein, carbohydrate and lipid composition of each feed, with the undigestible portion shown as the lighter bars on top."
 
 df <- merge(
   feed_stats %>% 
@@ -378,10 +385,9 @@ df %>%
   facet_wrap(facets = vars(group))
 ```
 
-```{r feed-energy}
-#| code-summary: Code to generate plot
-#| eval: false
-#| fig-cap: The proportion of energy derived from protein, carbohydrate and lipid within each feed.
+```{r fig-feed-energy}
+#| code-summary: "Plot proportion of energy derived from each macronutrient per feed"
+#| fig-cap: "The proportion of energy derived from protein, carbohydrate and lipid within each feed."
 
 feed_stats %>% 
   mutate(
@@ -400,3 +406,5 @@ feed_stats %>%
   theme_classic() +
   facet_wrap(facets = vars(group))
 ```
+
+[Next: Assigning production →](06_assigning%20production.qmd)

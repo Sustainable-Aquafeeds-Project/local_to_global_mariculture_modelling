@@ -1,14 +1,21 @@
 ---
-title: "Run Atlantic salmon model"
+title: "8: Run Atlantic salmon model"
+subtitle: "Local to global salmon aquaculture waste modelling"
+author:
+  - "Tormey Reimer"
+date: last-modified
 format: html
 editor: source
 ---
 
-# Introduction
+[← Previous: How many runs per farm?](07_how_many_runs_per_farm.qmd)
+
+# Overview {#sec-overview}
 
 This document runs the aquaculture model for Atlantic salmon farms.
 
-```{r setup, include=F}
+```{r setup}
+#| include: false
 #| warning: false
 #| message: false
 
@@ -37,7 +44,7 @@ here("src") %>%
   walk(source)
 ```
 
-# Run the farms pipeline
+# Run the farms pipeline {#sec-run-pipeline}
 
 The following code runs the main pipeline.
 
@@ -132,7 +139,7 @@ rm(farm_runs)
 gc()
 ```
 
-# Run sensitivities
+# Run sensitivities {#sec-run-sensitivities}
 
 ```{r check-sensitivities-pipeline}
 #| code-summary: Check that the pipeline will run correctly
@@ -143,7 +150,9 @@ tar_make(test_reference_feed)
 tar_read(test_reference_feed) # if weight < 1000g then feeds aren't processing properly! Fix it!
 ```
 
-```{r}
+```{r run-sensitivities-pipeline}
+#| code-summary: "Run the full sensitivities pipeline"
+
 Sys.setenv(TAR_PROJECT = "project_sensitivities")
 
 # Run whole pipeline
@@ -151,9 +160,13 @@ tar_make(seconds_meta_append = 300)
 ```
 
 ```{r sens-results}
+#| code-summary: "Load and save sensitivity analysis results"
+
 tar_load(sens_results_pop)
 tar_load(sens_results_spec)
 
 sens <- rbind(sens_results_pop, sens_results_spec)
 qsave(sens, file.path(output_sens_data_path, "sens_all.qs"))
 ```
+
+[Next: Data analysis →](09_data_analysis.qmd)

@@ -1,15 +1,19 @@
 ---
-title: "Extracting farm temperature data"
-author: Tormey Reimer
-date: today
+title: "4: Extracting farm temperature data"
+subtitle: "Local to global salmon aquaculture waste modelling"
+author:
+  - "Tormey Reimer"
+date: last-modified
 ---
 
-# Introduction
+[← Previous: Assessing species potential](03_assessing_species_potential.qmd)
 
-The purpose of this markdown is to extract daily temperature timeseries from SST data to drive fish growth in the correct places. The steps in this markdown are:
+# Overview {#sec-overview}
+
+The purpose of this document is to extract daily temperature timeseries from SST data to drive fish growth in the correct places. The steps are:
 
 1. Pull farm locations data (previously determined from FAO stocking locations)
-2. Record whether the farm is in the southern or north hemisphere (determines cohort stocking date)
+2. Record whether the farm is in the southern or northern hemisphere (determines cohort stocking date)
 3. Pull SST data from .tif file and construct "typical" temperature year for each farm location
 4. Gapfill missing temperature data using closest farm in the same FAO stocking area
 5. Save temperature data both with and without geometry information
@@ -17,7 +21,6 @@ The purpose of this markdown is to extract daily temperature timeseries from SST
 
 
 ```{r setup, include=F, cache=F}
-#| code-summary: R setup
 
 library(tidyverse)
 library(terra)
@@ -38,7 +41,7 @@ here("src") %>%
   walk(source)
 ```
 
-# Farm locations
+# Farm locations {#sec-farm-locations}
 
 Get global farm locations and determine whether they're in the southern or northern hemisphere.
 
@@ -175,12 +178,12 @@ farms_w_temp_df <- rbind(
 qsave(farms_w_temp_df, file.path(input_farm_coords_path, "possible_salmonid_locations_w_temps.qs"))
 ```
 
-# Mean farm temperatures
+# Mean farm temperatures {#sec-mean-temperatures}
 
 Now get overall mean temperatures of farms to exclude those where mean temp < 6 degrees C.
 
 ```{r mean-temp}
-#| code-summay: Get mean temperature of farms
+#| code-summary: "Get mean temperature of farms"
 
 mean_temps <- farms_w_temp_df %>% 
   group_by(hemisphere, country, fao_code, rownum) %>% 
@@ -204,7 +207,9 @@ cold_farms <- mean_temps$rownum[mean_temps$mean_temp < 6]
 This doesn't mean that those farms are the most suited to growing salmon (their temperatures can still dip below 6 degrees).
 
 ```{r fig-view-temperatures}
-farms_w_temp_df %>% 
+#| code-summary: "Plot temperature timeseries by country and FAO region"
+#| fig-cap: "Mean daily temperature (±1 SD) for each country/FAO region combination across all farms, excluding those with mean temperature below 6°C."
+farms_w_temp_df %>%
   filter(day <= 365 & !rownum %in% cold_farms) %>% 
   group_by(hemisphere, country, fao_code, day) %>% 
   reframe(
@@ -225,8 +230,11 @@ farms_w_temp_df %>%
 This data is saved as "suitable" salmon locations. Individual farms are assigned production in the next step.
 
 ```{r save-suitable}
+#| code-summary: "Save suitable farm locations with temperature data"
 qsave(
   farms_w_temp_df %>% filter(!rownum %in% cold_farms),
   file.path(input_farm_coords_path, "suitable_salmonid_locations_w_temps.qs")
 )
 ```
+
+[Next: Formulating experimental feeds →](05_formulating_feeds.qmd)

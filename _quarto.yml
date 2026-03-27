@@ -1,6 +1,6 @@
 project:
   title: "Local to global inputs from changing feeds"
-  type: default
+  type: website
   output-dir: docs-rendered
   render:
     - index.qmd
@@ -15,6 +15,38 @@ project:
     - docs-working/09_data_analysis.qmd
     - docs-working/10_figures_for_paper.qmd
 
+website:
+  sidebar:
+    style: "docked"
+    search: false
+    contents:
+      - text: "Home"
+        href: index.qmd
+      - section: "Execution scripts"
+        contents:
+          - text: "01: Tidying data"
+            href: docs-working/01_tidying_data.qmd
+          - text: "02: Extracting production locations"
+            href: docs-working/02_extracting_production_locations.qmd
+          - text: "03: Assessing species potential"
+            href: docs-working/03_assessing_species_potential.qmd
+          - text: "04: Extracting farm temperature data"
+            href: docs-working/04_extracting_temperatures.qmd
+          - text: "05: Formulating experimental feeds"
+            href: docs-working/05_formulating_feeds.qmd
+          - text: "06: Assigning production"
+            href: "docs-working/06_assigning production.qmd"
+          - text: "07: How many runs per farm?"
+            href: docs-working/07_how_many_runs_per_farm.qmd
+          - text: "08: Run Atlantic salmon model"
+            href: docs-working/08_run_atlantic_salmon_model.qmd
+      - section: "Visualisation scripts"
+        contents:
+          - text: "09: Data analysis"
+            href: docs-working/09_data_analysis.qmd
+          - text: "10: Figures for manuscript"
+            href: docs-working/10_figures_for_paper.qmd
+
 editor: source
 
 execute:
@@ -28,7 +60,7 @@ format:
     theme: cosmo
     css: "docs-working/extra.css"
     # embed-resources: true
-    code-fold: false
+    code-fold: true
     code-overflow: wrap
     toc: true
     toc-depth: 4

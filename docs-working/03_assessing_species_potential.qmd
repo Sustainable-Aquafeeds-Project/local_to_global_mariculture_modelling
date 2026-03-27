@@ -1,12 +1,20 @@
 ---
-title: "Assessing species potential"
-author: Richard Cottrell
-date: today
+title: "3: Assessing species potential"
+subtitle: "Local to global salmon aquaculture waste modelling"
+author: 
+  - "Richard Cottrell"
+date: last-modified
 ---
 
-Set up
+[← Previous: Extracting production locations](02_extracting_production_locations.qmd)
 
-```{r setup, include=F, cache=F}
+# Overview {#sec-overview}
+
+This document assesses the global production potential of candidate marine finfish species using FAO aquaculture statistics, identifying which species and countries dominate production and selecting the focus species for the modelling work.
+
+```{r setup}
+#| include: false
+
 library(tidyverse)
 library(here)
 library(janitor)
@@ -18,9 +26,13 @@ here("src") %>%
   walk(source)
 ```
 
+# Global finfish production {#sec-global-finfish}
+
 Pull in FAO data for aquaculture production.
 
-```{r}
+```{r load-fao-data}
+#| code-summary: "Load and summarise FAO aquaculture production data"
+
 aquaculture_raw <- read_csv(file.path(bigdata_path, "fao/FAO_fishstat_2020/global_aquaculture_production_1950_2020.csv"))
 
 (aquaculture_prod <- 
@@ -137,6 +149,8 @@ ggsave("explore/cottrell_explore/global_proportion_finfish_by_country.jpg", dpi 
 aquaculture_prod |> filter(grepl("rouper", asfis_species_name_2))
 ```
 
+# Focus species {#sec-focus-species}
+
 Species decided on:
 
 | Common name | Scientific name |
@@ -151,3 +165,5 @@ Species decided on:
 | Groupers | Generalised mutli-species model |
 | Pompano | Trachinotus blochii |
 | Milkfish | Chanos chanos |
+
+[Next: Extracting farm temperature data →](04_extracting_temperatures.qmd)

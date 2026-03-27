@@ -13,18 +13,18 @@ All code and processes for this project are linked below. Note that some scripts
 
 | Page | Description |
 |---------|:-------------------------------------------------|
-| **[Tidying data](docs-working/01_tidying_data.html)** | Initial data tidying and preparation |
-| **[Extracting production locations](docs-working/02_extracting_production_locations.html)** | Identification of mariculture production site locations |
-| **[Assessing species potential](docs-working/03_assessing_species_potential.html)** | Evaluation of species suitability for different locations |
-| **[Extracting farm temperature data](docs-working/04_extracting_temperatures.html)** | SST data extraction and processing into a "typical year" for model inputs |
-| **[Formulating experimental feeds](docs-working/05_formulating_feeds.html)** | Feed composition formulation for model runs |
-| **[Assigning Production](docs-working/06_assigning production.html)** | Calculating typical harvest size per farm, assigning production and calculating population per farm to meet production data targets |
-| **[How many runs per farm?](docs-working/07_how_many_runs_per_farm.html)** | Determining how many Monte-Carlo runs is enough for acceptable variation |
-| **[Run Atlantic salmon model](docs-working/08_run_atlantic_salmon_model.html)** | Atlantic salmon growth model execution |
+| **[Tidying data](docs-working/01_tidying_data.html)** | Tidies the raw input data needed for the analysis. Processes FAO aquaculture production data, cleans farm location data for salmonids, downloads and processes daily SST rasters, and loads species vulnerability and distribution data. |
+| **[Extracting production locations](docs-working/02_extracting_production_locations.html)** | Matches salmonid farm locations to FAO fishing regions and country-level production data, checks that the spatial matching is consistent, and assigns model species to individual farms. |
+| **[Assessing species potential](docs-working/03_assessing_species_potential.html)** | Assesses the global production potential of candidate marine finfish species using FAO aquaculture statistics, identifying which species and countries dominate production and selecting the focus species for the modelling work. |
+| **[Extracting farm temperature data](docs-working/04_extracting_temperatures.html)** | Extracts daily temperature timeseries from SST rasters to drive fish growth at each farm location, gapfills missing values, and constructs a "typical year" for model inputs. |
+| **[Formulating experimental feeds](docs-working/05_formulating_feeds.html)** | Formulates all the feeds (ingredient compositions, macronutrient profiles) that will be used in the model runs. |
+| **[Assigning Production](docs-working/06_assigning%20production.html)** | Chooses which farms will be used to grow salmon and assigns each farm a production quota, including calculating typical harvest size and population per farm to meet national production targets. |
+| **[How many runs per farm?](docs-working/07_how_many_runs_per_farm.html)** | Determines how many Monte-Carlo simulation runs per farm are sufficient for acceptable variation in model outputs. |
+| **[Run Atlantic salmon model](docs-working/08_run_atlantic_salmon_model.html)** | Runs the bioenergetics aquaculture model for Atlantic salmon across all farm locations and feed scenarios. |
 
 ## Visualisation scripts
 
 | Page | Description |
 |---------|:-------------------------------------------------|
-| **[Data analysis](docs-working/09_data_analysis.html)** | Additional data analysis on model outputs, including variance partitioning and key numbers for the manuscript |
-| **[Figures for manuscript](docs-working/10_figures_for_paper.html)** | Code used to generate the specific figures used in the manuscript |
+| **[Data analysis](docs-working/09_data_analysis.html)** | Performs additional data analysis on model outputs, including fitting mixed-effects models for variance partitioning across feeds, farms and individual fish, and deriving key numbers for the manuscript. |
+| **[Figures for manuscript](docs-working/10_figures_for_paper.html)** | Generates all main and supplementary figures used in the final manuscript. |

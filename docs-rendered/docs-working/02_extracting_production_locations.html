@@ -8,9 +8,9 @@
 
 <meta name="author" content="Richard Cottrell">
 <meta name="author" content="Tormey Reimer">
-<meta name="dcterms.date" content="2026-02-13">
+<meta name="dcterms.date" content="2026-03-27">
 
-<title>Extracting production locations</title>
+<title>2: Extracting production locations – Local to global inputs from changing feeds</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -61,50 +61,197 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="02_extracting_production_locations_files/libs/clipboard/clipboard.min.js"></script>
-<script src="02_extracting_production_locations_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="02_extracting_production_locations_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="02_extracting_production_locations_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
-<script src="02_extracting_production_locations_files/libs/quarto-html/popper.min.js"></script>
-<script src="02_extracting_production_locations_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="02_extracting_production_locations_files/libs/quarto-html/anchor.min.js"></script>
-<link href="02_extracting_production_locations_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="02_extracting_production_locations_files/libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="02_extracting_production_locations_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="02_extracting_production_locations_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="02_extracting_production_locations_files/libs/bootstrap/bootstrap-c84b4aade266d36fd11f3874713c8ac4.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-dc55a5b9e770e841cd82e46aadbfb9b0.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-42ef3aae9bddeafe1c3ad01278edd5ad.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
 
 
 <link rel="stylesheet" href="../docs-working/extra.css">
 </head>
 
-<body class="quarto-light">
+<body class="nav-sidebar docked quarto-light">
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
-<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
-  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
-    <h2 id="toc-title">Table of contents</h2>
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs-working/01_tidying_data.html">Execution scripts</a></li><li class="breadcrumb-item"><a href="../docs-working/02_extracting_production_locations.html">02: Extracting production locations</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+      <a href="../index.html" class="sidebar-logo-link">
+      </a>
+      </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Home</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Execution scripts</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/01_tidying_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">01: Tidying data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/02_extracting_production_locations.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">02: Extracting production locations</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/03_assessing_species_potential.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">03: Assessing species potential</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/04_extracting_temperatures.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">04: Extracting farm temperature data</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/05_formulating_feeds.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">05: Formulating experimental feeds</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/06_assigning production.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">06: Assigning production</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/07_how_many_runs_per_farm.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">07: How many runs per farm?</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/08_run_atlantic_salmon_model.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">08: Run Atlantic salmon model</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Visualisation scripts</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/09_data_analysis.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">09: Data analysis</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../docs-working/10_figures_for_paper.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">10: Figures for manuscript</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+    <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="99">
+    <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#set-up" id="toc-set-up" class="nav-link active" data-scroll-target="#set-up"><span class="header-section-number">0.1</span> Set up</a></li>
-  <li><a href="#match-farm-locations-to-fao-regions" id="toc-match-farm-locations-to-fao-regions" class="nav-link" data-scroll-target="#match-farm-locations-to-fao-regions"><span class="header-section-number">1</span> Match farm locations to FAO regions</a></li>
-  <li><a href="#get-production-data" id="toc-get-production-data" class="nav-link" data-scroll-target="#get-production-data"><span class="header-section-number">2</span> Get production data</a>
+  <li><a href="#sec-overview" id="toc-sec-overview" class="nav-link active" data-scroll-target="#sec-overview"><span class="header-section-number">1</span> Overview</a></li>
+  <li><a href="#sec-match-fao-regions" id="toc-sec-match-fao-regions" class="nav-link" data-scroll-target="#sec-match-fao-regions"><span class="header-section-number">2</span> Match farm locations to FAO regions</a></li>
+  <li><a href="#sec-get-production" id="toc-sec-get-production" class="nav-link" data-scroll-target="#sec-get-production"><span class="header-section-number">3</span> Get production data</a>
   <ul>
-  <li><a href="#add-fao-regions-to-production-data" id="toc-add-fao-regions-to-production-data" class="nav-link" data-scroll-target="#add-fao-regions-to-production-data"><span class="header-section-number">2.1</span> Add FAO regions to production data</a></li>
+  <li><a href="#sec-add-fao-regions" id="toc-sec-add-fao-regions" class="nav-link" data-scroll-target="#sec-add-fao-regions"><span class="header-section-number">3.1</span> Add FAO regions to production data</a></li>
   </ul></li>
-  <li><a href="#check-matching" id="toc-check-matching" class="nav-link" data-scroll-target="#check-matching"><span class="header-section-number">3</span> Check matching</a></li>
-  <li><a href="#assign-species-to-individual-farms" id="toc-assign-species-to-individual-farms" class="nav-link" data-scroll-target="#assign-species-to-individual-farms"><span class="header-section-number">4</span> Assign species to individual farms</a></li>
-  <li><a href="#for-later" id="toc-for-later" class="nav-link" data-scroll-target="#for-later"><span class="header-section-number">5</span> For later</a></li>
+  <li><a href="#sec-check-matching" id="toc-sec-check-matching" class="nav-link" data-scroll-target="#sec-check-matching"><span class="header-section-number">4</span> Check matching</a></li>
+  <li><a href="#sec-assign-species" id="toc-sec-assign-species" class="nav-link" data-scroll-target="#sec-assign-species"><span class="header-section-number">5</span> Assign species to individual farms</a></li>
   </ul>
 <div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://drtreimer.com/local_to_global_mariculture_modelling"><i class="bi bi-link-45deg"></i>Back to main</a></li></ul></div><div class="quarto-code-links"><h2>Code Links</h2><ul><li><a href="https://github.com/stormeyseas/local_to_global_mariculture_modelling"><i class="bi bi-file-code"></i>Github</a></li></ul></div></nav>
-</div>
-<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
-</div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+    </div>
+<!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../docs-working/01_tidying_data.html">Execution scripts</a></li><li class="breadcrumb-item"><a href="../docs-working/02_extracting_production_locations.html">02: Extracting production locations</a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Extracting production locations</h1>
+<h1 class="title">2: Extracting production locations</h1>
+<p class="subtitle lead">Local to global salmon aquaculture waste modelling</p>
 </div>
 
 
@@ -122,7 +269,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">13 February 2026</p>
+      <p class="date">27 March 2026</p>
     </div>
   </div>
   
@@ -134,13 +281,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="set-up" class="level2" data-number="0.1">
-<h2 data-number="0.1" class="anchored" data-anchor-id="set-up"><span class="header-section-number">0.1</span> Set up</h2>
+<p><a href="../docs-working/01_tidying_data.html">← Previous: Tidying data</a></p>
+<section id="sec-overview" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Overview</h1>
+<p>This document matches salmonid farm locations to FAO fishing regions and country-level production data, checks that the spatial matching is consistent, and assigns model species to individual farms.</p>
 </section>
-<section id="match-farm-locations-to-fao-regions" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Match farm locations to FAO regions</h1>
+<section id="sec-match-fao-regions" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Match farm locations to FAO regions</h1>
 <p>Pull in farm locations and check that they look right.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Get farm locations for salmonids</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>farm_locations <span class="ot">&lt;-</span> <span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"salmon_marine_farm_locations.qs"</span>) <span class="sc">%&gt;%</span> <span class="fu">qread</span>()</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>farms_sf <span class="ot">&lt;-</span> farm_locations <span class="sc">%&gt;%</span> </span>
@@ -154,9 +305,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_sf</span>() <span class="sc">+</span></span>
 <span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">prettyplot_300</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>Add FAO Major fishing regions to farm locations. Why? Because the production data is classified by country and FAO region. Basically, this ensures that some of the big two-coasted countries (namely the USA and Canada) have the appropriate number of farms on both coasts.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Get FAO fishing region information</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>farms_sf_list <span class="ot">&lt;-</span> farm_locations <span class="sc">%&gt;%</span> </span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_as_sf</span>(<span class="at">coords =</span> <span class="fu">c</span>(<span class="st">"X"</span>, <span class="st">"Y"</span>), <span class="at">crs =</span> <span class="st">"EPSG:4326"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">row_num =</span> <span class="fu">row_number</span>()) <span class="sc">%&gt;%</span> </span>
@@ -173,8 +327,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_sf</span>() <span class="sc">%&gt;%</span> </span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(F_LEVEL <span class="sc">==</span> <span class="st">"MAJOR"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(F_CODE, NAME_EN)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Intersect FAO fishing area polygons with farm location points</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For testing function</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># this_farm &lt;- farms_sf_list[[1]]</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -207,12 +364,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a><span class="co">#   ) +</span></span>
 <span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a><span class="co">#   coord_sf() +</span></span>
 <span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="co">#   prettyplot_300()</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
-<section id="get-production-data" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Get production data</h1>
+<section id="sec-get-production" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Get production data</h1>
 <p>Average production over years 2019:2023.</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Load and average aquaculture production data over 2017-2023</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>production <span class="ot">&lt;-</span> <span class="fu">file.path</span>(species_path, <span class="st">"production"</span>, <span class="st">"aquaculture_quantity.qs"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">qread</span>()</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># range(production$period)</span></span>
@@ -238,8 +398,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Collapse fishing regions just for viewing</span></span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(country, model_name) <span class="sc">%&gt;%</span> </span>
 <span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">production =</span> <span class="fu">sum</span>(production))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <div class="cell">
+<details class="code-fold">
+<summary>Assign relevant species/groups to the production data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mariculture_prod_all <span class="ot">&lt;-</span> production <span class="sc">%&gt;%</span> </span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ISO3_Code, country) <span class="sc">%&gt;%</span> </span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nest</span>() <span class="sc">%&gt;%</span> </span>
@@ -264,22 +427,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">nat_prod_sal =</span> <span class="fu">map</span>(data, <span class="sc">~</span>(<span class="fu">sum</span>(.<span class="sc">$</span>production)))) <span class="sc">%&gt;%</span> </span>
 <span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(<span class="at">cols =</span> <span class="fu">c</span>(data, nat_prod_sal)) <span class="sc">%&gt;%</span> </span>
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-<section id="add-fao-regions-to-production-data" class="level2" data-number="2.1">
-<h2 data-number="2.1" class="anchored" data-anchor-id="add-fao-regions-to-production-data"><span class="header-section-number">2.1</span> Add FAO regions to production data</h2>
+<section id="sec-add-fao-regions" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="sec-add-fao-regions"><span class="header-section-number">3.1</span> Add FAO regions to production data</h2>
 <div class="cell">
+<details class="code-fold">
+<summary>Add FAO fishing area codes to production data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>mariculture_prod_all <span class="ot">&lt;-</span> mariculture_prod_all <span class="sc">%&gt;%</span> </span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">farm_name =</span> <span class="st">"Salmonidae fish"</span>) <span class="sc">%&gt;%</span> <span class="co"># to match with farm location names</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(FAO_code_key, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"fao_fishing_area"</span> <span class="ot">=</span> <span class="st">"NAME_EN"</span>)) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">fao_code =</span> F_CODE)</span>
 <span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(mariculture_prod_all, <span class="fu">file.path</span>(gendata_path, <span class="st">"mariculture_production_all.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 </section>
 </section>
-<section id="check-matching" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> Check matching</h1>
+<section id="sec-check-matching" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Check matching</h1>
 <div class="cell">
+<details class="code-fold">
+<summary>Check that mapped farm locations for each country are in the same FAO fishing regions as the production data</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the mapped farm location data</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>farm_fao_intersect <span class="ot">&lt;-</span> <span class="fu">qread</span>(<span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"farm_locations_w_fishing_areas.qs"</span>))</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -330,9 +499,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>fao_area_code_check <span class="sc">%&gt;%</span> </span>
 <span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>production_fishing_areas <span class="sc">==</span> <span class="st">""</span> <span class="sc">&amp;</span> farm_spp_group <span class="sc">==</span> <span class="st">"Salmonidae fish"</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">50</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-<p>There’s a problem here: in the USA, there are salmonid farms mapped to fishing areas 21 (east coast) and 67 (west coast), but the production data only has it placed in 21 (east coast). How to solve this? We could do an extra step before moving on: - Assume that all USA farms produce the same amount each (both east and west coast) - Count the number of farms on the east and west coast in the US (from mapping data) - Modify the mariculture_production_all to split the production between the two fishing areas</p>
+<p>There’s a problem here: in the USA, there are salmonid farms mapped to fishing areas 21 (east coast) and 67 (west coast), but the production data only has it placed in 21 (east coast). How to solve this? We could do an extra step before moving on:</p>
+<ul>
+<li>Assume that all USA farms produce the same amount each (both east and west coast)</li>
+<li>Count the number of farms on the east and west coast in the US (from mapping data)</li>
+<li>Modify the mariculture_production_all to split the production between the two fishing areas</li>
+</ul>
 <div class="cell">
+<details class="code-fold">
+<summary>Split USA production across east and west coast fishing regions proportionally</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>tmp <span class="ot">&lt;-</span> farm_fao_intersect <span class="sc">%&gt;%</span> </span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(iso3c <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"USA"</span>, <span class="st">"CAN"</span>))</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -372,12 +549,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Overwrite previous file</span></span>
 <span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(mariculture_prod_all, <span class="fu">file.path</span>(gendata_path, <span class="st">"mariculture_production_all.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
 <p>If you run the above check again the production should now be fixed.</p>
 </section>
-<section id="assign-species-to-individual-farms" class="level1" data-number="4">
-<h1 data-number="4"><span class="header-section-number">4</span> Assign species to individual farms</h1>
+<section id="sec-assign-species" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Assign species to individual farms</h1>
 <div class="cell">
+<details class="code-fold">
+<summary>Assign salmonid species to individual farm locations based on proportional production</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>mariculture_prod_sal <span class="ot">&lt;-</span> mariculture_prod_all <span class="sc">%&gt;%</span> </span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(farm_name <span class="sc">==</span> <span class="st">"Salmonidae fish"</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -398,91 +578,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">reframe</span>(<span class="at">production =</span> <span class="fu">sum</span>(production))</span>
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="fu">qsave</span>(mariculture_prod_sal, <span class="fu">file.path</span>(input_farm_coords_path, <span class="st">"mariculture_prod_salmonids.qs"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
 </div>
-</section>
-<section id="for-later" class="level1" data-number="5">
-<h1 data-number="5"><span class="header-section-number">5</span> For later</h1>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>mariculture_prod_all <span class="ot">&lt;-</span> production <span class="sc">%&gt;%</span> </span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">model_name =</span> <span class="fu">case_when</span>(</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Salmonids</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Salmo salar"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"atlantic_salmon"</span>, </span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Oncorhynchus|Salmonidae|Salmo |Salmoniformes"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_salmonid"</span>, </span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Fish</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Lates"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"barramundi"</span>, </span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Dicentrarchus|Lateolabrax|Morone "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"bass"</span>, </span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Sparus|Diplodus|Acanthopagrus|Sparidentex |Sparidae|Rhabdosargus |Pagrus |Dentex |Pagellus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"breams_porgies"</span>,</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Ariidae|Bagridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"catfish"</span>,</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Kyphosus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"chubs"</span>,  </span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Rachycentron"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"cobia_ling"</span>,  </span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Gadus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"cod"</span>,  </span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Astacidae|Cambaridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"crayfish"</span>,</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Miichthys|Larimichthys "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"croaker"</span>,  </span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Sciaenidae|Sciaenops |Umbrina "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"drums"</span>,</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Monacanthidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"filefish"</span>,</span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Paralichthys"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"flounder"</span>,</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Gobiidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"gobies"</span>,</span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Epinephelus|Mycteroperca|Serranidae|Chromileptes|Plectropomus |Hyporthodus "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"grouper"</span>, </span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Terapon|Pomadasys"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"grunts"</span>, </span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Hippoglossus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"halibut"</span>, </span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Carangidae|Trachinotus "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"jack_pompano"</span>,</span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Scombridae|Trachurus |Scomber"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mackerels"</span>,</span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Chanos"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"milkfish"</span>,</span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Cyprinidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"minnows"</span>,</span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Gerreidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mojarras"</span>,</span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Planiliza"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mudskipper"</span>,</span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Mugilidae|Mugil "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mullets"</span>,</span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Bolbometopon"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"parrotfish"</span>, </span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Siganus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"rabbitfish"</span>,</span>
-<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Scorpaenidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"rockfish"</span>,</span>
-<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Scatophagus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"scats"</span>,  </span>
-<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Atherinidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"silversides"</span>,</span>
-<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Eleotridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"sleepers"</span>,</span>
-<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Lutjanidae|Chrysophrys"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"snappers"</span>,</span>
-<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Soleidae|Solea "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"soles"</span>,</span>
-<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Acipenseridae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"sturgeon"</span>,</span>
-<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Characidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"tetras"</span>, </span>
-<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Oreochromis"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"tilapia"</span>, </span>
-<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Caranx|Platycaranx |Turrum |Gnathanodon |Seriolina|Pseudocaranx |Atropus "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"trevally"</span>,   </span>
-<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Thunnus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"tuna"</span>,   </span>
-<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Actinopterygii|Plectorhinchus|Lutjanus |Eremichthys|Argyrosomus|Polydactylus |Platax|Takifugu|Seriola |Eleutheronema|Variola |Konosirus |Coregonus |Oplegnathus |Sebastes "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_fish"</span>, </span>
-<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Invertebrates</span></span>
-<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Haliotis"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"abalone"</span>, </span>
-<span id="cb10-49"><a href="#cb10-49" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Veneridae|Tridacna|Venus |Polymesoda |Solen|Meretrix|Ruditapes |Larkinia |Hippopus|Anadara |Ensis |Mercenaria |Leukoma |Saxidomus |Mactra |Cyclina |Mya|Sinonovacula "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"clams"</span>,</span>
-<span id="cb10-50"><a href="#cb10-50" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Portunidae|Carcinus|Scylla|Maja |Portunus |Paralithodes"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"crabs"</span>,</span>
-<span id="cb10-51"><a href="#cb10-51" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Cardiidae|Cerastoderma "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"cockles"</span>, </span>
-<span id="cb10-52"><a href="#cb10-52" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Octopodidae|Octopus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"octopus"</span>,</span>
-<span id="cb10-53"><a href="#cb10-53" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Mytilus|Aulacomya|Unionidae|Mytilidae|Perna |Choromytilus "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"mussels"</span>,</span>
-<span id="cb10-54"><a href="#cb10-54" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Crassostrea|Ostreidae|Magallana|Pinctada|Ostrea |Saccostrea "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"oysters"</span>,</span>
-<span id="cb10-55"><a href="#cb10-55" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Palinuridae|Panulirus |Panulirus |Thenus "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"lobsters"</span>,</span>
-<span id="cb10-56"><a href="#cb10-56" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Pectinidae|Pecten |Mimachlamys |Aequipecten |Mizuhopecten|Argopecten "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"scallops"</span>,</span>
-<span id="cb10-57"><a href="#cb10-57" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Palaemonidae|Penaeus|Metapenaeus|Miyakella|Squillidae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"shrimp"</span>,</span>
-<span id="cb10-58"><a href="#cb10-58" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Aliger"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"conch"</span>,</span>
-<span id="cb10-59"><a href="#cb10-59" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Actinopyga|Holothuria|Holothuroidea|Apostichopus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"sea_cucumber"</span>,</span>
-<span id="cb10-60"><a href="#cb10-60" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Strongylocentrotus"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"urchins"</span>,</span>
-<span id="cb10-61"><a href="#cb10-61" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Mollusca|Polititapes |Pteria "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_molluscs"</span>,</span>
-<span id="cb10-62"><a href="#cb10-62" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Asaphis |Bivalvia|Donax |Tegillarca |Nodipecten|Venerupis |Panopea |Atrina "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_bivalves"</span>,</span>
-<span id="cb10-63"><a href="#cb10-63" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Gastropoda|Bolinus |Turbo|Rochia|Rapana "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_gastropods"</span>,</span>
-<span id="cb10-64"><a href="#cb10-64" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Crustacea"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_crustaceans"</span>,</span>
-<span id="cb10-65"><a href="#cb10-65" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Invertebrata|Ascidiacea|Halocynthia"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_invertebrates"</span>,</span>
-<span id="cb10-66"><a href="#cb10-66" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-67"><a href="#cb10-67" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Seaweeds</span></span>
-<span id="cb10-68"><a href="#cb10-68" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Dunaliella|Spirulina"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"microalgae"</span>,      </span>
-<span id="cb10-69"><a href="#cb10-69" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Ulva|Undaria|Gracilaria|Saccharina|Sargassum|Rhodophyta|Pyropia|Laminaria|Laminariaceae|Eucheuma|Chlorophyceae|Kappaphycus|Caulerpa|Macrocystis|Algae|Sarcothalia |Codium |Gracilariopsis |Alaria |Gigartina|Phaeophyceae|Porphyra|Cladosiphon|Meristotheca|Capsosiphon |Gelidium |Monostroma "</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_seaweed"</span>,</span>
-<span id="cb10-70"><a href="#cb10-70" aria-hidden="true" tabindex="-1"></a>      <span class="fu">grepl</span>(<span class="st">"Plantae aquaticae"</span>, Scientific_Name) <span class="sc">~</span> <span class="st">"general_plants"</span>,</span>
-<span id="cb10-71"><a href="#cb10-71" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-72"><a href="#cb10-72" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="cn">NA</span></span>
-<span id="cb10-73"><a href="#cb10-73" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span> <span class="fu">as.factor</span>()</span>
-<span id="cb10-74"><a href="#cb10-74" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-75"><a href="#cb10-75" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(model_name, <span class="at">.before =</span> Scientific_Name) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
+<p><a href="../docs-working/03_assessing_species_potential.html">Next: Assessing species potential →</a></p>
+
+
 </section>
 
-</main>
-<!-- /main column -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

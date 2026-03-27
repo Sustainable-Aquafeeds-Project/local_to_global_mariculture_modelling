@@ -1,5 +1,5 @@
 ---
-title: "Step 10: Figures for manuscript"
+title: "10: Figures for manuscript"
 subtitle: "Local to global salmon aquaculture waste modelling"
 author: 
   - "Tormey Reimer"
@@ -11,7 +11,7 @@ format:
     code-fold: true
 ---
 
-[← Previous: Data analysis](docs-working/09_data_analysis.qmd)
+[← Previous: Data analysis](09_data_analysis.qmd)
 
 # Overview {#sec-overview}
 
@@ -30,11 +30,16 @@ library(here)
 library(scales)
 library(cowplot)
 library(patchwork)
+# library(ggtern)
+library(patchwork)
+library(ggpubr)
 
 conflicted::conflicts_prefer(
   dplyr::filter(),
   dplyr::select(),
   scales::rescale(),
+  ggplot2::theme_void(),
+  ggplot2::aes(),
   .quiet = T
 )
 ```
@@ -42,6 +47,7 @@ conflicted::conflicts_prefer(
 ```{r source-scripts}
 #| code-summary: "Source R scripts and set up custom units"
 #| output: false
+#| cache: false
 
 here("src") %>%
   list.files(pattern = "\\.R$", full.names = TRUE) %>%
@@ -90,8 +96,7 @@ The total values describe selected output variables (measures) summed over the e
 - 3 different feed groups, representing different formulations of salmon feed: MD (marine-dominant), AD (animal-dominant) and PD (plant-dominant)
 - 3 different feed types representing levels of digestibility of each of the three different feeds: mean digestibility, minimum digestibility, and maximum digestibility
 
-```{r}
-#| label: total-values
+```{r total-values}
 #| code-summary: "Get farm ends data"
 
 clean_up <- function(df) {
@@ -201,7 +206,7 @@ p1 <- farm_ends_CN %>%
     strip.background = element_blank()
   )
 
-legend_grob <- get_legend(
+legend_grob <- ggpubr::get_legend(
   p1 +
     guides(colour = guide_legend(ncol = 1)) +
     theme(
@@ -633,13 +638,13 @@ p1 <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>%
   scale_colour_manual(values = feed_pal) +
   scale_y_continuous(breaks = seq(0, 12, 2), limits = c(0,12)) +
   facet_wrap(~nutrient) +
-  prettyplot_300() +
+  prettyplot_600() +
   labs(
     x = expression("Aboslute latitude ("*degree*")"),
     y = expression("Change in loading (kg"~t[fish]^{-1}*")")
   )
 
-legend_grob <- get_legend(
+legend_grob <- ggpubr::get_legend(
   p1 +
     guides(colour = guide_legend(ncol = 1)) +
     theme(
@@ -658,6 +663,123 @@ p1 + inset_element(
   bottom = 0.85, top    = 0.95,   # y start, y end
   align_to = "full"  # relative to full plot, not just panel area
 )
+```
+
+## Tradeoff plot {#sec-tradeoff}
+
+```{r fig-ternary-tradeoff}
+#| code-summary: "Create ternary tradeoff plot of C loading, N loading, and biomass production"
+#| fig-cap: "Ternary tradeoff plot of end-of-cycle carbon loading, nitrogen loading, and biomass produced per unit biomass, across feed types and digestibility levels."
+
+weight_data <- file.path(output_path, "model_run_outputs", "fish_ends_weight.qs") %>% 
+  qread() %>% 
+  group_by(farm_ID, feed) %>% 
+  reframe(mean_value = mean(value)) %>% 
+  convert_feeds_to_levels() %>% 
+  mutate(
+    farm_ID = as.integer(farm_ID),
+    feed = factor(feed, 
+      levels = c("marine_dominant_biomar", "plant_dominant_biomar", "animal_dominant_biomar"),
+      labels = c("MD", "PD", "AD")
+      )
+    )
+
+plt_data <- farm_ends_carbon %>%
+  select(farm_ID, feed, feed_level, carbon_perbiom = mean_value_perbiom) %>%
+  inner_join(
+    farm_ends_nitrogen %>% select(farm_ID, feed, feed_level, nitrogen_perbiom = mean_value_perbiom),
+    by = c("farm_ID", "feed", "feed_level")
+  ) %>%
+  inner_join(
+    weight_data %>% select(farm_ID, feed, feed_level, biomass = mean_value),
+    by = c("farm_ID", "feed", "feed_level")
+  ) %>%
+  # Step 1: min-max scale each dimension to [0, 1] so columns are comparable.
+  mutate(
+    c = rescale(drop_units(carbon_perbiom)),
+    n = rescale(drop_units(nitrogen_perbiom)),
+    b = rescale(biomass),
+    feed_level = factor(
+      feed_level,
+      levels = c("min", "mean", "max"),
+      labels = c("Minimum", "Meanimum", "Maximum")
+    )
+  )
+
+# library(plotly)
+# plot_ly(plt_data,
+#         x = ~c, y = ~n, z = ~b,
+#         color = ~feed,
+#         type = "scatter3d",
+#         mode = "markers",
+#         marker = list(size = 5)) %>%
+#   plotly::layout(scene = list(
+#     xaxis = list(title = "Carbon lost"),
+#     yaxis = list(title = "Nitrogen lost"),
+#     zaxis = list(title = "Biomass produced")
+#   ))
+```
+
+@fig-biomass-carbon-nitrogen shows the relationship between harvest biomass, carbon loading, and nitrogen loading across feed types and digestibility levels.
+
+```{r fig-biomass-carbon-nitrogen}
+#| code-summary: "Plot pairwise relationships between harvest biomass, carbon loading and nitrogen loading"
+#| fig-cap: "Pairwise relationships between mean harvest biomass, carbon loading, and nitrogen loading across feed types and digestibility levels."
+p1 <- plt_data %>%
+  ggplot(aes(
+    x = biomass, 
+    y = drop_units(carbon_perbiom), 
+    color = feed, shape = feed_level
+  )) +
+  geom_point(size = 2) +
+  scale_color_manual(values = feed_pal) +
+  scale_shape_manual(values = c(21, 4, 24)) +
+  prettyplot_600() +
+  labs(
+    x = "Mean harvest biomass (g)",
+    y = expression("Carbon loading (kg"~t[fish]^{-1}*")")
+  )
+
+p2 <- plt_data %>% 
+  ggplot(aes(
+    x = biomass, 
+    y = drop_units(nitrogen_perbiom), 
+    color = feed, shape = feed_level
+  )) +
+  geom_point(size = 2) +
+  scale_color_manual(values = feed_pal) +
+  scale_shape_manual(values = c(21, 4, 24)) +
+  prettyplot_600() +
+  labs(
+    x = "Mean harvest biomass (g)",
+    y = expression("Nitrogen loading (kg"~t[fish]^{-1}*")")
+  )
+
+p3 <- plt_data %>% 
+  ggplot(aes(
+    x = drop_units(carbon_perbiom), 
+    y = drop_units(nitrogen_perbiom), 
+    color = feed, shape = feed_level
+  )) +
+  geom_point(size = 2) +
+  scale_color_manual(values = feed_pal) +
+  scale_shape_manual(values = c(21, 4, 24)) +
+  prettyplot_600() +
+  labs(
+    x = expression("Carbon loading (kg"~t[fish]^{-1}*")"),
+    y = expression("Nitrogen loading (kg"~t[fish]^{-1}*")")
+  )
+
+# Extract legend as its own plot element
+legend <- ggpubr::get_legend(
+  p1 + theme(legend.position = "right")
+  ) %>% as_ggplot()
+
+# Arrange in quadrants
+row1 <- p1 + p3     + plot_layout(widths = c(2, 1))
+row2 <- p2 + legend + plot_layout(widths = c(2, 1))
+
+row1 / row2
 ```
 
 # Supplementary figures {#sec-supplementary}
@@ -875,4 +997,4 @@ farm_ends_CN_ratio %>%
   labs(x = "Feed digestibility", y = "C:N")
 ```
 
-[Next: TBD →](index.qmd)
+[Next: Home →](../index.qmd)

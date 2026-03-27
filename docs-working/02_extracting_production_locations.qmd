@@ -1,14 +1,21 @@
 ---
-title: "Extracting production locations"
+title: "2: Extracting production locations"
+subtitle: "Local to global salmon aquaculture waste modelling"
 author: 
-  - Richard Cottrell
-  - Tormey Reimer
-date: today
+  - "Richard Cottrell"
+  - "Tormey Reimer"
+date: last-modified
 ---
 
-## Set up
+[← Previous: Tidying data](01_tidying_data.qmd)
 
-```{r setup, include=F, cache=F}
+# Overview {#sec-overview}
+
+This document matches salmonid farm locations to FAO fishing regions and country-level production data, checks that the spatial matching is consistent, and assigns model species to individual farms.
+
+```{r setup}
+#| include: false
+
 library(tidyr)
 library(dplyr)
 library(magrittr)
@@ -28,12 +35,12 @@ here("src") %>%
   walk(source)
 ```
 
-# Match farm locations to FAO regions
+# Match farm locations to FAO regions {#sec-match-fao-regions}
 
 Pull in farm locations and check that they look right.
 
 ```{r locations-of-farms}
-#| code-summary: Get farm locations for salmonids
+#| code-summary: "Get farm locations for salmonids"
 
 farm_locations <- file.path(input_farm_coords_path, "salmon_marine_farm_locations.qs") %>% qread()
 
@@ -53,7 +60,7 @@ p_bigmap_mercator +
 Add FAO Major fishing regions to farm locations. Why? Because the production data is classified by country and FAO region. Basically, this ensures that some of the big two-coasted countries (namely the USA and Canada) have the appropriate number of farms on both coasts.
 
 ```{r fao-region-info}
-#| code-summary: Get FAO fishing region information
+#| code-summary: "Get FAO fishing region information"
 
 farms_sf_list <- farm_locations %>% 
   st_as_sf(coords = c("X", "Y"), crs = "EPSG:4326") %>% 
@@ -74,7 +81,7 @@ FAO_code_key <- file.path(bigdata_path, "fao/FAO_AREAS_CWP_NOCOASTLINE") %>%
 ```
 
 ```{r intersect-locations-with-fao-regions}
-#| code-summary: Intersect FAO fishing area polygons with farm location points
+#| code-summary: "Intersect FAO fishing area polygons with farm location points"
 
 # For testing function
 # this_farm <- farms_sf_list[[1]]
@@ -110,11 +117,12 @@ qsave(farm_fao_intersect, here(input_farm_coords_path, "farm_locations_w_fishing
 #   prettyplot_300()
 ```
 
-# Get production data
+# Get production data {#sec-get-production}
 
 Average production over years 2019:2023.
 
 ```{r aquaculture-production}
+#| code-summary: "Load and average aquaculture production data over 2017-2023"
 
 production <- file.path(species_path, "production", "aquaculture_quantity.qs") %>% 
   qread()
@@ -144,7 +152,7 @@ production %>%
 ```
 
 ```{r species-production}
-#| code-summary: Assign relevant species/groups to the production data
+#| code-summary: "Assign relevant species/groups to the production data"
 
 mariculture_prod_all <- production %>% 
   group_by(ISO3_Code, country) %>% 
@@ -172,9 +180,11 @@ mariculture_prod_all <- mariculture_prod_all %>%
   ungroup() 
 ```
 
-## Add FAO regions to production data
+## Add FAO regions to production data {#sec-add-fao-regions}
 
-```{r}
+```{r add-fao-regions}
+#| code-summary: "Add FAO fishing area codes to production data"
+
 mariculture_prod_all <- mariculture_prod_all %>% 
   mutate(farm_name = "Salmonidae fish") %>% # to match with farm location names
   left_join(FAO_code_key, by = c("fao_fishing_area" = "NAME_EN")) %>% 
@@ -183,10 +193,10 @@ mariculture_prod_all <- mariculture_prod_all %>%
 qsave(mariculture_prod_all, file.path(gendata_path, "mariculture_production_all.qs"))
 ```
 
-# Check matching
+# Check matching {#sec-check-matching}
 
 ```{r check-same-regions}
-#| code-summary: Check that mapped farm locations for each country are in the same FAO fishing regions as the production data
+#| code-summary: "Check that mapped farm locations for each country are in the same FAO fishing regions as the production data"
 
 # Get the mapped farm location data
 farm_fao_intersect <- qread(file.path(input_farm_coords_path, "farm_locations_w_fishing_areas.qs"))
@@ -241,11 +251,14 @@ fao_area_code_check %>%
 ```
 
 There's a problem here: in the USA, there are salmonid farms mapped to fishing areas 21 (east coast) and 67 (west coast), but the production data only has it placed in 21 (east coast). How to solve this? We could do an extra step before moving on:
+
 - Assume that all USA farms produce the same amount each (both east and west coast)
 - Count the number of farms on the east and west coast in the US (from mapping data)
 - Modify the mariculture_production_all to split the production between the two fishing areas
 
 ```{r fixing-USA}
+#| code-summary: "Split USA production across east and west coast fishing regions proportionally"
+
 tmp <- farm_fao_intersect %>% 
   filter(iso3c %in% c("USA", "CAN"))
 
@@ -289,9 +302,10 @@ qsave(mariculture_prod_all, file.path(gendata_path, "mariculture_production_all.
 
 If you run the above check again the production should now be fixed.
 
-# Assign species to individual farms
+# Assign species to individual farms {#sec-assign-species}
 
-```{r}
+```{r assign-species-to-farms}
+#| code-summary: "Assign salmonid species to individual farm locations based on proportional production"
 
 mariculture_prod_sal <- mariculture_prod_all %>% 
   filter(farm_name == "Salmonidae fish")
@@ -314,3 +328,5 @@ mariculture_prod_sal <- mariculture_prod_sal %>%
 
 qsave(mariculture_prod_sal, file.path(input_farm_coords_path, "mariculture_prod_salmonids.qs"))
 ```
+
+[Next: Assessing species potential →](03_assessing_species_potential.qmd)
