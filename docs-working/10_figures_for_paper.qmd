@@ -178,7 +178,7 @@ nutrient_labels <- data.frame(
 ```{r}
 #| label: fig-nutrient-loading
 #| code-summary: "Plot total C and N loading to environment by feed and digestibility"
-#| fig-cap: "Total carbon (a) and nitrogen (b) loading to the environment with different feeds and digestibility levels."
+#| fig-cap: "Total carbon (top) and nitrogen (bbottom) loading to the environment with different feeds and digestibility levels."
 
 p1 <- farm_ends_CN %>% 
   ggplot(aes(x = feed_level, y = drop_units(mean_value_perbiom), fill = feed)) +
@@ -229,16 +229,14 @@ p1 + inset_element(
 
 ## Global loading of C and N {#sec-global-loading}
 
-```{r}
-#| label: global-loading-data
+```{r global-loading-data}
 #| code-summary: "Prepare global C and N loading data for mapping"
 
 global_data <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
-  filter(feed_level == "mean" & feed == "MD") %>% 
   merge(farm_locs, by = "farm_ID") %>% 
   st_as_sf(crs = 4326) %>% 
   st_transform(crs = "+proj=robin") %>% 
-  select(farm_ID, feed, measure, mean_value_perbiom, nutrient, feed_level, iso3c, fao_code, country, region)
+  select(farm_ID, feed, measure, mean_value_perbiom, nutrient, feed_level, country)
 
 Cr <- range(global_data$mean_value_perbiom[global_data$nutrient == "C"])
 Nr <- range(global_data$mean_value_perbiom[global_data$nutrient == "N"])
@@ -246,113 +244,261 @@ Nr <- range(global_data$mean_value_perbiom[global_data$nutrient == "N"])
 print(
   sprintf("Range of C: %f - %f Mt, range of N: %f - %f Mt", Cr[1], Cr[2], Nr[1], Nr[2])
 )
+
+global_data_diff <- global_data %>% 
+  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
+  mutate(
+    diff_PD = PD - MD,
+    diff_AD = AD - MD
+    )
 ```
 
-@fig-map-nutrient-loading-MD maps the global distribution of total carbon and nitrogen loading for the marine-dominant feed at mean digestibility.
-
-```{r}
-#| label: fig-map-nutrient-loading-MD
-#| code-summary: "Map global C and N loading for marine-dominant feed at mean digestibility"
-#| fig-cap: "Map showing global distribution of total nitrogen and carbon loading for the MD feed at mean digestibility."
-#| fig-height: 7.5
-
-p1 <- p_bigmap_robinson +
-  geom_sf(
-    data = filter(global_data, nutrient == "C"), 
-    aes(color = drop_units(mean_value_perbiom), geometry = geometry), 
-    size = 2
-  ) +
-  coord_sf() +
-  scale_color_viridis_c(option = "turbo", breaks = seq(50, 80, 5), limits = c(50, 81)) + 
-  guides(color = guide_colourbar(
+```{r CN-plot-formatting}
+Carbon_text <-      annotate("text", label = "Carbon", x = -Inf, y = Inf, vjust = 1, hjust = 0, size = 5.5, family = "serif")
+Carbon_colourbar_1 <- guides(color = guide_colourbar(
     title = expression(atop("C loading", paste("(kg"~t[fish]^{-1}*")"))),
     direction = "vertical", position = "right",
     label.position = "right", title.position = "top",
     title.vjust = 1, title.hjust = 0.5,
     frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
-    barwidth = 1.5, barheight = 15,
-  )) +
-  annotate(
-    "text", label = "Carbon",
-    x = -Inf, y = Inf, 
-    vjust = 1, hjust = 0,
-    size = 5.5, family = "serif",
-    inherit.aes = FALSE
-    ) +
-  labs(y = "Latitude", x = "Longitude") +
-  prettyplot_600() +
-  theme(legend.position = "bottom") +
-  remove_map_axes()
+    barwidth = 1.25, barheight = 8,
+  ))
+Carbon_colourbar_2 <- guides(color = guide_colourbar(
+    title = expression(atop("Difference, C", paste("(kg"~t[fish]^{-1}*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barwidth = 1.25, barheight = 12,
+  ))
 
-p2 <- p_bigmap_robinson +
-  geom_sf(
-    data = filter(global_data, nutrient == "N"), 
-    aes(color = drop_units(mean_value_perbiom), geometry = geometry), 
-    size = 2
-  ) +
-  coord_sf() +
-  scale_x_continuous(expand = c(0,0)) +
-  scale_y_continuous(expand = c(0,0)) +
-  scale_color_viridis_c(option = "turbo", breaks = seq(6, 10, 1), limits = c(6, 10.25)) + 
-  guides(color = guide_colourbar(
+Nitrogen_text <-      annotate("text", label = "Nitrogen", x = -Inf, y = Inf, vjust = 1, hjust = 0, size = 5.5, family = "serif")
+Nitrogen_colourbar_1 <- guides(color = guide_colourbar(
     title = expression(atop("N loading", paste("(kg"~t[fish]^{-1}*")"))),
     direction = "vertical", position = "right",
     label.position = "right", title.position = "top",
     title.vjust = 1, title.hjust = 0.5,
     frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
-    barwidth = 1.5, barheight = 12,
-  )) +
-  annotate(
-    "text", label = "Nitrogen",
-    x = -Inf, y = Inf, 
-    vjust = 1, hjust = 0,
-    size = 5.5, family = "serif",
-    inherit.aes = FALSE
+    barwidth = 1.25, barheight = 8,
+  ))
+Nitrogen_colourbar_2 <- guides(color = guide_colourbar(
+    title = expression(atop("Difference, N", paste("(kg"~t[fish]^{-1}*")"))),
+    direction = "vertical", position = "right",
+    label.position = "right", title.position = "top",
+    title.vjust = 1, title.hjust = 0.5,
+    frame.colour = "black", ticks.colour = "black",ticks.linewidth = 1,
+    barwidth = 1.25, barheight = 12,
+  ))
+
+north_band_bbox <- band_bbox_robinson( 41,  75)
+south_band_bbox <- band_bbox_robinson(-58, -24)
+ar <- diff(c(41,75))/diff(c(-58,-24))
+```
+
+@fig-map-nutrient-loading-MD maps the global distribution of total carbon and nitrogen loading for the marine-dominant feed at mean digestibility.
+
+```{r nutrient-loading-MD-maps}
+#| code-summary: "Create all the bits for global C and N loading plots."
+
+p_MD_C_north <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "C" & feed_level == "mean"), 
+    aes(color = drop_units(MD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(north_band_bbox["xmin"], north_band_bbox["xmax"]), 
+      ylim = c(north_band_bbox["ymin"], north_band_bbox["ymax"]), expand = FALSE
     ) +
-  labs(y = "Latitude", x = "Longitude") +
-  prettyplot_600() +
-  theme(legend.position = "bottom") +
-  remove_map_axes()
+  scale_color_viridis_c(option = "turbo", breaks = seq(50, 80, 5), limits = c(50, 81)) +
+  prettyplot_600() + remove_map_axes()
+
+p_MD_C_south <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "C" & feed_level == "mean"), 
+    aes(color = drop_units(MD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(south_band_bbox["xmin"], south_band_bbox["xmax"]), 
+      ylim = c(south_band_bbox["ymin"], south_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(50, 80, 5), limits = c(50, 81)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_PD_C_north <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "C" & feed_level == "mean"), 
+    aes(color = drop_units(diff_PD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(north_band_bbox["xmin"], north_band_bbox["xmax"]), 
+      ylim = c(north_band_bbox["ymin"], north_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 12, 2), limits = c(1.5, 11.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_PD_C_south <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "C" & feed_level == "mean"), 
+    aes(color = drop_units(diff_PD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(south_band_bbox["xmin"], south_band_bbox["xmax"]), 
+      ylim = c(south_band_bbox["ymin"], south_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 12, 2), limits = c(1.5, 11.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_AD_C_north <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "C" & feed_level == "mean"), 
+    aes(color = drop_units(diff_AD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(north_band_bbox["xmin"], north_band_bbox["xmax"]), 
+      ylim = c(north_band_bbox["ymin"], north_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 12, 2), limits = c(1.5, 11.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_AD_C_south <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "C" & feed_level == "mean"), 
+    aes(color = drop_units(diff_AD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(south_band_bbox["xmin"], south_band_bbox["xmax"]), 
+      ylim = c(south_band_bbox["ymin"], south_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 12, 2), limits = c(1.5, 11.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_AD_C <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "C" & feed_level == "mean"), 
+    aes(color = drop_units(diff_AD), geometry = geometry), size = 2) +
+  coord_sf() +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 12, 2), limits = c(1.5, 11.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_MD_N_north <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "N" & feed_level == "mean"), 
+    aes(color = drop_units(MD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(north_band_bbox["xmin"], north_band_bbox["xmax"]), 
+      ylim = c(north_band_bbox["ymin"], north_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(6, 10, 1), limits = c(6, 10.25)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_MD_N_south <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "N" & feed_level == "mean"), 
+    aes(color = drop_units(MD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(south_band_bbox["xmin"], south_band_bbox["xmax"]), 
+      ylim = c(south_band_bbox["ymin"], south_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(6, 10, 1), limits = c(6, 10.25)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_PD_N_north <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "N" & feed_level == "mean"), 
+    aes(color = drop_units(diff_PD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(north_band_bbox["xmin"], north_band_bbox["xmax"]), 
+      ylim = c(north_band_bbox["ymin"], north_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 4, 0.5), limits = c(0.5, 3.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_PD_N_south <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "N" & feed_level == "mean"), 
+    aes(color = drop_units(diff_PD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(south_band_bbox["xmin"], south_band_bbox["xmax"]), 
+      ylim = c(south_band_bbox["ymin"], south_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 4, 0.5), limits = c(0.5, 3.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_AD_N_north <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "N" & feed_level == "mean"), 
+    aes(color = drop_units(diff_AD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(north_band_bbox["xmin"], north_band_bbox["xmax"]), 
+      ylim = c(north_band_bbox["ymin"], north_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 4, 0.5), limits = c(0.5, 3.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+p_AD_N_south <- p_bigmap_robinson +
+  geom_sf(
+    data = filter(global_data_diff, nutrient == "N" & feed_level == "mean"), 
+    aes(color = drop_units(diff_AD), geometry = geometry), size = 2) +
+  coord_sf(
+      xlim = c(south_band_bbox["xmin"], south_band_bbox["xmax"]), 
+      ylim = c(south_band_bbox["ymin"], south_band_bbox["ymax"]), expand = FALSE
+    ) +
+  scale_color_viridis_c(option = "turbo", breaks = seq(0, 4, 0.5), limits = c(0.5, 3.5)) + 
+  prettyplot_600() + remove_map_axes()
+
+# Add needed bits
+p_MD_C_north <- p_MD_C_north + Carbon_colourbar_1 + 
+  annotate("text", label = "MD", x = -Inf, y = Inf, vjust = 1, hjust = 0, size = 5.5, family = "serif")
+p_MD_C_south <- p_MD_C_south
+p_PD_C_north <- p_PD_C_north + Carbon_colourbar_2 + 
+  annotate("text", label = "PD - MD", x = -Inf, y = Inf, vjust = 1, hjust = 0, size = 5.5, family = "serif")
+p_PD_C_south <- p_PD_C_south
+p_AD_C_north <- p_AD_C_north + 
+  annotate("text", label = "AD - MD", x = -Inf, y = Inf, vjust = 1, hjust = 0, size = 5.5, family = "serif")
+p_AD_C_south <- p_AD_C_south
+p_MD_N_north <- p_MD_N_north + Nitrogen_colourbar_1 + 
+  annotate("text", label = "MD", x = -Inf, y = Inf, vjust = 1, hjust = 0, size = 5.5, family = "serif")
+p_MD_N_south <- p_MD_N_south
+p_PD_N_north <- p_PD_N_north + Nitrogen_colourbar_2 + 
+  annotate("text", label = "PD - MD", x = -Inf, y = Inf, vjust = 1, hjust = 0, size = 5.5, family = "serif")
+p_PD_N_south <- p_PD_N_south
+p_AD_N_north <- p_AD_N_north + 
+  annotate("text", label = "AD - MD", x = -Inf, y = Inf, vjust = 1, hjust = 0, size = 5.5, family = "serif")
+p_AD_N_south <- p_AD_N_south
+```
+
+```{r fig-map-nutrient-loading-MD}
+#| code-summary: "Map global C and N loading for marine-dominant feed at mean digestibility"
+#| fig-cap: "Map showing global distribution of total nitrogen and carbon loading for the MD feed at mean digestibility."
+#| fig-width: 7.5
+
+border <- element_rect(colour = "grey70", fill = NA, linewidth = 1)
 
 plot_grid(
-  p1, p2,
-  ncol = 1,
-  align = "v"
+  p_MD_C_north + theme(panel.border = border), 
+  p_MD_C_south + theme(panel.border = border), 
+  p_PD_C_north + theme(panel.border = border), 
+  p_PD_C_south + theme(panel.border = border), 
+  p_AD_C_north + theme(panel.border = border), 
+  p_AD_C_south + theme(panel.border = border), 
+  nrow = 8, rel_heights = c(1, 1.01, 1, 1.01, 1, 1.01, 1, 1.01)
+)
+
+plot_grid(
+  p_MD_N_north + theme(panel.border = border), 
+  p_MD_N_south + theme(panel.border = border), 
+  p_PD_N_north + theme(panel.border = border), 
+  p_PD_N_south + theme(panel.border = border), 
+  p_AD_N_north + theme(panel.border = border), 
+  p_AD_N_south + theme(panel.border = border), 
+  nrow = 8, rel_heights = c(1, 1.01, 1, 1.01, 1, 1.01, 1, 1.01)
 )
 ```
 
-@fig-global-diff-MD maps the spatial distribution of C and N loading for the MD feed at mean digestibility side by side.
-
-```{r global-diff-data}
-#| code-summary: "Prepare global loading difference data comparing MD to PD and AD feeds"
-
-global_data_all <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>%
-  merge(farm_locs, by = "farm_ID") %>% 
-  st_as_sf(crs = 4326) %>% 
-  st_transform(crs = "+proj=robin") %>% 
-  select(farm_ID, feed, feed_level, nutrient, mean_value_perbiom)
-
-global_data_PD_diff <- global_data_all %>% 
-  filter(feed %in% c("MD", "PD") & feed_level == "mean") %>% 
-  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
-  mutate(diff = PD - MD) %>% 
-  select(-MD, -PD)
-
-global_data_AD_diff <- global_data_all %>% 
-  filter(feed %in% c("MD", "AD") & feed_level == "mean") %>% 
-  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
-  mutate(diff = AD - MD) %>% 
-  select(-MD, -AD)
-```
-
-```{r fig-global-diff-MD}
-#| code-summary: "Map global C and N loading for MD feed (side-by-side)"
-#| fig-cap: "Map showing global distribution of total carbon and nitrogen loading for the MD feed at mean digestibility."
-#| fig-height: 7.5
+```{r fig-mapping-colourbars}
 plot_grid(
-  p1, p2,
-  ncol = 2,
-  align = "v"
+  ggpubr::get_legend(p_MD_C_north + theme(legend.position = "right")),
+  ggpubr::get_legend(p_MD_N_north + theme(legend.position = "right")),
+  ncol = 2
+)
+plot_grid(
+  ggpubr::get_legend(p_PD_C_north + theme(legend.position = "right")),
+  ggpubr::get_legend(p_PD_N_north + theme(legend.position = "right")),
+  ncol = 2
 )
 ```
 
@@ -727,7 +873,7 @@ plt_data <- farm_ends_carbon %>%
 #| fig-cap: "Pairwise relationships between mean harvest biomass, carbon loading, and nitrogen loading across feed types and digestibility levels."
 p1 <- plt_data %>%
   ggplot(aes(
-    x = biomass, 
+    x = biomass/1000, 
     y = drop_units(carbon_perbiom), 
     color = feed, shape = feed_level
   )) +
@@ -736,13 +882,13 @@ p1 <- plt_data %>%
   scale_shape_manual(values = c(21, 4, 24)) +
   prettyplot_600() +
   labs(
-    x = "Mean harvest biomass (g)",
+    x = "Mean harvest biomass (kg)",
     y = expression("Carbon loading (kg"~t[fish]^{-1}*")")
   )
 
 p2 <- plt_data %>% 
   ggplot(aes(
-    x = biomass, 
+    x = biomass/1000, 
     y = drop_units(nitrogen_perbiom), 
     color = feed, shape = feed_level
   )) +
@@ -751,7 +897,7 @@ p2 <- plt_data %>%
   scale_shape_manual(values = c(21, 4, 24)) +
   prettyplot_600() +
   labs(
-    x = "Mean harvest biomass (g)",
+    x = "Mean harvest biomass (kg)",
     y = expression("Nitrogen loading (kg"~t[fish]^{-1}*")")
   )
 
@@ -777,7 +923,7 @@ legend <- ggpubr::get_legend(
 
 # Arrange in quadrants
 row1 <- p1 + p3     + plot_layout(widths = c(2, 1))
-row2 <- p2 + legend + plot_layout(widths = c(2, 1))
+row2 <- p2 + legend + plot_layout(widths = c(1.7, 1))
 
 row1 / row2
 ```

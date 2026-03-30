@@ -1,19 +1,20 @@
 suppressPackageStartupMessages(suppressWarnings({
-library(devtools)
-library(qs)
-library(dplyr)
-library(magrittr)
-library(tidyr)
-library(stringr)
-library(ggplot2)
-library(ggh4x)
-library(cowplot)
-library(sf)
-library(terra)
-library(rnaturalearth)
-library(rnaturalearthdata)
-library(rnaturalearthhires)
-library(purrr)
+  library(devtools)
+  library(qs)
+  library(dplyr)
+  library(magrittr)
+  library(tidyr)
+  library(stringr)
+  library(ggplot2)
+  library(ggh4x)
+  library(cowplot)
+  library(sf)
+  library(terra)
+  library(rnaturalearth)
+  library(rnaturalearthdata)
+  library(rnaturalearthhires)
+  library(purrr)
+  library(patchwork)
 }))
 
 # Define areas -------------------------------------------------
@@ -68,8 +69,30 @@ labels_spec_mercator <- list(
   AUS = c(l = "E", h = 0, v = 0)
 )
 
-# The Robinson projection --------------------------------------------------------------------------------------------------------------
-worldmap_robinson <- ne_countries(scale = "medium", returnclass = "sf") %>% 
+# The Molleweide projection -----------------------------------------------------------------------------------------
+worldmap_moll <- ne_coastline(scale = "medium", returnclass = "sf") %>% 
+  st_transform(crs = "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs")
+
+p_bigmap_moll <- ggplot() +
+  geom_sf(data = worldmap_moll, fill = "white", color = "dimgray") +
+  coord_sf() +
+  theme_void()
+
+## Broken axis map -----------------------------------------------------------
+# Define the lat bands in Molleweide projection
+band_bbox <- function(lat_min, lat_max) {
+  bbox_sf <- st_sfc(
+    st_polygon(list(matrix(
+      c(-180, lat_min, 180, lat_min, 180, lat_max, -180, lat_max, -180, lat_min), 
+      ncol = 2, byrow = TRUE
+    ))),
+    crs = 4326
+  ) %>% st_transform(crs = "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs")
+  st_bbox(bbox_sf)
+}
+
+# The Robinson projection -------------------------------------------------------------------------------------------
+worldmap_robinson <- ne_coastline(scale = "medium", returnclass = "sf") %>% 
   st_transform(crs = "+proj=robin")
 graticules_robinson <- st_graticule(worldmap_robinson, lon = seq(-180, 180, 30), lat = seq(-90, 90, 30)) 
 
@@ -83,7 +106,7 @@ boxes_robinson <- st_transform(box_data$boxes, crs = "+proj=robin")
 labels_robinson <- st_transform(box_data$labels, crs = "+proj=robin")
 
 p_bigmap_robinson <- ggplot() +
-  geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
+  # geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
   geom_sf(data = worldmap_robinson, fill = "white", color = "dimgray") +
   coord_sf() +
   theme_void()
@@ -105,44 +128,16 @@ p_bigmap_robinson_boxes <- ggplot() +
 library(patchwork)
 
 # Define the lat bands in Robinson projection
-# We need to transform bbox coords to Robinson first
-band_bbox <- function(lat_min, lat_max) {
+band_bbox_robinson <- function(lat_min, lat_max) {
   bbox_sf <- st_sfc(
-    st_polygon(list(matrix(c(
-      -180, lat_min,
-       180, lat_min,
-       180, lat_max,
-      -180, lat_max,
-      -180, lat_min
-    ), ncol = 2, byrow = TRUE))),
+    st_polygon(list(matrix(
+      c(-180, lat_min, 180, lat_min, 180, lat_max, -180, lat_max, -180, lat_min), 
+      ncol = 2, byrow = TRUE
+    ))),
     crs = 4326
   ) %>% st_transform(crs = "+proj=robin")
   st_bbox(bbox_sf)
 }
-
-bbox_north <- band_bbox( 30,  70)  # slight buffer around 30-60N
-bbox_south <- band_bbox(-70, -30) # slight buffer around 30-60S
-
-# Helper to build a panel
-make_band_panel <- function(bbox) {
-  ggplot() +
-    geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
-    geom_sf(data = worldmap_robinson, fill = "white", color = "dimgray") +
-    coord_sf(
-      xlim = c(bbox["xmin"], bbox["xmax"]),
-      ylim = c(bbox["ymin"], bbox["ymax"]),
-      expand = FALSE
-    ) +
-    theme_void()
-}
-
-p_north <- make_band_panel(bbox_north)
-p_south <- make_band_panel(bbox_south)
-
-p_combined <- p_north / p_south +
-  plot_layout(heights = c(1, 1))  # equal height since same lat span
-
-p_combined
 
 # The Mercator projection --------------------------------------------------------------------------------------------------------------
 worldmap_mercator <- ne_countries(scale = "large", returnclass = "sf")

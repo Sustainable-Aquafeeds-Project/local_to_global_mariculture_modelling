@@ -1,0 +1,367 @@
+================================================================================
+DOCUMENTATION STANDARDS FOR CURRENT PROJECT
+================================================================================
+Last Updated: 2026-03-25
+Purpose: Ensure consistency across all Quarto documentation files
+
+================================================================================
+1. DOCUMENT STRUCTURE
+================================================================================
+
+1.1 YAML Header
+---------------
+All documents must include:
+- title: "X: [Title]"
+- subtitle: "Local to global salmon aquaculture waste modelling"
+- author: Either "Tormey Reimer" OR "Richard Cottrell"
+- date: last-modified
+
+Examples:
+---
+title: "10: Figures for manuscript"
+- subtitle: "Local to global salmon aquaculture waste modelling"
+author: 
+  - "Tormey Reimer"
+date: last-modified
+---
+
+---
+title: "2: Extract production locations"
+- subtitle: "Local to global salmon aquaculture waste modelling"
+author: 
+  - "Richard Cottrell"
+date: last-modified
+---
+
+1.2 Navigation Links
+--------------------
+MANDATORY: Add navigation links to create a connected document flow. If it is not clear which document comes before/after, replace with TBD and link to the index.
+
+At the TOP of document (after YAML, before first section):
+[← Previous: [Title]]([docs-working/filename].qmd)
+
+At the BOTTOM of document (after References section, right-aligned):
+[Next: [Title] →]([docs-working/filename].qmd)
+
+Example:
+[← Previous: Model Structure](docs-working/02_model_structure.qmd)
+[Next: Resource Spectrum →](docs-working/04_resource_spectrum.qmd)
+OR
+[Next: TBD →](index.qmd)
+
+1.3 Section Structure
+---------------------
+Required sections in order:
+1. Navigation link (top)
+2. Overview section
+3. Main content sections
+4. References section (if applicable, otherwise remove this section)
+5. Navigation link (bottom)
+
+DO NOT INCLUDE:
+- "Next Steps" sections
+- Future work that belongs in later documents
+- Status notes like "Document Status: Complete"
+
+================================================================================
+2. TEXT AND LANGUAGE
+================================================================================
+
+1.1 Section Typography
+---------------------
+- All section titles should be in sentence case (only first word capitalised)
+- All lists (ordered or unordered) must be preceeded by a blank line
+
+MAIN sections and FIRST-LEVEL SUBSECTIONS should be labelled with the Quarto referencing system.
+
+Example: 
+  # Load data {#sec-load-data}
+  ## Filter data by date {#sec-filter-data}
+
+1.2 Tone
+---------------------
+The documents should be written in an informal version of scientific vernacular. This is being written by a scientist for other scientists, so tone should be precise and professional but relaxed.
+Use Australian/British English, not American English.
+DO NOT alter text that I have written to fit the specified tone - the old alterations to human-made text you should be making is to fix mistakes. The tone specifications mentioned here are for AI-written text only.
+
+Good example:
+  Load in production data and filter out non-feeding groups (n = 15).
+
+Bad example (too formal/scientific): 
+  Live-weight production data was loaded in from [source] and non-feeding groups were excluded (n = 15).
+
+Bad example (too informal/casual/short): 
+  Let's get the prod data and get rid of the 15 non-feeding critters.
+
+1.2 Specific wording choices
+---------------------
+There are some specific words/phrases that are preferred over others:
+- Use "plot" instead of "chart" or "graph" for bar and line graphs: E.g. "barplot and scatterplot" instead of "bar chart or line graph"
+- Use "line graph" instead of "line chart"
+- Use "calculate" instead of "compute"
+
+================================================================================
+3. CODE CHUNKS
+================================================================================
+
+3.1 Chunk Labels
+----------------
+ALL code chunks MUST have unique labels in the chunk wrapper using the format:
+```{r descriptive-name}
+
+Naming conventions:
+- Use lowercase with hyphens (kebab-case)
+- Be descriptive and specific
+- Use prefixes for special chunk types
+
+Required prefixes:
+- fig- : For chunks that generate figures/plots
+- tbl- : For chunks that generate tables
+- No prefix needed for setup, data loading, calculations
+
+Examples:
+```{r fig-biomass-comparison}
+```{r tbl-species-summary}
+```{r load-data}
+```{r calculate-parameters}
+
+3.2 Code Summaries
+------------------
+ALL code chunks EXCEPT those with label "setup" MUST include a code-summary attribute:
+#| code-summary: "Brief description of what this code does"
+
+Purpose: Provides collapsible code blocks with informative descriptions
+
+Examples:
+#| code-summary: "Load packages and set plot themes"
+#| code-summary: "Source R script for parameter derivation"
+#| code-summary: "Calculate and plot size ratios"
+
+Code chunks with label "setup" should have no code-summary attribute.
+
+3.3 Figure sizing
+------------------
+Default figure sizes are set in _quarto.yml to:
+  fig.height: 8.5
+  fig.width: 7.5
+
+If a figure needs to be larger (or smaller) than this, it must be specified in the figure generation chunk yaml with:
+#| fig-height: [height]
+#| fig-width: [width]
+
+3.4 Captions
+------------
+MANDATORY for figure-generating chunks:
+#| fig-cap: "Descriptive caption for the figure"
+
+MANDATORY for table-generating chunks:
+#| tbl-cap: "Descriptive caption for the table"
+
+Examples:
+#| fig-cap: "Species body size ranges and distribution of size parameters"
+#| tbl-cap: "Summary of species parameters by category"
+
+3.5 Common Chunk Options
+-------------------------
+Setup chunks:
+#| include: false
+#| code-summary: "Load packages and documentation helper functions"
+
+Script sourcing chunks:
+#| code-summary: "Source R script for [description]"
+#| output: false
+
+Figure generating chunks:
+#| code-summary: "Plot [data] for [purpose]"
+#| fig-cap: "Descriptive caption for the figure"
+#| fig-height: 5
+#| fig-width: 8
+
+General code chunks:
+#| code-summary: "Code to [describe action]"
+
+================================================================================
+4. SOURCING R SCRIPTS
+================================================================================
+
+4.1 Script Execution Location
+------------------------------
+R scripts related to the documentation MUST be sourced:
+- AFTER the Overview section and setup chunk
+- BEFORE the main content that uses the generated data
+
+All required scripts should be sourced in a single chunk.
+
+4.2 Script Sourcing Pattern
+----------------------------
+Use the source function.
+
+Example:
+```{r source-scripts}
+#| code-summary: "Source R scripts in use"
+#| output: false
+
+here("src", "dirs.R") %>% source()
+here("src", "functions.R") %>% source()
+```
+
+================================================================================
+5. FIGURES AND TABLES
+================================================================================
+
+5.1 Figure References
+---------------------
+MANDATORY: All figures must use Quarto's cross-referencing system
+
+Reference in text BEFORE the chunk which generates the plot using:
+@fig-label
+
+Example:
+In text: "As shown in @fig-size-ranges, marine mammals have narrow size ranges..."
+
+5.2 Table References
+--------------------
+For tables generated by code chunks, the label serves as the reference:
+```{r tbl-species-summary}
+# Generate table here...
+```
+
+Reference in text BEFORE the chunk which generates the table using:
+@tbl-species-summary
+
+Example:
+@tbl-species-summary shows the distribution of species across categories.
+
+5.3 Multiple Figures in Single Chunk
+-------------------------------------
+If a chunk generates multiple figures, reference the whole chunk:
+@fig-comparison shows three aspects of the analysis.
+
+================================================================================
+6. CROSS-REFERENCES
+================================================================================
+
+6.1 Internal Document References
+---------------------------------
+Link to other documentation files:
+[Title](XX_filename.qmd)
+
+Link to specific sections using anchors defined in index.qmd:
+[Title: Section](XX_filename.qmd#sec-name)
+
+Examples:
+[Model Structure](02_model_structure.qmd)
+[Model Structure: Key Decisions](02_model_structure.qmd#sec-key-decisions)
+
+6.2 File Path References
+-------------------------
+When referencing code or data files:
+[`path/to/file.R`](../path/to/file.R)
+
+Example:
+The script [`01_derive_species_parameters.R`](../Models/AI-assisted/Attempt 1/01_derive_species_parameters.R) generates the parameters.
+
+6.3 Citations
+-------------
+Use BibTeX format in resources/references.bib and cite using:
+@author_firstword_2019 or [@author_firstword_2019]
+
+Examples:
+Based on @clawson_mapping_2022, we...
+The model [@dahood_model_2019; @blanchard_investigating_2017] shows...
+
+================================================================================
+7. FORMATTING CONVENTIONS
+================================================================================
+
+7.2 Mathematics
+---------------
+Use LaTeX math notation:
+- Inline: $x = y$
+- Display: $$x = \frac{a}{b}$$
+
+7.3 Code vs Results
+-------------------
+Distinguish between:
+- Example/illustration code: eval: false, echo: true
+- Code that actually runs: No eval specification or eval: true
+- Setup code: include: false
+
+7.4 Lists and Tables
+--------------------
+Use markdown tables for simple data:
+| Column 1 | Column 2 |
+|----------|----------|
+| Data     | Data     |
+
+Use R code chunks with kable() for dynamic tables.
+
+================================================================================
+8. HUMAN-ONLY ADDITIONS
+================================================================================
+
+8.1 Callout Blocks
+------------------
+FORBIDDEN: Quarto callout blocks are for humans to add important notes:
+
+::: {.callout-note}
+## Title (optional)
+Content here
+:::
+
+DO NOT use callout blocks for notes, comments, or anything else. 
+DO NOT delete any existing callout blocks.
+
+================================================================================
+9. QUALITY CHECKLIST
+================================================================================
+
+Before finalizing any document, verify:
+
+[ ] YAML header is complete with all required fields
+[ ] Navigation links present at top and bottom
+[ ] All code chunks have unique labels
+[ ] All code chunks have code-summary attributes
+[ ] Figure chunks have fig- prefix and fig-cap
+[ ] Table chunks have tbl- prefix and tbl-cap
+[ ] All figures referenced in text using @fig-label
+[ ] All tables referenced in text using @tbl-label
+[ ] R scripts sourced at beginning (after Overview)
+[ ] No "Next Steps" or "Future Work" sections
+[ ] No placeholder text or "to be filled" notes
+[ ] Cross-references use proper Quarto syntax
+[ ] File paths use relative links
+[ ] Document is self-contained and focused on its step
+
+================================================================================
+10. EXAMPLE TEMPLATE
+================================================================================
+
+---
+title: "Step X: [Title]"
+subtitle: "Translation of Dahood et al. (2019) EwE Model"
+author: 
+  - "Tormey Reimer"
+date: last-modified
+---
+
+[← Previous: [Previous Title]]([previous_file].qmd)
+
+```{r setup}
+#| include: false
+#| code-summary: "Load packages and documentation helper functions"
+
+library(tidyverse)
+source("doc_functions.R")
+```
+
+```{r source-analysis-script}
+#| code-summary: "Source R script for [specific analysis]"
+#| output: false
+
+source(here("src", "XX_script_name.R"))
+```
+
+================================================================================
+END OF DOCUMENTATION STANDARDS
+================================================================================
