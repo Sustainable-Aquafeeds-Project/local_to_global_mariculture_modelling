@@ -7,22 +7,39 @@ author:
 date: last-modified
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Home](../index.qmd)
+
+[Next: Extract production locations →](02_extracting_production_locations.qmd)
+:::
 
 # Overview {#sec-overview}
 
 This document tidies the raw input data needed for the analysis. It processes FAO aquaculture production data, cleans farm location data for salmonids, downloads and processes daily SST rasters, and loads species vulnerability and distribution data.
 
 ```{r setup}
-#| include: false
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyverse)
 library(here)
 library(terra)
 library(qs)
+```
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+```{r source-scripts}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts in use"
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
   walk(source)
 ```
 
@@ -245,4 +262,8 @@ filter(aquamaps_0.5d, is.na(cell_id))
 qsave(x = aquamaps_0.5d, file = here("data/_general_data/species_layers/distribution/aquamaps_0.5d.qs"))
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Home](../index.qmd)
+
 [Next: Extract production locations →](02_extracting_production_locations.qmd)
+:::

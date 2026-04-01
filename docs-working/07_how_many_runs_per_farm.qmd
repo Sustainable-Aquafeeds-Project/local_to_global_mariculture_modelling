@@ -6,14 +6,22 @@ author:
 date: last-modified
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Assigning production](06_assigning%20production.qmd)
+
+[Next: Run Atlantic salmon model →](08_run_atlantic_salmon_model.qmd)
+:::
 
 # Overview {#sec-overview}
 
 Originally, each farm was run with 5000 Monte-Carlo simulation runs. This takes quite a long time (4-5 minutes per farm and feed). But is this necessary?
 
 ```{r setup}
-#| include: false
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyverse)
 library(arrow)
@@ -32,12 +40,21 @@ library(here)
 library(targets)
 conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
-  str_subset("map", negate = T) %>% 
-  walk(source)
-
 overwrite <- F # Make sure to set this to FALSE for quarto rendering
+```
+
+```{r source-scripts}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts in use"
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
+  str_subset("map", negate = T) %>%
+  walk(source)
 ```
 
 # Set up data for MC testing {#sec-setup-data}
@@ -45,7 +62,7 @@ overwrite <- F # Make sure to set this to FALSE for quarto rendering
 Only use a small but representative sample of farms (n = 50) across the mean temperature spectrum.
 
 ```{r set-up-data}
-#| code-summary: Set up data
+#| code-summary: "Set up data"
 
 farm_ts_data <- file.path(input_farm_coords_path, "farm_temporal_data.qs") %>% qread()
 farm_static_data <- file.path(input_farm_coords_path, "farm_static_data_w_stocking.qs") %>% qread()
@@ -110,7 +127,7 @@ farm_ts_data_2 <- purrr::map2(
 ```
 
 ```{r define-model-runs}
-#| code-summary: Set up different farm runs as functions, define multisessions
+#| code-summary: "Set up different farm runs as functions, define multisessions"
 
 plan(multisession, workers = parallelly::availableCores()-2)
 
@@ -193,7 +210,7 @@ farm_run_MC = function(n) {
 These take quite a long time (a couple hours) so best not to do this again if you don't have to.
 
 ```{r save-nruns-5000}
-#| code-summary: Run the model with 5000 nruns (default) and save
+#| code-summary: "Run the model with 5000 nruns (default) and save"
 
 res_5000 <- farm_run_MC(5000) 
 
@@ -205,7 +222,7 @@ qsave(res_5000, file.path(output_sens_data_path, "res_nruns_5000.qs"))
 ```
 
 ```{r save-nruns-1}
-#| code-summary: Run the model with nrun = 1
+#| code-summary: "Run the model with nrun = 1"
 
 res_1 <- farm_run_singular() 
 
@@ -218,7 +235,7 @@ qsave(res_1, file.path(output_sens_data_path, "res_nruns_1.qs"))
 ```
 
 ```{r save-nruns-other}
-#| code-summary: Run the model with other numbers of nruns and save
+#| code-summary: "Run the model with other numbers of nruns and save"
 
 for (i in c(100, 250, 500, 1000, 2500)) {
   fnm <- file.path(output_sens_data_path, paste0("res_nruns_", i, ".qs"))
@@ -248,8 +265,9 @@ res_5000 <- qread(file.path(output_sens_data_path, "res_nruns_5000.qs"))
 How does the MC run approach using 5000 runs (the default) differ from only using a uniform fish weight/maximum ingestion?
 
 ```{r fig-1-nruns-weight}
+#| code-summary: "Plot individual weight timeseries comparing 1 run vs 5000 Monte-Carlo runs"
 #| fig-width: 8.5
-#| fig-cap: Individual weight at each timestep, when the farm has been run with 5000 Monte-Carlo runs (with a range of fish weights/maximum ingestion values) and when only mean fish weight/maximum ingestion was used.
+#| fig-cap: "Individual weight at each timestep, when the farm has been run with 5000 Monte-Carlo runs (with a range of fish weights/maximum ingestion values) and when only mean fish weight/maximum ingestion was used."
 
 ggplot(
   rbind(res_1, res_5000),
@@ -262,7 +280,9 @@ ggplot(
 ```
 
 ```{r fig-1-nruns-weight-diff}
+#| code-summary: "Plot percentage difference in individual weight between 1 run and 5000 Monte-Carlo runs"
 #| fig-width: 8.5
+#| fig-cap: "Percentage difference in individual weight at each timestep between a single run and 5000 Monte-Carlo runs."
 
 df_diff_1 <- rbind(res_1, res_5000) %>% 
   mutate(sd = sd/mean) %>% 
@@ -486,4 +506,8 @@ ggplot(df_diff, aes(x = as.factor(nruns), y = 100*max_diff)) +
   geom_col() + theme_classic()
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Assigning production](06_assigning%20production.qmd)
+
 [Next: Run Atlantic salmon model →](08_run_atlantic_salmon_model.qmd)
+:::

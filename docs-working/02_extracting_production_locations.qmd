@@ -7,14 +7,22 @@ author:
 date: last-modified
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Tidying data](01_tidying_data.qmd)
+
+[Next: Assessing species potential →](03_assessing_species_potential.qmd)
+:::
 
 # Overview {#sec-overview}
 
 This document matches salmonid farm locations to FAO fishing regions and country-level production data, checks that the spatial matching is consistent, and assigns model species to individual farms.
 
 ```{r setup}
-#| include: false
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyr)
 library(dplyr)
@@ -29,9 +37,18 @@ library(units)
 library(readr)
 library(ggplot2)
 library(purrr)
+```
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+```{r source-scripts}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts in use"
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
   walk(source)
 ```
 
@@ -329,4 +346,8 @@ mariculture_prod_sal <- mariculture_prod_sal %>%
 qsave(mariculture_prod_sal, file.path(input_farm_coords_path, "mariculture_prod_salmonids.qs"))
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Tidying data](01_tidying_data.qmd)
+
 [Next: Assessing species potential →](03_assessing_species_potential.qmd)
+:::

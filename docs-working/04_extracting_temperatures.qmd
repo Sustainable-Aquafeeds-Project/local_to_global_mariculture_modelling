@@ -6,7 +6,11 @@ author:
 date: last-modified
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Assessing species potential](03_assessing_species_potential.qmd)
+
+[Next: Formulating experimental feeds →](05_formulating_feeds.qmd)
+:::
 
 # Overview {#sec-overview}
 
@@ -19,8 +23,12 @@ The purpose of this document is to extract daily temperature timeseries from SST
 5. Save temperature data both with and without geometry information
 6. Determine which farms have a mean temperature <=6 C (will be omitted)
 
-
-```{r setup, include=F, cache=F}
+```{r setup}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyverse)
 library(terra)
@@ -35,9 +43,18 @@ library(units)
 library(tictoc)
 library(conflicted)
 conflicts_prefer(dplyr::select(), dplyr::filter(), .quiet = T)
+```
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+```{r source-scripts}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts in use"
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
   walk(source)
 ```
 
@@ -45,8 +62,8 @@ here("src") %>%
 
 Get global farm locations and determine whether they're in the southern or northern hemisphere.
 
-``` {r farm-locations}
-#| code-summary: Get all farm locations, determine hemisphere
+```{r farm-locations}
+#| code-summary: "Get all farm locations, determine hemisphere"
 
 farms <- here(input_farm_coords_path, "farm_locations_w_fishing_areas.qs") %>% 
   qread() %>% 
@@ -61,7 +78,7 @@ farms <- here(input_farm_coords_path, "farm_locations_w_fishing_areas.qs") %>%
 Get daily temperatures for a typical year.
 
 ```{r daily-temperatures}
-#| code-summary: Create typical year of SST for all farms
+#| code-summary: "Create typical year of SST for all farms"
 
 day_number <- seq(1:365)
 
@@ -107,8 +124,8 @@ farms_w_temp_df <- farms %>%
 
 Check which farms have missing temp data. The above method already tries bilinear interpretation, so this will need something a little more custom.
 
-``` {r missing-data}
-#| code-summary: Check which farms have missing temp data
+```{r missing-data}
+#| code-summary: "Check which farms have missing temp data"
 
 (
   missing_temp_farms <- farms_w_temp_df %>% 
@@ -163,8 +180,8 @@ farms_w_temp_df <- farms_w_temp_df %>%
   rbind(farms_w_temp_df_2)
 ```
 
-``` {r save}
-#| code-summary: Save data
+```{r save}
+#| code-summary: "Save data"
 
 # Create three identical years
 farms_w_temp_df <- rbind(
@@ -237,4 +254,8 @@ qsave(
 )
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Assessing species potential](03_assessing_species_potential.qmd)
+
 [Next: Formulating experimental feeds →](05_formulating_feeds.qmd)
+:::

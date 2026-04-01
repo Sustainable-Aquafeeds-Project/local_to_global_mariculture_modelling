@@ -11,7 +11,12 @@ format:
     code-fold: true
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Data analysis](09_data_analysis.qmd)
+
+[Next: Home →](../index.qmd)
+:::
+
 
 # Overview {#sec-overview}
 
@@ -19,7 +24,10 @@ This script generates all the figures (main and supplementary) used in the final
 
 ```{r setup}
 #| cache: false
-#| include: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyverse)
 library(sf)
@@ -33,6 +41,7 @@ library(patchwork)
 # library(ggtern)
 library(patchwork)
 library(ggpubr)
+library(gt)
 
 conflicted::conflicts_prefer(
   dplyr::filter(),
@@ -45,9 +54,12 @@ conflicted::conflicts_prefer(
 ```
 
 ```{r source-scripts}
-#| code-summary: "Source R scripts and set up custom units"
-#| output: false
 #| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts and set up custom units"
 
 here("src") %>%
   list.files(pattern = "\\.R$", full.names = TRUE) %>%
@@ -64,8 +76,7 @@ install_unit("t_fish", "1000 kg_fish")
 
 # Get data {#sec-get-data}
 
-```{r}
-#| label: location-globals-farm
+```{r location-globals-farm}
 #| code-summary: "Get locations of farms for mapping"
 
 farm_locs <- file.path(input_farm_coords_path, "farm_static_data.qs") %>% 
@@ -88,6 +99,15 @@ farm_locs <- file.path(input_farm_coords_path, "farm_static_data.qs") %>%
       country == "Russian Federation" ~ NA
     ) %>% as.factor()
   )
+
+farm_temps <- file.path(input_farm_coords_path, ("farm_temporal_data.qs")) %>% 
+  qread() %>% 
+  rename(farm_ID = farm_id) %>% 
+  group_by(farm_ID) %>% 
+  reframe(mean_temp = mean(temp_c))
+
+farm_locs <- farm_locs %>% 
+  left_join(farm_temps, by = join_by(farm_ID))
 ```
 
 The total values describe selected output variables (measures) summed over the entire period of a salmon growing period (548 days). The data were generated from a suite of model runs which cover several dimensions:
@@ -155,8 +175,7 @@ farm_ends_weight <- file.path(output_path, "model_run_outputs", "farm_ends_weigh
 
 ## Total C and N to environment {#sec-total-cn}
 
-```{r}
-#| label: total-CN-data
+```{r total-CN-data}
 #| code-summary: "Prepare combined C and N data for plotting"
 
 farm_ends_CN <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>%
@@ -173,10 +192,7 @@ nutrient_labels <- data.frame(
 )
 ```
 
-@fig-nutrient-loading shows total carbon and nitrogen loading to the environment across different feeds and digestibility levels.
-
-```{r}
-#| label: fig-nutrient-loading
+```{r fig-nutrient-loading}
 #| code-summary: "Plot total C and N loading to environment by feed and digestibility"
 #| fig-cap: "Total carbon (top) and nitrogen (bbottom) loading to the environment with different feeds and digestibility levels."
 
@@ -294,8 +310,6 @@ north_band_bbox <- band_bbox_robinson( 41,  75)
 south_band_bbox <- band_bbox_robinson(-58, -24)
 ar <- diff(c(41,75))/diff(c(-58,-24))
 ```
-
-@fig-map-nutrient-loading-MD maps the global distribution of total carbon and nitrogen loading for the marine-dominant feed at mean digestibility.
 
 ```{r nutrient-loading-MD-maps}
 #| code-summary: "Create all the bits for global C and N loading plots."
@@ -490,6 +504,8 @@ plot_grid(
 ```
 
 ```{r fig-mapping-colourbars}
+#| code-summary: "Extract and display colour bar legends for global nutrient loading maps"
+#| fig-cap: "Colour bar legends for global C and N loading maps (top: MD absolute loading; bottom: PD and AD difference from MD)."
 plot_grid(
   ggpubr::get_legend(p_MD_C_north + theme(legend.position = "right")),
   ggpubr::get_legend(p_MD_N_north + theme(legend.position = "right")),
@@ -501,8 +517,6 @@ plot_grid(
   ncol = 2
 )
 ```
-
-@fig-global-diff-carbon maps the difference in carbon loading when switching from MD to PD or AD feed.
 
 ```{r fig-global-diff-carbon}
 #| code-summary: "Map difference in carbon loading between MD and PD/AD feeds"
@@ -570,8 +584,6 @@ plot_grid(
 )
 ```
 
-@fig-global-diff-nitrogen maps the difference in nitrogen loading when switching from MD to PD or AD feed.
-
 ```{r fig-global-diff-nitrogen}
 #| code-summary: "Map difference in nitrogen loading between MD and PD/AD feeds"
 #| fig-cap: "Difference in nitrogen loading (kg per tonne of fish) when switching from MD to PD (top) or from MD to AD (bottom) feed at mean digestibility."
@@ -638,10 +650,345 @@ plot_grid(
 )
 ```
 
-## Latitudinal loading of C and N {#sec-lat-loading}
+## Latitudinal/temperature loading of C and N {#sec-lat-loading}
 
-```{r}
-#| label: chile-loading-data
+```{r temp-loading-smooth-data}
+#| code-summary: "Smooth plot C and N loading vs temperature"
+
+plt_data <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
+  left_join(farm_locs, by = join_by(farm_ID)) %>% 
+  select(feed, nutrient, mean_value_perbiom, feed_level, mean_temp) %>% 
+  mutate(
+    nutrient = factor(nutrient, 
+      levels = c("C", "N"),
+      labels = c("Carbon", "Nitrogen")),
+    feed_level = factor(feed_level,
+      levels = c("min", "mean", "max"),
+      labels = c("Minimum", "Mean", "Maximum"))
+    ) 
+
+nutrient_labels <- plt_data %>%
+  distinct(nutrient) %>%
+  mutate(label = as.character(nutrient))
+```
+
+```{r fig-temp-loading-smooth}
+#| code-summary: "Smooth plot C and N loading vs temperature"
+#| fig-cap: "Change in C and N loading with farm mean temperature (fitted)"
+
+p1 <- plt_data %>%
+  ggplot(aes(
+    x = mean_temp,
+    y = drop_units(mean_value_perbiom),
+    colour = feed,
+    fill = feed,
+    linetype = feed_level
+  )) +
+  geom_smooth(method = "loess", se = TRUE, alpha = 0.25, show.legend = c(fill = FALSE, colour = TRUE, linetype = TRUE)) +
+  scale_colour_manual(values = feed_pal) +
+  scale_fill_manual(values = feed_pal) +
+  scale_y_continuous(breaks = seq(0, 150, 20), limits = c(0, 130)) +
+  scale_x_continuous(breaks = seq(0, 20, 2), limits = c(6, 16.75)) +
+  scale_linetype_manual(values = c("Mean" = "solid", "Maximum" = "dashed", "Minimum" = "dotted")) +
+  facet_wrap(~nutrient, ncol = 2) +
+  prettyplot_600() +
+  labs(
+    x = expression("Mean temperature ("*degree*"C)"),
+    y = expression("Change in loading (kg"~t[fish]^{-1}*")")
+  ) +
+  geom_text(
+    data        = nutrient_labels,
+    aes(x = -Inf, y = Inf, label = label),
+    hjust       = -0.25, vjust = 1.5,
+    size        = 5.5, family = "serif",
+    inherit.aes = FALSE
+  ) +
+  theme(strip.background = element_blank(), strip.text = element_blank())
+
+legend_grob <- ggpubr::get_legend(
+  p1 +
+    guides(
+      colour = guide_legend(
+      ncol = 1,
+      keywidth = unit(1, "cm")
+    ),
+      linetype = guide_legend(
+      ncol = 1,
+      keywidth = unit(2, "cm")
+    )) +
+    theme(
+      legend.position = "right",
+      legend.background = element_rect(fill = "white", colour = "grey70", linewidth = 0.3),
+      legend.margin     = margin(5, 6, 5, 6),
+      legend.key.size   = unit(0.4, "cm"),
+      legend.text       = element_text(size = 10),
+      legend.title      = element_blank()
+    )
+)
+
+p1 + inset_element(
+  legend_grob,
+  left   = 0.80, right  = 0.95,  # x start, x end (fraction of plot width)
+  bottom = 0.80, top    = 0.90,   # y start, y end
+  align_to = "full"  # relative to full plot, not just panel area
+)
+```
+
+```{r temp-loading-shift-data}
+#| code-summary: "Plot change in C and N loading vs absolute latitude when switching from MD to PD or AD feed"
+
+plt_data <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
+  # filter(feed_level == "mean") %>% 
+  left_join(farm_locs, by = join_by(farm_ID)) %>% 
+  # mutate(latitute = st_coordinates(geometry)[, 2]) %>% 
+  select(farm_ID, feed, nutrient, mean_value_perbiom, feed_level, country, mean_temp) %>% 
+  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
+  mutate(
+    MD_PD_shift = PD - MD,
+    MD_AD_shift = AD - MD
+  ) %>% 
+  select(-contains("biomar")) %>% 
+  pivot_longer(
+    cols = contains("shift"),
+    names_to = "shift_to", 
+    values_to = "change_mean_perbiomass"
+  ) %>% 
+  mutate(
+    shift_to = factor(shift_to, 
+      levels = c("MD_PD_shift", "MD_AD_shift"),
+      labels = c("PD", "AD")),
+    nutrient = factor(nutrient, 
+      levels = c("C", "N"),
+      labels = c("Carbon", "Nitrogen")),
+    feed_level = factor(feed_level,
+      levels = c("min", "mean", "max"),
+      labels = c("Minimum", "Mean", "Maximum"))
+    ) 
+
+nutrient_labels <- plt_data %>%
+  distinct(nutrient) %>%
+  mutate(label = as.character(nutrient))
+```
+
+```{r fig-temp-loading-shift}
+#| code-summary: "Plot change in C and N loading vs temperature when switching from MD to PD or AD feed"
+#| fig-cap: "Change in nutrient loading when changing from MD to PD (green) or from MD to AD (orange) at all farm locations globally."
+    
+p1 <- plt_data %>% 
+  ggplot(aes(
+    x = mean_temp, 
+    y = drop_units(change_mean_perbiomass), 
+    colour = shift_to,
+    shape = feed_level
+  )) +
+  geom_point(size = 2.5) +
+  scale_colour_manual(values = feed_pal) +
+  scale_y_continuous(breaks = seq(0, 14, 2), limits = c(0,14)) +
+  scale_x_continuous(breaks = seq(0, 20, 2), limits = c(6, 16.75)) +
+  scale_shape_manual(values = c(21, 4, 24)) +
+  facet_wrap(~nutrient, ncol = 2) +
+  prettyplot_600() +
+  labs(
+    x = expression("Mean temperature ("*degree*"C)"),
+    y = expression("Change in loading (kg"~t[fish]^{-1}*")")
+  ) +
+  geom_text(
+    data        = nutrient_labels,
+    aes(x = -Inf, y = Inf, label = label),
+    hjust       = -0.25, vjust = 1.5,
+    size        = 5.5, family = "serif",
+    inherit.aes = FALSE
+  ) +
+  theme(strip.background = element_blank(), strip.text = element_blank())
+
+legend_grob <- ggpubr::get_legend(
+  p1 +
+    guides(colour = guide_legend(ncol = 1)) +
+    theme(
+      legend.position = "right",
+      legend.background = element_rect(fill = "white", colour = "grey70", linewidth = 0.3),
+      legend.margin     = margin(5, 6, 5, 6),
+      legend.key.size   = unit(0.4, "cm"),
+      legend.text       = element_text(size = 10),
+      legend.title      = element_blank()
+    )
+)
+
+p1 + inset_element(
+  legend_grob,
+  left   = 0.85, right  = 0.95,  # x start, x end (fraction of plot width)
+  bottom = 0.80, top    = 0.90,   # y start, y end
+  align_to = "full"  # relative to full plot, not just panel area
+)
+```
+
+```{r tbl-change-with-temperature}
+#| code-summary: "Show slope of change with temperature"
+#| tbl-cap: "Linear regression slopes (kg t~fish~^-1^ per °C) of nutrient loading on mean farm temperature, by feed and digestibility level."
+
+temp_change_data <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
+  left_join(farm_locs, by = join_by(farm_ID)) %>% 
+  select(feed, nutrient, mean_value_perbiom, feed_level, mean_temp) %>% 
+  mutate(mean_value_perbiom = drop_units(mean_value_perbiom))
+
+form <- as.formula(mean_value_perbiom ~ mean_temp)
+
+tbl_data <- temp_change_data %>% 
+  distinct(feed, feed_level, nutrient) %>% 
+  mutate(slope = NA)
+
+for (i in 1:nrow(tbl_data)) {
+  tbl_data$slope[i] <- lm(
+    form, 
+    temp_change_data %>% 
+      filter(nutrient == tbl_data$nutrient[i] & 
+      feed_level == tbl_data$feed_level[i] & 
+      feed == tbl_data$feed[i])
+  )[["coefficients"]][["mean_temp"]]
+}
+
+tbl_data %>% 
+  pivot_wider(
+    names_from = c(feed_level),
+    values_from = slope
+  ) %>% 
+  relocate(min, .before = "mean") %>% 
+  relocate(nutrient, .before = "feed") %>% 
+  mutate(feed = fct_relevel(feed, "MD", "PD", "AD")) %>% 
+  arrange(nutrient, feed) %>% 
+  gt() %>% 
+  cols_label(
+    nutrient = "Nutrient",
+    feed     = "Feed",
+    min      = "Min",
+    mean     = "Mean",
+    max      = "Max"
+  )
+```
+
+## Tradeoff plot {#sec-tradeoff}
+
+```{r fig-ternary-tradeoff}
+#| code-summary: "Create ternary tradeoff plot of C loading, N loading, and biomass production"
+#| fig-cap: "Ternary tradeoff plot of end-of-cycle carbon loading, nitrogen loading, and biomass produced per unit biomass, across feed types and digestibility levels."
+
+weight_data <- file.path(output_path, "model_run_outputs", "fish_ends_weight.qs") %>% 
+  qread() %>% 
+  group_by(farm_ID, feed) %>% 
+  reframe(mean_value = mean(value)) %>% 
+  convert_feeds_to_levels() %>% 
+  mutate(
+    farm_ID = as.integer(farm_ID),
+    feed = factor(feed, 
+      levels = c("marine_dominant_biomar", "plant_dominant_biomar", "animal_dominant_biomar"),
+      labels = c("MD", "PD", "AD")
+      )
+    )
+
+plt_data <- farm_ends_carbon %>%
+  select(farm_ID, feed, feed_level, carbon_perbiom = mean_value_perbiom) %>%
+  inner_join(
+    farm_ends_nitrogen %>% select(farm_ID, feed, feed_level, nitrogen_perbiom = mean_value_perbiom),
+    by = c("farm_ID", "feed", "feed_level")
+  ) %>%
+  inner_join(
+    weight_data %>% select(farm_ID, feed, feed_level, biomass = mean_value),
+    by = c("farm_ID", "feed", "feed_level")
+  ) %>%
+  inner_join(
+    farm_locs,
+    by = "farm_ID"
+  ) %>% 
+  # Step 1: min-max scale each dimension to [0, 1] so columns are comparable.
+  mutate(
+    c = rescale(drop_units(carbon_perbiom)),
+    n = rescale(drop_units(nitrogen_perbiom)),
+    b = rescale(biomass),
+    feed_level = factor(
+      feed_level,
+      levels = c("min", "mean", "max"),
+      labels = c("Minimum", "Meanimum", "Maximum")
+    )
+  )
+
+# library(plotly)
+# plot_ly(plt_data,
+#         x = ~c, y = ~n, z = ~b,
+#         color = ~feed,
+#         type = "scatter3d",
+#         mode = "markers",
+#         marker = list(size = 5)) %>%
+#   plotly::layout(scene = list(
+#     xaxis = list(title = "Carbon lost"),
+#     yaxis = list(title = "Nitrogen lost"),
+#     zaxis = list(title = "Biomass produced")
+#   ))
+```
+
+```{r fig-biomass-carbon-nitrogen}
+#| code-summary: "Plot pairwise relationships between harvest biomass, carbon loading and nitrogen loading"
+#| fig-cap: "Pairwise relationships between mean harvest biomass, carbon loading, and nitrogen loading across feed types and digestibility levels."
+
+p1 <- plt_data %>%
+  ggplot(aes(
+    x = mean_temp, 
+    y = drop_units(carbon_perbiom), 
+    color = feed, shape = feed_level
+  )) +
+  geom_point(size = 2) +
+  scale_color_manual(values = feed_pal) +
+  scale_shape_manual(values = c(21, 4, 24)) +
+  prettyplot_600() +
+  labs(
+    x = expression("Mean farm temperature ("*degree*"C)"),
+    y = expression("Carbon loading (kg"~t[fish]^{-1}*")")
+  )
+
+p2 <- plt_data %>% 
+  ggplot(aes(
+    x = mean_temp, 
+    y = drop_units(nitrogen_perbiom), 
+    color = feed, shape = feed_level
+  )) +
+  geom_point(size = 2) +
+  scale_color_manual(values = feed_pal) +
+  scale_shape_manual(values = c(21, 4, 24)) +
+  prettyplot_600() +
+  labs(
+    x = expression("Mean farm temperature ("*degree*"C)"),
+    y = expression("Nitrogen loading (kg"~t[fish]^{-1}*")")
+  )
+
+p3 <- plt_data %>% 
+  ggplot(aes(
+    x = drop_units(carbon_perbiom), 
+    y = drop_units(nitrogen_perbiom), 
+    color = feed, shape = feed_level
+  )) +
+  geom_point(size = 2) +
+  scale_color_manual(values = feed_pal) +
+  scale_shape_manual(values = c(21, 4, 24)) +
+  prettyplot_600() +
+  labs(
+    x = expression("Carbon loading (kg"~t[fish]^{-1}*")"),
+    y = expression("Nitrogen loading (kg"~t[fish]^{-1}*")")
+  )
+
+# Extract legend as its own plot element
+legend <- ggpubr::get_legend(
+  p1 + theme(legend.position = "right")
+  ) %>% as_ggplot()
+
+# Arrange in quadrants
+row1 <- p1 + p3     + plot_layout(widths = c(2, 1))
+row2 <- p2 + legend + plot_layout(widths = c(1.7, 1))
+
+row1 / row2
+```
+
+# Supplementary figures {#sec-supplementary}
+
+```{r chile-loading-data, eval=F}
 #| code-summary: "Prepare Chile-specific C and N loading data for mapping"
 
 chile_data <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
@@ -664,10 +1011,7 @@ print(
 )
 ```
 
-@fig-mapping-nutrient-loading-chile shows the spatial distribution of total C and N loading across all feeds and digestibility levels in Chile.
-
-```{r}
-#| label: fig-mapping-nutrient-loading-chile
+```{r fig-mapping-nutrient-loading-chile, eval=F}
 #| code-summary: "Map total C and N loading across all feeds and digestibility levels in Chile"
 #| fig-cap: "Total N lost across all feeds and digestibility levels in Chile."
 #| fig-height: 8.5
@@ -744,198 +1088,9 @@ p1
 p2
 ```
 
-@fig-lat-loading-shift shows how the change in nutrient loading when switching from MD feed to either PD or AD varies with absolute latitude across all farm locations globally.
-
-```{r}
-#| label: fig-lat-loading-shift
-#| code-summary: "Plot change in C and N loading vs absolute latitude when switching from MD to PD or AD feed"
-#| fig-cap: "Change in nutrient loading when changing from MD to PD (green) or from MD to AD (orange) at all farm locations globally."
-
-p1 <- rbind(farm_ends_carbon, farm_ends_nitrogen) %>% 
-  filter(feed_level == "mean") %>% 
-  left_join(farm_locs, by = join_by(farm_ID)) %>% 
-  mutate(latitute = st_coordinates(geometry)[, 2]) %>% 
-  select(farm_ID, feed, nutrient, mean_value_perbiom, feed_level, country, latitude) %>% 
-  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
-  mutate(
-    MD_PD_shift = PD - MD,
-    MD_AD_shift = AD - MD
-  ) %>% 
-  select(-contains("biomar")) %>% 
-  pivot_longer(
-    cols = contains("shift"),
-    names_to = "shift_to", 
-    values_to = "change_mean_perbiomass"
-  ) %>% 
-  mutate(
-    shift_to = factor(shift_to, 
-      levels = c("MD_PD_shift", "MD_AD_shift"),
-      labels = c("PD", "AD")),
-    nutrient = factor(nutrient, 
-      levels = c("C", "N"),
-      labels = c("Carbon", "Nitrogen")),
-    ) %>% 
-  ggplot(aes(
-    x = abs(latitude), 
-    y = drop_units(change_mean_perbiomass), 
-    colour = shift_to
-  )) +
-  geom_point() +
-  scale_colour_manual(values = feed_pal) +
-  scale_y_continuous(breaks = seq(0, 12, 2), limits = c(0,12)) +
-  facet_wrap(~nutrient) +
-  prettyplot_600() +
-  labs(
-    x = expression("Aboslute latitude ("*degree*")"),
-    y = expression("Change in loading (kg"~t[fish]^{-1}*")")
-  )
-
-legend_grob <- ggpubr::get_legend(
-  p1 +
-    guides(colour = guide_legend(ncol = 1)) +
-    theme(
-      legend.position = "right",
-      legend.background = element_rect(fill = "white", colour = "grey70", linewidth = 0.3),
-      legend.margin     = margin(5, 6, 5, 6),
-      legend.key.size   = unit(0.4, "cm"),
-      legend.text       = element_text(size = 10),
-      legend.title      = element_blank()
-    )
-)
-
-p1 + inset_element(
-  legend_grob,
-  left   = 0.85, right  = 0.95,  # x start, x end (fraction of plot width)
-  bottom = 0.85, top    = 0.95,   # y start, y end
-  align_to = "full"  # relative to full plot, not just panel area
-)
-```
-
-## Tradeoff plot {#sec-tradeoff}
-
-```{r fig-ternary-tradeoff}
-#| code-summary: "Create ternary tradeoff plot of C loading, N loading, and biomass production"
-#| fig-cap: "Ternary tradeoff plot of end-of-cycle carbon loading, nitrogen loading, and biomass produced per unit biomass, across feed types and digestibility levels."
-
-weight_data <- file.path(output_path, "model_run_outputs", "fish_ends_weight.qs") %>% 
-  qread() %>% 
-  group_by(farm_ID, feed) %>% 
-  reframe(mean_value = mean(value)) %>% 
-  convert_feeds_to_levels() %>% 
-  mutate(
-    farm_ID = as.integer(farm_ID),
-    feed = factor(feed, 
-      levels = c("marine_dominant_biomar", "plant_dominant_biomar", "animal_dominant_biomar"),
-      labels = c("MD", "PD", "AD")
-      )
-    )
-
-plt_data <- farm_ends_carbon %>%
-  select(farm_ID, feed, feed_level, carbon_perbiom = mean_value_perbiom) %>%
-  inner_join(
-    farm_ends_nitrogen %>% select(farm_ID, feed, feed_level, nitrogen_perbiom = mean_value_perbiom),
-    by = c("farm_ID", "feed", "feed_level")
-  ) %>%
-  inner_join(
-    weight_data %>% select(farm_ID, feed, feed_level, biomass = mean_value),
-    by = c("farm_ID", "feed", "feed_level")
-  ) %>%
-  # Step 1: min-max scale each dimension to [0, 1] so columns are comparable.
-  mutate(
-    c = rescale(drop_units(carbon_perbiom)),
-    n = rescale(drop_units(nitrogen_perbiom)),
-    b = rescale(biomass),
-    feed_level = factor(
-      feed_level,
-      levels = c("min", "mean", "max"),
-      labels = c("Minimum", "Meanimum", "Maximum")
-    )
-  )
-
-# library(plotly)
-# plot_ly(plt_data,
-#         x = ~c, y = ~n, z = ~b,
-#         color = ~feed,
-#         type = "scatter3d",
-#         mode = "markers",
-#         marker = list(size = 5)) %>%
-#   plotly::layout(scene = list(
-#     xaxis = list(title = "Carbon lost"),
-#     yaxis = list(title = "Nitrogen lost"),
-#     zaxis = list(title = "Biomass produced")
-#   ))
-```
-
-@fig-biomass-carbon-nitrogen shows the relationship between harvest biomass, carbon loading, and nitrogen loading across feed types and digestibility levels.
-
-```{r fig-biomass-carbon-nitrogen}
-#| code-summary: "Plot pairwise relationships between harvest biomass, carbon loading and nitrogen loading"
-#| fig-cap: "Pairwise relationships between mean harvest biomass, carbon loading, and nitrogen loading across feed types and digestibility levels."
-p1 <- plt_data %>%
-  ggplot(aes(
-    x = biomass/1000, 
-    y = drop_units(carbon_perbiom), 
-    color = feed, shape = feed_level
-  )) +
-  geom_point(size = 2) +
-  scale_color_manual(values = feed_pal) +
-  scale_shape_manual(values = c(21, 4, 24)) +
-  prettyplot_600() +
-  labs(
-    x = "Mean harvest biomass (kg)",
-    y = expression("Carbon loading (kg"~t[fish]^{-1}*")")
-  )
-
-p2 <- plt_data %>% 
-  ggplot(aes(
-    x = biomass/1000, 
-    y = drop_units(nitrogen_perbiom), 
-    color = feed, shape = feed_level
-  )) +
-  geom_point(size = 2) +
-  scale_color_manual(values = feed_pal) +
-  scale_shape_manual(values = c(21, 4, 24)) +
-  prettyplot_600() +
-  labs(
-    x = "Mean harvest biomass (kg)",
-    y = expression("Nitrogen loading (kg"~t[fish]^{-1}*")")
-  )
-
-p3 <- plt_data %>% 
-  ggplot(aes(
-    x = drop_units(carbon_perbiom), 
-    y = drop_units(nitrogen_perbiom), 
-    color = feed, shape = feed_level
-  )) +
-  geom_point(size = 2) +
-  scale_color_manual(values = feed_pal) +
-  scale_shape_manual(values = c(21, 4, 24)) +
-  prettyplot_600() +
-  labs(
-    x = expression("Carbon loading (kg"~t[fish]^{-1}*")"),
-    y = expression("Nitrogen loading (kg"~t[fish]^{-1}*")")
-  )
-
-# Extract legend as its own plot element
-legend <- ggpubr::get_legend(
-  p1 + theme(legend.position = "right")
-  ) %>% as_ggplot()
-
-# Arrange in quadrants
-row1 <- p1 + p3     + plot_layout(widths = c(2, 1))
-row2 <- p2 + legend + plot_layout(widths = c(1.7, 1))
-
-row1 / row2
-```
-
-# Supplementary figures {#sec-supplementary}
-
 ## Harvest sizes {#sec-harvest-sizes}
 
-@fig-harvest-sizes shows the distribution of individual harvest weights across all farms.
-
-```{r}
-#| label: fig-harvest-sizes
+```{r fig-harvest-sizes}
 #| code-summary: "Plot distribution of individual harvest weights across farms"
 #| fig-cap: "Individual harvest weights (plant-dominant diet)."
 
@@ -952,8 +1107,7 @@ harvest_size %>%
 
 ## Daily values {#sec-daily-values}
 
-```{r}
-#| label: get-daily-values
+```{r get-daily-values}
 #| code-summary: "Load and summarise daily C and N loading by country"
 
 farm_runs <- map2_dfr(
@@ -980,10 +1134,7 @@ farm_runs <- farm_runs %>%
   )
 ```
 
-@fig-daily-values shows daily carbon loading over the production cycle for the marine-dominant feed at mean digestibility, summarised by country.
-
-```{r}
-#| label: fig-daily-values
+```{r fig-daily-values}
 #| code-summary: "Plot daily C loading over the production cycle by country"
 #| fig-height: 7.5
 #| fig-cap: "Daily carbon loading over the production cycle for the marine-dominant feed at mean digestibility, summarised by country."
@@ -1010,10 +1161,7 @@ farm_runs %>%
 
 ## Model sensitivity {#sec-model-sensitivity}
 
-@fig-sensitivity shows the sensitivity of individual weight and total excreted nutrient outputs to each model parameter.
-
-```{r}
-#| label: fig-sensitivity
+```{r fig-sensitivity}
 #| code-summary: "Plot parameter sensitivity for individual weight and total excreted nutrients"
 #| fig-cap: "Parameter sensitivity for individual weight and total excreted nutrient outputs."
 #| fig-height: 6
@@ -1068,8 +1216,7 @@ sens %>%
 
 ## C:N ratio to environment {#sec-cn-ratio}
 
-```{r}
-#| label: ratio-data
+```{r ratio-data}
 #| code-summary: "Calculate C:N ratios for excreted and uneaten waste fractions"
 
 farm_ends_CN_ratio <- rbind(
@@ -1107,10 +1254,7 @@ farm_ends_CN_ratio <- farm_ends_CN_ratio %>%
   )
 ```
 
-@fig-CN-ratio shows the C:N ratio for excreted, uneaten, and total waste fractions by feed type and digestibility level.
-
-```{r}
-#| label: fig-CN-ratio
+```{r fig-CN-ratio}
 #| code-summary: "Plot C:N ratio of excreted, uneaten, and total waste"
 #| fig-cap: "C:N ratio of total waste by feed type and digestibility level."
 #| fig-height: 4.5
@@ -1143,4 +1287,8 @@ farm_ends_CN_ratio %>%
   labs(x = "Feed digestibility", y = "C:N")
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Data analysis](09_data_analysis.qmd)
+
 [Next: Home →](../index.qmd)
+:::

@@ -6,14 +6,22 @@ author:
 date: last-modified
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Extracting farm temperature data](04_extracting_temperatures.qmd)
+
+[Next: Assigning production →](06_assigning%20production.qmd)
+:::
 
 # Overview {#sec-overview}
 
 The purpose of this document is to formulate all the feeds that will be used in the analysis. This needs to be done before the model pipeline is run.
 
 ```{r setup}
-#| include: false
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyverse)
 library(arrow)
@@ -29,9 +37,18 @@ library(units)
 library(qs)
 library(here)
 conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+```
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+```{r source-scripts}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts in use"
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
   walk(source)
 ```
 
@@ -39,7 +56,7 @@ here("src") %>%
 
 There is no check or correction here to ensure that protein + lipid + ash + carb = 1 in the incoming ingredient data. This needs to be checked manually prior to import. 
 
-``` {r import-ingredients}
+```{r import-ingredients}
 #| code-summary: "Get ingredient details (PLC composition, digestibility)"
 
 ingreds <- file.path(input_feed_profile_path, "all_ingredients.xlsx") %>% 
@@ -53,7 +70,7 @@ ingred_nms <- levels(ingreds$ingredient)
 
 Unlike ingredients, the feeds do not need to be checked for sum = 1 prior to import. That check is done here.
 
-``` {r import-feeds}
+```{r import-feeds}
 #| code-summary: "Feed compositions"
 
 feed_inputs <- file.path(input_feed_profile_path, "all_feeds.xlsx") %>% 
@@ -407,4 +424,8 @@ feed_stats %>%
   facet_wrap(facets = vars(group))
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Extracting farm temperature data](04_extracting_temperatures.qmd)
+
 [Next: Assigning production →](06_assigning%20production.qmd)
+:::

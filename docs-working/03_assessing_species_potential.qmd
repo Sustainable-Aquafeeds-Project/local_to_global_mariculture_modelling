@@ -6,23 +6,40 @@ author:
 date: last-modified
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Extracting production locations](02_extracting_production_locations.qmd)
+
+[Next: Extracting farm temperature data →](04_extracting_temperatures.qmd)
+:::
 
 # Overview {#sec-overview}
 
 This document assesses the global production potential of candidate marine finfish species using FAO aquaculture statistics, identifying which species and countries dominate production and selecting the focus species for the modelling work.
 
 ```{r setup}
-#| include: false
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyverse)
 library(here)
 library(janitor)
 library(countrycode)
 library(rnaturalearth)
+```
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
+```{r source-scripts}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts in use"
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
   walk(source)
 ```
 
@@ -166,4 +183,8 @@ Species decided on:
 | Pompano | Trachinotus blochii |
 | Milkfish | Chanos chanos |
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Extracting production locations](02_extracting_production_locations.qmd)
+
 [Next: Extracting farm temperature data →](04_extracting_temperatures.qmd)
+:::

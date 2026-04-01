@@ -6,14 +6,22 @@ author:
 date: last-modified
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Formulating experimental feeds](05_formulating_feeds.qmd)
+
+[Next: How many runs per farm? →](07_how_many_runs_per_farm.qmd)
+:::
 
 # Overview {#sec-overview}
 
 The purpose of this document is to choose which farms will be used to grow salmon and assign each of those farms a "production quota".
 
 ```{r setup}
-#| include: false
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyverse)
 library(arrow)
@@ -29,11 +37,20 @@ library(units)
 library(qs)
 library(here)
 conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+```
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
-  str_subset("map", negate = T) %>% 
-  str_subset("pipeline", negate = T) %>% 
+```{r source-scripts}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts in use"
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
+  str_subset("map", negate = T) %>%
+  str_subset("pipeline", negate = T) %>%
   walk(source)
 ```
 
@@ -337,4 +354,8 @@ stocking_info <- map_dfr(
 qsave(stocking_info, file.path(input_farm_coords_path, "farm_static_data_w_stocking.qs"))
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Formulating experimental feeds](05_formulating_feeds.qmd)
+
 [Next: How many runs per farm? →](07_how_many_runs_per_farm.qmd)
+:::

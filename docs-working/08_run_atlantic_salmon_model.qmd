@@ -4,20 +4,24 @@ subtitle: "Local to global salmon aquaculture waste modelling"
 author:
   - "Tormey Reimer"
 date: last-modified
-format: html
-editor: source
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: How many runs per farm?](07_how_many_runs_per_farm.qmd)
+
+[Next: Data analysis →](09_data_analysis.qmd)
+:::
 
 # Overview {#sec-overview}
 
 This document runs the aquaculture model for Atlantic salmon farms.
 
 ```{r setup}
-#| include: false
+#| cache: false
+#| echo: false
 #| warning: false
 #| message: false
+#| output: false
 
 library(tidyverse)
 library(arrow)
@@ -36,11 +40,20 @@ library(targets)
 library(lme4)
 library(MuMIn)
 conflicted::conflicts_prefer(dplyr::filter(), dplyr::select(), .quiet = T)
+```
 
-here("src") %>% 
-  list.files(pattern = "\\.R$", full.names = TRUE) %>% 
-  str_subset("map", negate = T) %>% 
-  str_subset("pipeline", negate = T) %>% 
+```{r source-scripts}
+#| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts in use"
+
+here("src") %>%
+  list.files(pattern = "\\.R$", full.names = TRUE) %>%
+  str_subset("map", negate = T) %>%
+  str_subset("pipeline", negate = T) %>%
   walk(source)
 ```
 
@@ -49,7 +62,7 @@ here("src") %>%
 The following code runs the main pipeline.
 
 ```{r run-farms-pipeline}
-#| code-summary: Run the main pipeline
+#| code-summary: "Run the main pipeline"
 #| eval: false
 
 source(here("src", "run_farmruns_pipeline.R"))
@@ -61,7 +74,7 @@ Collate the pipeline objects.
 - `farm_ends` is the read output
 
 ```{r save-fish-ends-results}
-#| code-summary: Save fish_ends objects as files
+#| code-summary: "Save fish_ends objects as files"
 
 fish_ends_files <- here("outputs/model_run_outputs/fish_ends") %>% 
   list.files(full.names = T, recursive = T, pattern = ".qs")
@@ -94,7 +107,7 @@ gc()
 ```
 
 ```{r save-farms-results}
-#| code-summary: Save farm_ends objects as files
+#| code-summary: "Save farm_ends objects as files"
 
 farm_ends_files <- here("outputs/model_run_outputs/farm_ends") %>% 
   list.files(full.names = T, recursive = T, pattern = ".qs")
@@ -117,7 +130,7 @@ gc()
 ```
 
 ```{r save-farm-runs-results}
-#| code-summary: Save farm_runs objects as files
+#| code-summary: "Save farm_runs objects as files"
 
 farm_runs_files <- here("outputs/model_run_outputs/farm_runs") %>% 
   list.files(full.names = T, recursive = T, pattern = ".qs")
@@ -169,4 +182,8 @@ sens <- rbind(sens_results_pop, sens_results_spec)
 qsave(sens, file.path(output_sens_data_path, "sens_all.qs"))
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: How many runs per farm?](07_how_many_runs_per_farm.qmd)
+
 [Next: Data analysis →](09_data_analysis.qmd)
+:::

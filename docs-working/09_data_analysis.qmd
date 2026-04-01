@@ -8,7 +8,11 @@ execute:
   eval: true
 ---
 
+::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Run Atlantic salmon model](08_run_atlantic_salmon_model.qmd)
+
+[Next: Figures for paper →](10_figures_for_paper.qmd)
+:::
 
 # Overview {#sec-overview}
 
@@ -16,7 +20,10 @@ This document does some additional data analysis on the outputs before presentin
 
 ```{r setup}
 #| cache: false
-#| include: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
 
 library(tidyverse)
 library(sf)
@@ -36,9 +43,12 @@ conflicted::conflicts_prefer(
 ```
 
 ```{r source-scripts}
-#| code-summary: "Source R scripts and set up custom units"
-#| output: false
 #| cache: false
+#| echo: false
+#| warning: false
+#| message: false
+#| output: false
+#| code-summary: "Source R scripts and set up custom units"
 
 here("src") %>%
   list.files(pattern = "\\.R$", full.names = TRUE) %>%
@@ -53,8 +63,7 @@ install_unit("kg_fish", "1000 g_fish")
 install_unit("t_fish", "1000 kg_fish")
 ```
 
-```{r}
-#| label: location-globals-farm
+```{r location-globals-farm}
 #| code-summary: "Get locations of farms for mapping"
 
 farm_locs <- file.path(input_farm_coords_path, "farm_static_data.qs") %>% 
@@ -81,8 +90,7 @@ farm_locs <- file.path(input_farm_coords_path, "farm_static_data.qs") %>%
 
 # Variance partitioning {#sec-variance-partitioning}
 
-```{r}
-#| label: get-farm-endsdata
+```{r get-farm-endsdata}
 #| code-summary: "Get all data"
 
 fish_ends_nitrogen <- file.path(output_path, "model_run_outputs", "fish_ends_total_nitrogen.qs") %>% 
@@ -93,8 +101,7 @@ fish_ends_carbon <- file.path(output_path, "model_run_outputs", "fish_ends_total
   convert_feeds_to_levels()
 ```
 
-```{r}
-#| label: get-farm-ends-data
+```{r get-farm-ends-data}
 #| code-summary: "Get all data"
 
 farm_ends_nitrogen <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs") %>% 
@@ -117,8 +124,7 @@ farm_ends_total_excr <- file.path(output_path, "model_run_outputs", "farm_ends_t
 
 For total nitrogen and carbon, we use the total value per biomass rather than total value. This is because total value is highly dependent on farm population, which is implied rather than measured and gives far too much weight to the random effect of farm location.
 
-```{r}
-#| label: choose-model
+```{r choose-model}
 #| code-summary: "Check if we should be accounting for all random slope effects"
 
 set.seed(42)
@@ -173,8 +179,7 @@ Successively removing random effects shows that farm_ID is the only one that rea
 - Farm_ID is controlled as a random intercept
 - The residual represents individual fish variation
 
-```{r}
-#| label: fit-model-value-nitrogen
+```{r fit-model-value-nitrogen}
 #| code-summary: "Fit actual model for total_nitrogen"
 
 VP_nitrogen <- file.path(data_analysis_path, "VP_modelfinal_total_nitrogen.qs")
@@ -204,8 +209,7 @@ r2*100
 rm(VP_nitrogen)
 ```
 
-```{r}
-#| label: fit-model-value-carbon
+```{r fit-model-value-carbon}
 #| code-summary: "Fit actual model for total_carbon"
 
 VP_carbon <- file.path(data_analysis_path, "VP_modelfinal_total_carbon.qs")
@@ -261,8 +265,7 @@ farm_ends_carbon %>%
 
 This section prints numbers to be used in the final manuscript.
 
-```{r}
-#| label: farm-info-1
+```{r farm-info-1}
 #| code-summary: "Get number of farms from static farm data"
 
 n_farms <- file.path(input_farm_coords_path, "farm_static_data.qs") %>% 
@@ -273,8 +276,7 @@ n_farms <- file.path(input_farm_coords_path, "farm_static_data.qs") %>%
 sprintf("Number of farms: %f", n_farms)
 ```
 
-```{r}
-#| label: farm-info-2
+```{r farm-info-2}
 #| code-summary: "Get number of farms from temporal farm data"
 
 farm_temp <- file.path(input_farm_coords_path, "farm_temporal_data.qs") %>% 
@@ -285,8 +287,7 @@ farm_temp <- file.path(input_farm_coords_path, "farm_temporal_data.qs") %>%
 sprintf("Number of farms: %f", n_farms)
 ```
 
-```{r}
-#| label: mean-harvest-size
+```{r mean-harvest-size}
 #| code-summary: "Calculate range and mean harvest size"
 
 harvest_size <- file.path(gendata_path, "harvest_sizes", "farm_harvest_sizes.qs") %>% 
@@ -327,8 +328,7 @@ total_waste %>%
   gt()
 ```
 
-```{r}
-#| label: proportion-uneaten
+```{r proportion-uneaten}
 #| code-summary: "Calculate mean and SD of proportion of feed that is uneaten"
 
 uneat <- rbind(
@@ -345,8 +345,7 @@ uneat <- rbind(
 
 @tbl-total-uneaten shows mean uneaten feed per biomass by feed type and level. @tbl-total-provided shows mean feed provided per unit biomass by feed type and level.
 
-```{r}
-#| label: tbl-total-uneaten
+```{r tbl-total-uneaten}
 #| code-summary: "Summarise and tabulate total uneaten feed per biomass by feed and level"
 #| tbl-cap: "Mean uneaten feed per unit biomass (kg per tonne of fish) by feed type and level, with propagated standard deviation."
 
@@ -365,8 +364,7 @@ farm_ends_total_uneat %>%
   gt()
 ```
 
-```{r}
-#| label: tbl-total-provided
+```{r tbl-total-provided}
 #| code-summary: "Summarise and tabulate total feed provided per biomass by feed and level"
 #| tbl-cap: "Mean feed provided per unit biomass (kg per tonne of fish) by feed type and level, with propagated standard deviation."
 
@@ -405,4 +403,8 @@ tmp <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs"
   tmp$mean_value_perbiom[tmp$feed_level == "mean"] * 100
 ```
 
+::: {style="display: flex; justify-content: space-between;"}
+[← Previous: Run Atlantic salmon model](08_run_atlantic_salmon_model.qmd)
+
 [Next: Figures for paper →](10_figures_for_paper.qmd)
+:::
