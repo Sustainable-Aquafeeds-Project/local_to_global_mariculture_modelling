@@ -17,6 +17,10 @@ suppressPackageStartupMessages(suppressWarnings({
   library(patchwork)
 }))
 
+crs_str_robinson <- "+proj=robin +lon_0=0 +datum=WGS84 +units=m +no_defs"
+crs_str_molleweide <- "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs"
+crs_str_mercator <- "+proj=merc"
+
 # Define areas -------------------------------------------------
 # For drawing area boxes on the big map
 inset_boxes <- list(   # lonmin, lonmax, latmin, latmax
@@ -71,7 +75,7 @@ labels_spec_mercator <- list(
 
 # The Molleweide projection -----------------------------------------------------------------------------------------
 worldmap_moll <- ne_coastline(scale = "medium", returnclass = "sf") %>% 
-  st_transform(crs = "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs")
+  st_transform(crs = crs_str_molleweide)
 
 p_bigmap_moll <- ggplot() +
   geom_sf(data = worldmap_moll, fill = "white", color = "dimgray") +
@@ -80,20 +84,20 @@ p_bigmap_moll <- ggplot() +
 
 ## Broken axis map -----------------------------------------------------------
 # Define the lat bands in Molleweide projection
-band_bbox <- function(lat_min, lat_max) {
+band_bbox_molleweide <- function(lat_min, lat_max) {
   bbox_sf <- st_sfc(
     st_polygon(list(matrix(
       c(-180, lat_min, 180, lat_min, 180, lat_max, -180, lat_max, -180, lat_min), 
       ncol = 2, byrow = TRUE
     ))),
     crs = 4326
-  ) %>% st_transform(crs = "+proj=moll +lon_0=0 +datum=WGS84 +units=m +no_defs")
+  ) %>% st_transform(crs = crs_str_molleweide)
   st_bbox(bbox_sf)
 }
 
 # The Robinson projection -------------------------------------------------------------------------------------------
 worldmap_robinson <- ne_coastline(scale = "medium", returnclass = "sf") %>% 
-  st_transform(crs = "+proj=robin")
+  st_transform(crs = crs_str_robinson)
 graticules_robinson <- st_graticule(worldmap_robinson, lon = seq(-180, 180, 30), lat = seq(-90, 90, 30)) 
 
 box_data <- create_boxes(
@@ -102,8 +106,8 @@ box_data <- create_boxes(
   offset_deg = unname(labels_offset_robinson)
   )
 
-boxes_robinson <- st_transform(box_data$boxes, crs = "+proj=robin")
-labels_robinson <- st_transform(box_data$labels, crs = "+proj=robin")
+boxes_robinson <- st_transform(box_data$boxes, crs = crs_str_robinson)
+labels_robinson <- st_transform(box_data$labels, crs = crs_str_robinson)
 
 p_bigmap_robinson <- ggplot() +
   # geom_sf(data = graticules_robinson, color = "gray80", size = 0.3) +
@@ -125,8 +129,6 @@ p_bigmap_robinson_boxes <- ggplot() +
   theme_void()
 
 ## Broken axis map -----------------------------------------------------------
-library(patchwork)
-
 # Define the lat bands in Robinson projection
 band_bbox_robinson <- function(lat_min, lat_max) {
   bbox_sf <- st_sfc(
@@ -135,7 +137,7 @@ band_bbox_robinson <- function(lat_min, lat_max) {
       ncol = 2, byrow = TRUE
     ))),
     crs = 4326
-  ) %>% st_transform(crs = "+proj=robin")
+  ) %>% st_transform(crs = crs_str_robinson)
   st_bbox(bbox_sf)
 }
 
@@ -156,6 +158,18 @@ p_bigmap_mercator <- ggplot() +
   geom_sf(data = worldmap_mercator, fill = "white", color = "dimgray") +
   coord_sf() +
   labs(y = "Latitude", x = "Longitude")
+
+# Define the lat bands in Mercator projection
+band_bbox_mercator <- function(lat_min, lat_max, lonmin = -180, lonmax = 180) {
+  bbox_sf <- st_sfc(
+    st_polygon(list(matrix(
+      c(lonmin, lat_min, lonmax, lat_min, lonmax, lat_max, lonmin, lat_max, lonmin, lat_min), 
+      ncol = 2, byrow = TRUE
+    ))),
+    crs = 4326
+  )
+  st_bbox(bbox_sf)
+}
 
 p_mercator_insets <- get_insets_mercator(p_bigmap_mercator)
 

@@ -1,6 +1,6 @@
 ---
 title: "8: Run Atlantic salmon model"
-subtitle: "Local to global salmon aquaculture waste modelling"
+subtitle: "Feed composition and temperature shape nutrient pressures across global salmon aquaculture locations"
 author:
   - "Tormey Reimer"
 date: last-modified
@@ -70,8 +70,8 @@ source(here("src", "run_farmruns_pipeline.R"))
 
 Collate the pipeline objects.
 
-- The only purpose of `fish_ends` is for variance partitioning
-- `farm_ends` is the read output
+- The only purpose of `fish_ends` is for variance partitioning ([09_data_analysis.qmd](09_data_analysis.qmd))
+- `farm_ends` is the real output
 
 ```{r save-fish-ends-results}
 #| code-summary: "Save fish_ends objects as files"
@@ -79,28 +79,40 @@ Collate the pipeline objects.
 fish_ends_files <- here("outputs/model_run_outputs/fish_ends") %>% 
   list.files(full.names = T, recursive = T, pattern = ".qs")
 
-fish_ends_measures <- c("weight", "total_carbon", "total_nitrogen")
+# Weight is absolute
+fish_ends <- map_dfr(
+  fish_ends_files,
+  function(fnm) {
+    qread(fnm) %>% 
+      filter(measure == "weight") %>% 
+      select(-value_perbiom, -measure, -fish)
+  },
+  .progress = T
+)
+qsave(fish_ends, here("outputs/model_run_outputs", str_c("fish_ends_weight.qs")))
 
-for (m in fish_ends_measures) {
-  if (m == "weight") {
-    fish_ends <- fish_ends_files %>% 
-      map_dfr(function(fnm) {
-        qread(fnm) %>% 
-          filter(measure == m) %>% 
-          select(-value_perbiom, -measure, -fish) %>% 
-          mutate(farm_ID = as.factor(farm_ID))
-      })
-  } else {
-    fish_ends <- fish_ends_files %>% 
-      map_dfr(function(fnm) {
-        qread(fnm) %>% 
-          filter(measure == m) %>% 
-          select(-value, -measure, -fish) %>% 
-          mutate(farm_ID = as.factor(farm_ID))
-      })
-  }
-  qsave(fish_ends, here("outputs/model_run_outputs", str_c("fish_ends_", m, ".qs")))
-}
+# Total nitrogen and carbon are per biomass
+fish_ends <- map_dfr(
+  fish_ends_files,
+  function(fnm) {
+    qread(fnm) %>% 
+      filter(measure == "total_carbon") %>% 
+      select(-value, -measure, -fish)
+  },
+  .progress = T
+)
+qsave(fish_ends, here("outputs/model_run_outputs", str_c("fish_ends_total_carbon.qs")))
+
+fish_ends <- map_dfr(
+  fish_ends_files,
+  function(fnm) {
+    qread(fnm) %>% 
+      filter(measure == "total_nitrogen") %>% 
+      select(-value, -measure, -fish)
+  },
+  .progress = T
+)
+qsave(fish_ends, here("outputs/model_run_outputs", str_c("fish_ends_total_nitrogen.qs")))
 
 rm(fish_ends)
 gc()
@@ -115,18 +127,20 @@ farm_ends_files <- here("outputs/model_run_outputs/farm_ends") %>%
 farm_ends_measures <- farm_ends_files %>% 
   first() %>% qread() %>% pull(measure) %>% sort() %>% unique()
 
-for (m in farm_ends_measures) {
-  farm_ends <- farm_ends_files %>% 
-    map_dfr(function(fnm) {
-      qread(fnm) %>% 
-        filter(measure == m) %>% 
-        mutate(measure = as.factor(measure))
+walk(
+  farm_ends_measures,
+  function(m) {
+    farm_ends <- map_dfr(
+      farm_ends_files,
+      function(fnm) {
+        qread(fnm) %>% 
+          filter(measure == m) %>% 
+          mutate(measure = as.factor(measure))
     })
-  qsave(farm_ends, here("outputs/model_run_outputs", str_c("farm_ends_", m, ".qs")))
-}
-
-rm(farm_ends)
-gc()
+    qsave(farm_ends, here("outputs", "model_run_outputs", str_c("farm_ends_", m, ".qs")))
+  },
+  .progress = T
+)
 ```
 
 ```{r save-farm-runs-results}

@@ -1,13 +1,13 @@
 ---
 title: "7: How many runs per farm?"
-subtitle: "Local to global salmon aquaculture waste modelling"
+subtitle: "Feed composition and temperature shape nutrient pressures across global salmon aquaculture locations"
 author:
   - "Tormey Reimer"
 date: last-modified
 ---
 
 ::: {style="display: flex; justify-content: space-between;"}
-[← Previous: Assigning production](06_assigning%20production.qmd)
+[← Previous: Assigning production](06_assigning_production.qmd)
 
 [Next: Run Atlantic salmon model →](08_run_atlantic_salmon_model.qmd)
 :::
@@ -507,7 +507,7 @@ ggplot(df_diff, aes(x = as.factor(nruns), y = 100*max_diff)) +
 ```
 
 ::: {style="display: flex; justify-content: space-between;"}
-[← Previous: Assigning production](06_assigning%20production.qmd)
+[← Previous: Assigning production](06_assigning_production.qmd)
 
 [Next: Run Atlantic salmon model →](08_run_atlantic_salmon_model.qmd)
 :::

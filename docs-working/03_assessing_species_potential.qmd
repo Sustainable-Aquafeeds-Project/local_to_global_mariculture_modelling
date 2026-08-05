@@ -1,6 +1,6 @@
 ---
 title: "3: Assessing species potential"
-subtitle: "Local to global salmon aquaculture waste modelling"
+subtitle: "Feed composition and temperature shape nutrient pressures across global salmon aquaculture locations"
 author: 
   - "Richard Cottrell"
 date: last-modified

@@ -1,6 +1,6 @@
 ---
 title: "9: Data analysis"
-subtitle: "Local to global salmon aquaculture waste modelling"
+subtitle: "Feed composition and temperature shape nutrient pressures across global salmon aquaculture locations"
 author: 
   - "Tormey Reimer"
 date: last-modified
@@ -11,12 +11,12 @@ execute:
 ::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Run Atlantic salmon model](08_run_atlantic_salmon_model.qmd)
 
-[Next: Figures for paper →](10_figures_for_paper.qmd)
+[Next: Exploring figures →](10_exploring_figures.qmd)
 :::
 
 # Overview {#sec-overview}
 
-This document does some additional data analysis on the outputs before presenting numbers needed for the manuscript. In particular, we fit a series of mixed-effects models to determine how much of the variance can be attributed to fixed effects (different feeds), random effects (different farms) and residual effects (Monte-Carlo sampled individual fish).
+This document does some additional data analysis on the outputs before summarising the numbers needed for the manuscript. In particular, we fit a series of mixed-effects models to determine how much of the variance can be attributed to fixed effects (different feeds), random effects (different farms) and residual effects (Monte-Carlo sampled individual fish).
 
 ```{r setup}
 #| cache: false
@@ -33,7 +33,8 @@ library(qs)
 library(here)
 library(gt)
 library(lme4)
-library(MuMIn)
+# library(MuMIn)
+library(ggforce)
 
 conflicted::conflicts_prefer(
   dplyr::filter(),
@@ -86,184 +87,557 @@ farm_locs <- file.path(input_farm_coords_path, "farm_static_data.qs") %>%
       country == "Russian Federation" ~ NA
     ) %>% as.factor()
   )
+
+temp <- file.path(input_farm_coords_path, "farm_temporal_data.qs") %>% 
+  qread() %>% 
+  group_by(farm_id) %>% 
+  reframe(mean_temp = mean(temp_c, na.rm = T))
+
+farm_locs <- farm_locs %>% 
+  left_join(temp, by = c("farm_ID" = "farm_id"))
+```
+
+# Non-linear fit to temperature {#sec-non-linear-temperature}
+
+The purpose of this section is two-fold. We know that nutrient waste varies non-linearly with temperature, so the first question is the form (coefficients) this non-linearity takes - this will inform the formula used in the mixed-effects model in the next section (@sec-variance-partitioning).
+
+```{r get-data-nitrogen}
+#| code-summary: "Get nitrogen data to be analysed"
+
+fish_ends_nitrogen <- here("outputs", "model_run_outputs", "fish_ends_total_nitrogen.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels() %>% 
+  select(farm_ID, feed, feed_level, value_perbiom)
+
+# Join with locations for mean farm temperatures
+farm_ends_nitrogen <- fish_ends_nitrogen %>% 
+  left_join(
+    farm_locs %>% st_drop_geometry() %>% select(farm_ID, mean_temp),
+    by = join_by(farm_ID)
+  ) %>% 
+  group_by(farm_ID, feed, feed_level, mean_temp) %>%
+  reframe(mean_value_perbiom = mean(value_perbiom)) %>%
+  mutate(
+    feed = C(factor(feed), contr.sum),
+    feed_level = C(factor(feed_level), contr.sum)
+  )
+qsave(farm_ends_nitrogen, file.path(data_analysis_path, "farm_ends_nitrogen.qs"))
+```
+
+```{r get-data-carbon}
+#| code-summary: "Get carbon data to be analysed"
+
+fish_ends_carbon <- here("outputs", "model_run_outputs", "fish_ends_total_carbon.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels() %>% 
+  select(farm_ID, feed, feed_level, value_perbiom)
+
+# Join with locations for mean farm temperatures
+farm_ends_carbon <- fish_ends_carbon %>%
+  left_join(
+    farm_locs %>% st_drop_geometry() %>% select(farm_ID, mean_temp),
+    by = join_by(farm_ID)
+  ) %>% 
+  group_by(farm_ID, feed, feed_level, mean_temp) %>%
+  reframe(mean_value_perbiom = mean(value_perbiom)) %>%
+  mutate(
+    feed = C(factor(feed), contr.sum),
+    feed_level = C(factor(feed_level), contr.sum)
+  )
+qsave(farm_ends_carbon, file.path(data_analysis_path, "farm_ends_carbon.qs"))
+```
+
+## Nitrogen {#sec-nitrogen-nls}
+
+```{r build-varying-parameters-models-nitrogen}
+#| code-summary: "Build non-linear models with varying parameters for nitrogen"
+
+df <- farm_ends_nitrogen %>% 
+  mutate(
+    grp = interaction(feed, feed_level),
+    mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
+  )
+grp_levels <- levels(df$grp)
+n_grp <- length(grp_levels)
+
+starts <- c(a = 0.02, b = 1.8, c = 40)
+
+# 0. No varying parameters
+mod_0 <- nls(
+  mean_value_perbiom ~ a * mean_temp^b + c,
+  data = df,
+  start = list(a = starts['a'], b = starts['b'], c = starts['c'])
+)
+
+# 1. Only c varies (a, b shared)
+mod_c <- nls(
+  mean_value_perbiom ~ a * mean_temp^b + c[grp],
+  data = df,
+  start = list(a = starts['a'], b = starts['b'], c = rep(starts['c'], n_grp))
+)
+
+# 2. c and b vary, a shared
+mod_cb <- nls(
+  mean_value_perbiom ~ a * mean_temp^b[grp] + c[grp],
+  data = df,
+  start = list(a = starts['a'], b = rep(starts['b'], n_grp), c = rep(starts['c'], n_grp))
+)
+
+# 3. c and a vary, b shared
+mod_ca <- nls(
+  mean_value_perbiom ~ a[grp] * mean_temp^b + c[grp],
+  data = df,
+  start = list(a = rep(starts['a'], n_grp), b = starts['b'], c = rep(starts['c'], n_grp))
+)
+
+# 4. All three vary
+mod_full <- nls(
+  mean_value_perbiom ~ a[grp] * mean_temp^b[grp] + c[grp],
+  data = df,
+  start = list(a = rep(starts['a'], n_grp), b = rep(starts['b'], n_grp), c = rep(starts['c'], n_grp))
+)
+```
+
+```{r compare-non-linear-models-nitrogen}
+#| code-summary: "Compare nested non-linear models for nitrogen"
+# varying c is a given (different intercepts)
+anova(mod_0, mod_c)      # significant - allowing c to vary improves fit
+anova(mod_c, mod_cb)     # significant - allowing b to vary as well as c improves fit
+anova(mod_c, mod_ca)     # significant - allowing a to vary as well as c improves fit
+anova(mod_cb, mod_full)  # significant - allowing all three parameters to vary improves fit even more
+anova(mod_ca, mod_full)  # NOT significant - allowing b to very does not improve fit enough to justify the extra degrees of freedom
+```
+
+```{r tbl-AIC-models-nitrogen}
+#| code-summary: "Compare AIC values across nitrogen models"
+#| tbl-cap: "AIC comparison of non-linear models for nitrogen with varying parameter structures."
+AIC(mod_c, mod_ca, mod_cb, mod_full) %>%
+  as_tibble(rownames = "Model") %>%
+  arrange(AIC) %>% 
+  gt()
+```
+
+```{r tbl-supp-AIC-anova-nitrogen}
+#| code-summary: "Supplementary model comparison for nitrogen"
+#| tbl-cap: "ANOVA and AIC comparison of nested non-linear temperature models for nitrogen."
+
+aic_n <- AIC(mod_0, mod_c, mod_ca, mod_cb, mod_full) %>%
+  as_tibble(rownames = "Model")
+
+anova_n_0 <- anova(mod_0, mod_c)
+anova_n_cb <- anova(mod_c, mod_cb)
+anova_n_ca <- anova(mod_c, mod_ca)
+anova_n_full_cb <- anova(mod_cb, mod_full)
+anova_n_full_ca <- anova(mod_ca, mod_full)
+
+supp_nitrogen <- tribble(
+  ~Model,     ~Nested_against, ~Df,                   ~F_value,                     ~P_value,
+  "mod_0",    NA,              NA_real_,              NA_real_,                     NA_real_,
+  "mod_c",    "mod_0",         anova_n_0$Df[2],       anova_n_0$`F value`[2],       anova_n_0$`Pr(>F)`[2],
+  "mod_cb",   "mod_c",         anova_n_cb$Df[2],      anova_n_cb$`F value`[2],      anova_n_cb$`Pr(>F)`[2],
+  "mod_ca",   "mod_c",         anova_n_ca$Df[2],      anova_n_ca$`F value`[2],      anova_n_ca$`Pr(>F)`[2],
+  "mod_full", "mod_cb",        anova_n_full_cb$Df[2], anova_n_full_cb$`F value`[2], anova_n_full_cb$`Pr(>F)`[2],
+  "mod_full", "mod_ca",        anova_n_full_ca$Df[2], anova_n_full_ca$`F value`[2], anova_n_full_ca$`Pr(>F)`[2]
+)
+
+supp_nitrogen %>%
+  left_join(aic_n, by = "Model") %>%
+  select(Model, Nested_against, Df, F_value, P_value, AIC) %>%
+  gt() %>%
+  fmt_number(columns = c("Df"), decimals = 0) %>%
+  fmt_number(columns = c("F_value"), decimals = 2) %>%
+  fmt_number(columns = c("P_value"), decimals = 3) %>%
+  fmt_number(columns = c("AIC"), decimals = 1)
+```
+
+```{r tbl-non-linear-coefs-nitrogen}
+#| code-summary: "Extract and display non-linear model coefficients for nitrogen"
+#| tbl-cap: "Coefficients of the best-fitting non-linear model for nitrogen, with shared exponent b across feed groups."
+coefs <- coef(mod_ca)
+nitrogen_b <- coefs["b"]
+
+coefs_nitrogen <- tibble(
+  grp = grp_levels,
+  a   = coefs[paste0("a", 1:n_grp)],
+  c   = coefs[paste0("c", 1:n_grp)]
+) %>%
+  mutate(b = coefs["b"]) %>%   # shared across all groups
+  separate(grp, into = c("feed", "digest_level"), sep = "\\.") %>%
+  select(feed, digest_level, a, b, c)
+
+qsave(coefs_nitrogen, file.path(data_analysis_path, "coefs_nitrogen.qs"))
+
+coefs_nitrogen %>% 
+  gt() %>% 
+  fmt_scientific(columns = "a", decimals = 2) %>% 
+  fmt_number(columns = c("b","c"), decimals = 2)
+```
+
+## Carbon {#sec-carbon-nls}
+
+```{r build-varying-parameters-models-carbon}
+#| code-summary: "Build non-linear models with varying parameters for carbon"
+
+df <- farm_ends_carbon %>% 
+  mutate(
+    grp = interaction(feed, feed_level),
+    mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()
+  )
+grp_levels <- levels(df$grp)
+n_grp <- length(grp_levels)
+
+starts <- c(a = 0.1, b = 1.8, c = 40)
+
+# 0. No varying parameters
+mod_0 <- nls(
+  mean_value_perbiom ~ a * mean_temp^b + c,
+  data = df,
+  start = list(a = starts['a'], b = starts['b'], c = starts['c'])
+)
+
+# 1. Only c varies (a, b shared)
+mod_c <- nls(
+  mean_value_perbiom ~ a * mean_temp^b + c[grp],
+  data = df,
+  start = list(a = starts['a'], b = starts['b'], c = rep(starts['c'], n_grp))
+)
+
+# 2. c and b vary, a shared
+mod_cb <- nls(
+  mean_value_perbiom ~ a * mean_temp^b[grp] + c[grp],
+  data = df,
+  start = list(a = starts['a'], b = rep(starts['b'], n_grp), c = rep(starts['c'], n_grp))
+)
+
+# 3. c and a vary, b shared
+mod_ca <- nls(
+  mean_value_perbiom ~ a[grp] * mean_temp^b + c[grp],
+  data = df,
+  start = list(a = rep(starts['a'], n_grp), b = starts['b'], c = rep(starts['c'], n_grp))
+)
+
+# 4. All three vary
+mod_full <- nls(
+  mean_value_perbiom ~ a[grp] * mean_temp^b[grp] + c[grp],
+  data = df,
+  start = list(a = rep(starts['a'], n_grp), b = rep(starts['b'], n_grp), c = rep(starts['c'], n_grp))
+)
+```
+
+```{r compare-non-linear-models-carbon}
+#| code-summary: "Compare nested non-linear models for carbon"
+# varying c is a given (different intercepts)
+anova(mod_c, mod_cb)     # significant - allowing b to vary as well as c improves fit
+anova(mod_c, mod_ca)     # significant - allowing a to vary as well as c improves fit
+anova(mod_cb, mod_full)  # significant - allowing all three parameters to vary improves fit even more
+anova(mod_ca, mod_full)  # NOT significant - allowing b to very does not improve fit enough to justify the extra degrees of freedom
+```
+
+```{r tbl-AIC-models-carbon}
+#| code-summary: "Compare AIC values across carbon models"
+#| tbl-cap: "AIC comparison of non-linear models for carbon with varying parameter structures."
+AIC(mod_c, mod_ca, mod_cb, mod_full) %>%
+  as_tibble(rownames = "Model") %>%
+  arrange(AIC) %>% 
+  gt()
+```
+
+```{r tbl-supp-AIC-anova-carbon}
+#| code-summary: "Supplementary model comparison for carbon"
+#| tbl-cap: "ANOVA and AIC comparison of nested non-linear temperature models for carbon."
+
+aic_n <- AIC(mod_0, mod_c, mod_ca, mod_cb, mod_full) %>%
+  as_tibble(rownames = "Model")
+
+anova_n_0 <- anova(mod_0, mod_c)
+anova_n_cb <- anova(mod_c, mod_cb)
+anova_n_ca <- anova(mod_c, mod_ca)
+anova_n_full_cb <- anova(mod_cb, mod_full)
+anova_n_full_ca <- anova(mod_ca, mod_full)
+
+supp_carbon <- tribble(
+  ~Model,     ~Nested_against, ~Df,                   ~F_value,                     ~P_value,
+  "mod_0",    NA,              NA_real_,              NA_real_,                     NA_real_,
+  "mod_c",    "mod_0",         anova_n_0$Df[2],       anova_n_0$`F value`[2],       anova_n_0$`Pr(>F)`[2],
+  "mod_cb",   "mod_c",         anova_n_cb$Df[2],      anova_n_cb$`F value`[2],      anova_n_cb$`Pr(>F)`[2],
+  "mod_ca",   "mod_c",         anova_n_ca$Df[2],      anova_n_ca$`F value`[2],      anova_n_ca$`Pr(>F)`[2],
+  "mod_full", "mod_cb",        anova_n_full_cb$Df[2], anova_n_full_cb$`F value`[2], anova_n_full_cb$`Pr(>F)`[2],
+  "mod_full", "mod_ca",        anova_n_full_ca$Df[2], anova_n_full_ca$`F value`[2], anova_n_full_ca$`Pr(>F)`[2]
+)
+
+supp_carbon %>%
+  left_join(aic_n, by = "Model") %>%
+  select(Model, Nested_against, Df, F_value, P_value, AIC) %>%
+  gt() %>%
+  fmt_number(columns = c("Df"), decimals = 0) %>%
+  fmt_number(columns = c("F_value"), decimals = 2) %>%
+  fmt_number(columns = c("P_value"), decimals = 3) %>%
+  fmt_number(columns = c("AIC"), decimals = 1)
+```
+
+```{r tbl-non-linear-coefs-carbon}
+#| code-summary: "Extract and display non-linear model coefficients for carbon"
+#| tbl-cap: "Coefficients of the best-fitting non-linear model for carbon, with shared exponent b across feed groups."
+coefs <- coef(mod_ca)
+carbon_b <- coefs["b"]
+
+coefs_carbon <- tibble(
+  grp = grp_levels,
+  a   = coefs[paste0("a", 1:n_grp)],
+  c   = coefs[paste0("c", 1:n_grp)]
+) %>%
+  mutate(b = coefs["b"]) %>%   # shared across all groups
+  separate(grp, into = c("feed", "digest_level"), sep = "\\.") %>%
+  select(feed, digest_level, a, b, c) 
+
+qsave(coefs_carbon, file.path(data_analysis_path, "coefs_carbon.qs"))
+
+coefs_carbon %>% 
+  gt() %>% 
+  fmt_number(columns = "c", decimals = 1) %>% 
+  fmt_number(columns = c("b","a"), decimals = 2)
 ```
 
 # Variance partitioning {#sec-variance-partitioning}
 
-```{r get-farm-endsdata}
-#| code-summary: "Get all data"
+These models are to parition variance in nutrient outputs and examine the effect of changing feed. We use the total value per biomass rather than total value because total value is highly dependent on farm population, which is implied by production statistics rather than modelled.
 
-fish_ends_nitrogen <- file.path(output_path, "model_run_outputs", "fish_ends_total_nitrogen.qs") %>% 
-  qread() %>% 
-  convert_feeds_to_levels()
-fish_ends_carbon <- file.path(output_path, "model_run_outputs", "fish_ends_total_carbon.qs") %>% 
-  qread() %>% 
-  convert_feeds_to_levels()
-```
+- Quality crossed with feed, both crossed with location.
+- Temperature is a fixed effect (between-location predictor).
+- I considered including location as random (intercept) but since there is no between-location variance that isn't captured by temperature this proved unecessary (singular fit).
+- I also considered including the interaction between feed type/level and temperature, but since feed type/level is not mechanistically linked to temperature in the model this seemed unecessary and a huge increase in model complexity. There will likely be a small amount of variation attributable to this: temperature -> feeding response -> ingestion -> calories consumed (differs between feeds) -> weight gain -> feed provided. In the following partitioning model structure this variation will be absorbed into residual (individual) variation, which is already very small.
 
-```{r get-farm-ends-data}
-#| code-summary: "Get all data"
+## Nitrogen {#sec-nitrogen}
 
-farm_ends_nitrogen <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs") %>% 
-  qread() %>% 
-  convert_feeds_to_levels()
-farm_ends_carbon <- file.path(output_path, "model_run_outputs", "farm_ends_total_carbon.qs") %>% 
-  qread() %>% 
-  convert_feeds_to_levels()
+```{r fit-variance-model-nitrogen}
+#| code-summary: "Fit model for nitrogen and save"
 
-farm_ends_food_prov <- file.path(output_path, "model_run_outputs", "farm_ends_food_prov.qs") %>% 
-  qread() %>% 
-  convert_feeds_to_levels()
-farm_ends_total_uneat <- file.path(output_path, "model_run_outputs", "farm_ends_total_uneat.qs") %>% 
-  qread() %>% 
-  convert_feeds_to_levels()
-farm_ends_total_excr <- file.path(output_path, "model_run_outputs", "farm_ends_total_excr.qs") %>% 
-  qread() %>% 
-  convert_feeds_to_levels()
-```
-
-For total nitrogen and carbon, we use the total value per biomass rather than total value. This is because total value is highly dependent on farm population, which is implied rather than measured and gives far too much weight to the random effect of farm location.
-
-```{r choose-model}
-#| code-summary: "Check if we should be accounting for all random slope effects"
-
-set.seed(42)
-fish_ends_nitrogen_subset <- fish_ends_nitrogen %>% 
-  filter(farm_ID %in% sample(unique(fish_ends_nitrogen$farm_ID), 75)) %>% 
-  mutate(farm_ID = droplevels(farm_ID)) %>% 
-  group_by(farm_ID, feed, feed_level) %>% 
-  slice_sample(n = 25) %>% 
-  ungroup()
-
-# model1 <- lmer(value_perbiom ~ feed/feed_level + (1 + feed/feed_level | farm_ID), 
-#                data = fish_ends_nitrogen_subset, REML = FALSE,
-#                control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
-# qsave(model1, file.path(data_analysis_path, "VP_model1_total_nitrogen.qs"))
-
-# model2 <- lmer(value_perbiom ~ feed/feed_level + (1 + feed/feed_level || farm_ID),
-#                 data = fish_ends_nitrogen_subset, REML = FALSE,
-#                 control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
-# qsave(model2, file.path(data_analysis_path, "VP_model2_total_nitrogen.qs"))
-
-# model3 <- lmer(value_perbiom ~ feed/feed_level + (1 + feed | farm_ID),
-#                data = fish_ends_nitrogen_subset, REML = FALSE,
-#                control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
-# qsave(model3, file.path(data_analysis_path, "VP_model3_total_nitrogen.qs"))
-
-# model4 <- lmer(value_perbiom ~ feed/feed_level + (1 | farm_ID),
-#                 data = fish_ends_nitrogen_subset, REML = FALSE,
-#                 control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5)))
-# qsave(model4, file.path(data_analysis_path, "VP_model4_total_nitrogen.qs"))
-
-model1 <- file.path(data_analysis_path, "VP_model1_total_nitrogen.qs") %>% qread()
-model2 <- file.path(data_analysis_path, "VP_model2_total_nitrogen.qs") %>% qread()
-model3 <- file.path(data_analysis_path, "VP_model3_total_nitrogen.qs") %>% qread()
-model4 <- file.path(data_analysis_path, "VP_model4_total_nitrogen.qs") %>% qread()
-
-print("Singular fit models:")
-isSingular(model1)
-isSingular(model2)
-isSingular(model3)
-isSingular(model4)
-
-print("Compare models 4 and 3")
-anova(model4, model3)
-
-print("Compare models 4 and 2")
-anova(model4, model2)
-```
-
-Successively removing random effects shows that farm_ID is the only one that really matters wihtout overcomplicating the model structure. In the final model:
-
-- Feed and nested feed_level effects are fixed effects
-- Farm_ID is controlled as a random intercept
-- The residual represents individual fish variation
-
-```{r fit-model-value-nitrogen}
-#| code-summary: "Fit actual model for total_nitrogen"
-
-VP_nitrogen <- file.path(data_analysis_path, "VP_modelfinal_total_nitrogen.qs")
-if (!file.exists(VP_nitrogen)) {
-  VP_nitrogen <- lmer(
-    value_perbiom ~ feed/feed_level + (1 | farm_ID), 
-    data = fish_ends_nitrogen, REML = TRUE,
-    control = lmerControl(optimizer = "bobyqa",optCtrl = list(maxfun = 2e5))
+# Get within-farm variation
+fish_var <- fish_ends_nitrogen %>%
+  group_by(farm_ID, feed, feed_level) %>%
+  reframe(
+    value_perbiom = var(value_perbiom), 
+    n = n()
   )
-  qsave(VP_nitrogen, file.path(data_analysis_path, "VP_modelfinal_total_nitrogen.qs"))
-} else {
-  VP_nitrogen <- qread(VP_nitrogen)
-}
+V_fish <- with(fish_var, sum((n - 1) * value_perbiom) / sum(n - 1))
 
-# Random effects variance (location + residual)
-vc <- as.data.frame(VarCorr(VP_nitrogen))
-vc$pct <- vc$vcov / sum(vc$vcov) * 100
-vc
+# Add power-temperature to farm ends
+farm_ends_nitrogen <- farm_ends_nitrogen %>% 
+  mutate(power_temp = mean_temp ^ nitrogen_b)
 
-# Fixed effects variance — how much do feed and variant explain?
-# Use r.squaredGLMM for marginal (fixed, R2m) vs conditional (fixed + random, R2c) R²
-r2 <- as.data.frame(r.squaredGLMM(VP_nitrogen))
-r2$farm_ID <- r2$R2c - r2$R2m
-r2$ind_fish <- 1 - r2$R2c
-r2*100
+# Fit full model
+m_full <- lmer(
+  mean_value_perbiom ~ feed * feed_level + power_temp + (1 | farm_ID),
+  data = farm_ends_nitrogen
+)
 
-rm(VP_nitrogen)
+qsave(m_full, file.path(data_analysis_path, "m_full_Nitrogen.qs"))
 ```
 
-```{r fit-model-value-carbon}
-#| code-summary: "Fit actual model for total_carbon"
+```{r get-variance-nitrogen}
+#| code-summary: "Partition variance on the nitrogen model"
 
-VP_carbon <- file.path(data_analysis_path, "VP_modelfinal_total_carbon.qs")
-if (!file.exists(VP_carbon)) {
-  VP_carbon <- lmer(
-    value_perbiom ~ feed/feed_level + (1 | farm_ID), 
-    data = fish_ends_carbon, 
-    REML = TRUE,
-    control = lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))
+fixed_form <- ~ feed * feed_level + power_temp
+mm   <- model.matrix(fixed_form, data = farm_ends_nitrogen)
+beta <- fixef(m_full)[colnames(mm)]
+asgn <- attr(mm, "assign")
+lbl  <- attr(terms(fixed_form), "term.labels")
+
+contrib <- vapply(seq_along(lbl), function(j) {
+  cols <- which(asgn == j)
+  var(as.numeric(mm[, cols, drop = FALSE] %*% beta[cols]))
+}, numeric(1))
+names(contrib) <- lbl
+
+V_fixed <- var(as.numeric(mm %*% beta))              # total fixed-effect variance
+V_loc   <- as.data.frame(VarCorr(m_full))$vcov[1]    # between-location, after temperature
+V_total <- V_fixed + V_loc + V_fish                  # total fish-level variance
+
+marg_R2 <- V_fixed / V_total                         # all fixed effects
+cond_R2 <- (V_fixed + V_loc) / V_total               # fixed + location
+
+comp <- tibble(
+  group  = c(rep("Fixed effects", 4), rep("Random effects", 2)),
+  source = c("Feed", "Digestibility", "Feed × digestibility", "Temperature (power)", "Farm ID (between-farm residual)", "Fish (within-farm residual)"),
+  variance = c(contrib[["feed"]], contrib[["feed_level"]], contrib[["feed:feed_level"]], contrib[["power_temp"]], V_loc, V_fish)
+) %>%
+  mutate(pct = variance / V_total * 100)
+```
+
+```{r tbl-variance-nitrogen}
+#| code-summary: "Display variance results"
+#| tbl-cap: "Results of the variance partitioning for the nitrogen loading mixed-effects model. Temperature is a co-variate of farm ID, so the 'Farm ID' residual refers to any variance between farms NOT captured by temperature directly."
+
+comp %>%
+  gt(rowname_col = "source", groupname_col = "group") %>%
+  cols_label(variance = "Variance", pct = "% of total") %>%
+  fmt_scientific(columns = variance, decimals = 2) %>%
+  fmt_percent(columns = pct, scale_values = FALSE, decimals = 1) %>%
+  tab_source_note(md(sprintf(
+    "Marginal R² (fixed) = **%.1f%%** · Conditional R² (fixed + location) = **%.1f%%**",
+    marg_R2 * 100, cond_R2 * 100))) %>%
+  tab_style(cell_text(weight = "bold"), locations = cells_row_groups()) %>%
+  opt_stylize(style = 6, color = "gray")
+```
+
+## Carbon {#sec-carbon}
+
+This model is the same as the above, but for carbon. I expect that the results of the variance partitioning will be pretty much exactly the same.
+
+```{r fit-variance-model-carbon}
+#| code-summary: "Fit model for carbon and save"
+
+# Get within-farm variation
+fish_var <- fish_ends_carbon %>%
+  group_by(farm_ID, feed, feed_level) %>%
+  reframe(
+    value_perbiom = var(value_perbiom), 
+    n = n()
   )
-  qsave(VP_carbon, file.path(data_analysis_path, "VP_modelfinal_total_carbon.qs"))
-} else {
-  VP_carbon <- qread(VP_carbon)
-}
+V_fish <- with(fish_var, sum((n - 1) * value_perbiom) / sum(n - 1))
 
-# Random effects variance (location + residual)
-vc <- as.data.frame(VarCorr(VP_carbon))
-vc$pct <- vc$vcov / sum(vc$vcov) * 100
-vc
+# Add power-temperature to farm ends
+farm_ends_carbon <- farm_ends_carbon %>% 
+  mutate(power_temp = mean_temp ^ carbon_b)
 
-# Fixed effects variance — how much do feed and variant explain?
-# Use r.squaredGLMM for marginal (fixed, R2m) vs conditional (fixed + random, R2c) R²
-r2 <- as.data.frame(r.squaredGLMM(VP_carbon))
-r2$farm_ID <- r2$R2c - r2$R2m
-r2$ind_fish <- 1 - r2$R2c
-r2*100
+# Fit full model
+m_full <- lmer(
+  mean_value_perbiom ~ feed * feed_level + power_temp + (1 | farm_ID),
+  data = farm_ends_carbon
+)
 
-rm(VP_carbon)
+qsave(m_full, file.path(data_analysis_path, "m_full_Carbon.qs"))
 ```
 
-# Shifts in latitude {#sec-shifts-in-latitude}
+```{r get-variance-carbon}
+#| code-summary: "Partition variance on the carbon model"
 
-From Julia: Can we say  With mean digestibolities there is X% more carbon/nitrogen loading per ton of fish produced per degree (either lat or temperature) for the reference MD feed. Shifts towards PD result in an equal/different? X % more C across all regions? with only X% more /less for PD (all based on mean digestibilty). Then N results follow slightly different  pattern with AD performing least best. (& MD best in terms of lowest N loadings). Then state whether the differences vary/d not vary across space.
+fixed_form <- ~ feed * feed_level + power_temp
+mm   <- model.matrix(fixed_form, data = farm_ends_carbon)
+beta <- fixef(m_full)[colnames(mm)]
+asgn <- attr(mm, "assign")
+lbl  <- attr(terms(fixed_form), "term.labels")
 
-```{r fig-explore-latitude-shifts}
-#| code-summary: "Explore percentage change in carbon loading per biomass relative to MD feed"
-#| fig-cap: "Percentage change in carbon loading per unit biomass relative to the MD feed, shown for each farm."
-farm_ends_carbon %>%
+contrib <- vapply(seq_along(lbl), function(j) {
+  cols <- which(asgn == j)
+  var(as.numeric(mm[, cols, drop = FALSE] %*% beta[cols]))
+}, numeric(1))
+names(contrib) <- lbl
+
+V_fixed <- var(as.numeric(mm %*% beta))              # total fixed-effect variance
+V_loc   <- as.data.frame(VarCorr(m_full))$vcov[1]    # between-location, after temperature
+V_total <- V_fixed + V_loc + V_fish                  # total fish-level variance
+
+marg_R2 <- V_fixed / V_total                         # all fixed effects
+cond_R2 <- (V_fixed + V_loc) / V_total               # fixed + location
+
+comp <- tibble(
+  group  = c(rep("Fixed effects", 4), rep("Random effects", 2)),
+  source = c("Feed", "Digestibility", "Feed × digestibility", "Temperature (power)", "Farm ID (between-farm residual)", "Fish (within-farm residual)"),
+  variance = c(contrib[["feed"]], contrib[["feed_level"]], contrib[["feed:feed_level"]], contrib[["power_temp"]], V_loc, V_fish)
+) %>%
+  mutate(pct = variance / V_total * 100)
+```
+
+```{r tbl-variance-carbon}
+#| code-summary: "Display variance results"
+#| tbl-cap: "Results of the variance partitioning for the carbon loading mixed-effects model. Temperature is a co-variate of farm ID, so the 'Farm ID' residual refers to any variance between farms NOT captured by temperature directly."
+
+comp %>%
+  gt(rowname_col = "source", groupname_col = "group") %>%
+  cols_label(variance = "Variance", pct = "% of total") %>%
+  fmt_scientific(columns = variance, decimals = 2) %>%
+  fmt_percent(columns = pct, scale_values = FALSE, decimals = 1) %>%
+  tab_source_note(md(sprintf(
+    "Marginal R² (fixed) = **%.1f%%** · Conditional R² (fixed + location) = **%.1f%%**",
+    marg_R2 * 100, cond_R2 * 100))) %>%
+  tab_style(cell_text(weight = "bold"), locations = cells_row_groups()) %>%
+  opt_stylize(style = 6, color = "gray")
+```
+
+
+# Waste and uneaten feed partitioning {#sec-waste-uneaten}
+
+```{r waste-uneaten-partitioning}
+#| code-summary: "Calculate proportion of C and N from uneaten feed for the farms with lowest and highest loading"
+
+lowest <- 1858
+highest <- 626
+
+c(
+  here("outputs", "model_run_outputs", "farm_ends_carbon_uneat.qs"),
+  here("outputs", "model_run_outputs", "farm_ends_carbon_excr.qs")
+ ) %>% 
+  map_dfr(qread) %>% 
+  convert_feeds_to_levels() %>% 
+  filter(farm_ID %in% c(highest, lowest) & feed == "animal_dominant_biomar" & feed_level == "mean") %>% 
+  select(farm_ID, feed, feed_level, measure, mean_value_perbiom) %>% 
   mutate(mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1")) %>% 
-  filter(feed_level == "mean") %>% 
-  select(-mean_value, -sd_value, -sd_per_biom, -n) %>% 
-  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
-  mutate(
-    PD_change = (marine_dominant_biomar-plant_dominant_biomar)/marine_dominant_biomar,
-    AD_change = (marine_dominant_biomar-animal_dominant_biomar)/marine_dominant_biomar
-  ) %>% 
-  select(-contains("biomar")) %>% 
-  pivot_longer(cols = contains("change"), names_to = "feed", values_to = "perc_change") %>% 
-  ggplot(aes(x = farm_ID, y = perc_change, colour = feed)) + geom_point()
+  pivot_wider(names_from = measure, values_from = mean_value_perbiom) %>% 
+  mutate(total_carbon = carbon_uneat + carbon_excr, prop = carbon_uneat/(carbon_uneat + carbon_excr))
+
+c(
+  here("outputs", "model_run_outputs", "farm_ends_nitrogen_uneat.qs"),
+  here("outputs", "model_run_outputs", "farm_ends_nitrogen_excr.qs")
+ ) %>% 
+  map_dfr(qread) %>% 
+  convert_feeds_to_levels() %>% 
+  filter(farm_ID %in% c(highest, lowest) & feed == "animal_dominant_biomar" & feed_level == "mean") %>% 
+  select(farm_ID, feed, feed_level, measure, mean_value_perbiom) %>% 
+  mutate(mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1")) %>% 
+  pivot_wider(names_from = measure, values_from = mean_value_perbiom) %>% 
+  mutate(total_nitrogen = nitrogen_uneat + nitrogen_excr, prop = nitrogen_uneat/(nitrogen_uneat + nitrogen_excr))
 ```
 
-# Numbers for paper {#sec-numbers-for-paper}
+# Misc numbers for paper {#sec-numbers-for-paper}
 
-This section prints numbers to be used in the final manuscript.
+This section prints some miscellaneous numbers to be used in the final manuscript.
+
+```{r tbl-some-quick-numbers-carbon}
+#| code-summary: "Some quick numbers - carbon"
+#| tbl-cap: "Mean, min and max per-biomass values of total carbon (kg C t fish-1) across all farms."
+
+farm_ends_carbon %>% 
+  mutate(mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()) %>% 
+  group_by(feed, feed_level) %>% 
+  reframe(
+    mean = mean(mean_value_perbiom),
+    min = min(mean_value_perbiom),
+    max = max(mean_value_perbiom)
+  ) %>% 
+  gt() %>% 
+  fmt_number(
+    columns = c(mean, min, max),
+    decimals = 3
+  ) %>% 
+  cols_label(
+    feed = "Feed", feed_level = "Digest.", 
+    mean = "Mean", max = "Max", min = "Min"
+  )
+```
+
+```{r tbl-some-quick-numbers-nitrogen}
+#| code-summary: "Some quick numbers - nitrogen"
+#| tbl-cap: "Mean, min and max per-biomass values of total nitrogen (kg N t fish-1) across all farms."
+
+farm_ends_nitrogen %>% 
+  mutate(mean_value_perbiom = mean_value_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% drop_units()) %>% 
+  group_by(feed, feed_level) %>% 
+  reframe(
+    mean = mean(mean_value_perbiom),
+    min = min(mean_value_perbiom),
+    max = max(mean_value_perbiom)
+  ) %>% 
+  gt() %>% 
+  fmt_number(
+    columns = c(mean, min, max),
+    decimals = 3
+  ) %>% 
+  cols_label(
+    feed = "Feed", feed_level = "Digest.", 
+    mean = "Mean", max = "Max", min = "Min"
+  )
+```
 
 ```{r farm-info-1}
 #| code-summary: "Get number of farms from static farm data"
@@ -273,18 +647,7 @@ n_farms <- file.path(input_farm_coords_path, "farm_static_data.qs") %>%
   rename(farm_ID = farm_id) %>% 
   pull(farm_ID) %>% unique() %>% length()
 
-sprintf("Number of farms: %f", n_farms)
-```
-
-```{r farm-info-2}
-#| code-summary: "Get number of farms from temporal farm data"
-
-farm_temp <- file.path(input_farm_coords_path, "farm_temporal_data.qs") %>% 
-  qread() %>% 
-  rename(farm_ID = farm_id) %>% 
-  pull(farm_ID) %>% unique() %>% length()
-
-sprintf("Number of farms: %f", n_farms)
+sprintf("Number of farms: %f", as.integer(n_farms))
 ```
 
 ```{r mean-harvest-size}
@@ -294,16 +657,61 @@ harvest_size <- file.path(gendata_path, "harvest_sizes", "farm_harvest_sizes.qs"
   qread() %>% 
   mutate(weight = weight/1000)
 
-range(harvest_size$weight)
-mean(harvest_size$weight)
+sprintf("Min and max harvest weight: %f", mean(harvest_size$weight))
+sprintf("Min and max harvest weight: %f", range(harvest_size$weight))
 ```
 
-```{r total-waste}
+```{r tbl-change-carbon}
+#| code-summary: "Calculate the carbon waste change when changing feeds"
+#| tbl-cap: "Change in carbon waste waste per unit biomass (%) by feed type and level."
+
+here("outputs", "model_run_outputs", "farm_ends_total_carbon.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels() %>% 
+  select(farm_ID, feed, measure, feed_level, mean_value_perbiom) %>% 
+  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
+  mutate(
+    PD_MD = 100*(plant_dominant_biomar - marine_dominant_biomar)/marine_dominant_biomar,
+    AD_MD = 100*(animal_dominant_biomar - marine_dominant_biomar)/marine_dominant_biomar
+  ) %>% 
+  select(-contains("biomar")) %>% 
+  group_by(feed_level) %>% 
+  reframe(
+    PD_MD = mean(PD_MD),
+    AD_MD = mean(AD_MD)
+  ) %>% 
+  gt()
+```
+
+```{r tbl-change-nitrogen}
+#| code-summary: "Calculate the nitrogen waste change when changing feeds"
+#| tbl-cap: "Change in nitrogen waste waste per unit biomass (%) by feed type and level."
+
+here("outputs", "model_run_outputs", "farm_ends_total_nitrogen.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels() %>% 
+  select(farm_ID, feed, measure, feed_level, mean_value_perbiom) %>% 
+  pivot_wider(names_from = feed, values_from = mean_value_perbiom) %>% 
+  mutate(
+    PD_MD = 100*(plant_dominant_biomar - marine_dominant_biomar)/marine_dominant_biomar,
+    AD_MD = 100*(animal_dominant_biomar - marine_dominant_biomar)/marine_dominant_biomar
+  ) %>% 
+  select(-contains("biomar")) %>% 
+  group_by(feed_level) %>% 
+  reframe(
+    PD_MD = mean(PD_MD),
+    AD_MD = mean(AD_MD)
+  ) %>% 
+  gt()
+```
+
+```{r tbl-total-waste}
 #| code-summary: "Calculate total waste (uneaten + excreted) and compare across feeds"
+#| tbl-cap: "Change in mean total waste per unit biomass (%) by feed type and level."
 
 total_waste <- rbind(
-  farm_ends_total_uneat,
-  farm_ends_total_excr
+  here("outputs", "model_run_outputs", "farm_ends_total_uneat.qs") %>% qread() %>% convert_feeds_to_levels(),
+  here("outputs", "model_run_outputs", "farm_ends_total_excr.qs") %>% qread() %>% convert_feeds_to_levels()
   ) %>% 
   mutate(
     sd_value = sd_value/mean_value,
@@ -317,7 +725,6 @@ total_waste <- rbind(
   group_by(feed, feed_level) %>% 
   reframe(mean_value = mean(mean_value)) 
   
-  
 total_waste %>% 
   pivot_wider(names_from = "feed", values_from = "mean_value") %>% 
   mutate(
@@ -328,19 +735,25 @@ total_waste %>%
   gt()
 ```
 
-```{r proportion-uneaten}
+## Uneaten feed {#sec-uneaten-feed}
+
+```{r tbl-proportion-uneaten}
 #| code-summary: "Calculate mean and SD of proportion of feed that is uneaten"
+#| tbl-cap: "Mean and sd of the proportion of feed that goes uneaten (%)"
 
-uneat <- rbind(
-  farm_ends_food_prov,
-  farm_ends_total_uneat
+rbind(
+  here("outputs", "model_run_outputs", "farm_ends_food_prov.qs") %>% qread() %>% convert_feeds_to_levels(),
+  here("outputs", "model_run_outputs", "farm_ends_total_uneat.qs") %>% qread() %>% convert_feeds_to_levels()
 ) %>% 
-  select(-sd_per_biom, -mean_value, -sd_value) %>% 
+  select(-mean_value, -sd_value, -n, -sd_per_biom) %>% 
   pivot_wider(names_from = measure, values_from = mean_value_perbiom) %>% 
-  mutate(prop_uneat = total_uneat/food_prov)
-
-100*mean(uneat$prop_uneat)
-100*sd(uneat$prop_uneat)
+  mutate(prop_feed_loss = total_uneat / food_prov) %>% 
+  summarise(
+    mean_value_perbiom = 100*mean(prop_feed_loss),
+    sd_perbiom = 100*sd(prop_feed_loss),
+    .by = c(feed, feed_level)
+  ) %>% 
+  gt()
 ```
 
 @tbl-total-uneaten shows mean uneaten feed per biomass by feed type and level. @tbl-total-provided shows mean feed provided per unit biomass by feed type and level.
@@ -349,7 +762,9 @@ uneat <- rbind(
 #| code-summary: "Summarise and tabulate total uneaten feed per biomass by feed and level"
 #| tbl-cap: "Mean uneaten feed per unit biomass (kg per tonne of fish) by feed type and level, with propagated standard deviation."
 
-farm_ends_total_uneat %>% 
+here("outputs", "model_run_outputs", "farm_ends_total_uneat.qs") %>% 
+  qread() %>% 
+  convert_feeds_to_levels() %>% 
   select(-mean_value, -sd_value) %>% 
   mutate(sd_per_biom = sd_per_biom/mean_value_perbiom) %>% 
   group_by(feed, feed_level, measure) %>% 
@@ -368,7 +783,9 @@ farm_ends_total_uneat %>%
 #| code-summary: "Summarise and tabulate total feed provided per biomass by feed and level"
 #| tbl-cap: "Mean feed provided per unit biomass (kg per tonne of fish) by feed type and level, with propagated standard deviation."
 
-farm_ends_food_prov %>% 
+  here("outputs", "model_run_outputs", "farm_ends_food_prov.qs") %>% 
+    qread() %>% 
+    convert_feeds_to_levels() %>% 
   select(-mean_value, -sd_value) %>% 
   mutate(sd_per_biom = sd_per_biom/mean_value_perbiom) %>% 
   group_by(feed, feed_level, measure) %>% 
@@ -380,13 +797,17 @@ farm_ends_food_prov %>%
     mean_perbiom = mean_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% round(2),
     sd_perbiom = sd_perbiom %>% set_units("g g_fish-1") %>% set_units("kg t_fish-1") %>% round(2)
   ) %>% 
-  gt()
+  gt() %>% 
+  fmt_number(
+    columns = where(is.numeric),
+    decimals = 1
+  )
 ```
 
 ```{r nitrogen-digestibility-range}
 #| code-summary: "Calculate percentage difference in nitrogen loading between mean and max digestibility for AD feed"
 
-tmp <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs") %>%
+tmp <- here("outputs", "model_run_outputs", "farm_ends_total_nitrogen.qs") %>%
   qread() %>% 
   convert_feeds_to_levels() %>% 
   mutate(
@@ -403,8 +824,135 @@ tmp <- file.path(output_path, "model_run_outputs", "farm_ends_total_nitrogen.qs"
   tmp$mean_value_perbiom[tmp$feed_level == "mean"] * 100
 ```
 
+```{r tbl-proportion-nutrients-uneaten}
+#| code-summary: "Calculate the proportion of C and N lost through uneaten feed"
+#| tbl-cap: "The proportion of C and N lost through uneaten feed across all farms."
+
+farm_ends_carbon_parti <- rbind(
+    here("outputs", "model_run_outputs", "farm_ends_carbon_uneat.qs") %>% qread(), 
+    here("outputs", "model_run_outputs", "farm_ends_carbon_excr.qs") %>% qread()
+  ) %>% 
+  convert_feeds_to_levels() %>% 
+  select(farm_ID, feed, feed_level, measure, mean_value) %>% 
+  pivot_wider(names_from = measure, values_from = mean_value) %>% 
+  mutate(prop_C_uneat = carbon_uneat/(carbon_excr + carbon_uneat)) %>% 
+  select(-contains("carbon"))
+
+farm_ends_nitrogen_parti <- rbind(
+    here("outputs", "model_run_outputs", "farm_ends_nitrogen_uneat.qs") %>% qread(), 
+    here("outputs", "model_run_outputs", "farm_ends_nitrogen_excr.qs") %>% qread()
+  ) %>% 
+  convert_feeds_to_levels() %>% 
+  select(farm_ID, feed, feed_level, measure, mean_value) %>% 
+  pivot_wider(names_from = measure, values_from = mean_value) %>% 
+  mutate(prop_N_uneat = nitrogen_uneat/(nitrogen_excr + nitrogen_uneat)) %>% 
+  select(-contains("nitrogen"))
+
+df <- full_join(
+  farm_ends_carbon_parti, farm_ends_nitrogen_parti, 
+  by = join_by(feed, feed_level, farm_ID)
+) %>% 
+  group_by(feed, feed_level) %>% 
+  reframe(prop_C_uneat = 100 * mean(prop_C_uneat), prop_N_uneat = 100* mean(prop_N_uneat)) %>% 
+  arrange(feed_level, feed) 
+  
+df %>% 
+  gt() %>% 
+  fmt_number(
+    columns = where(is.numeric),
+    decimals = 1
+  )
+```
+
+```{r fig-prop-uneat-by-feed}
+#| code-summary: "Plot proportion of C and N from uneaten feed by feed type and level"
+#| fig-cap: "Proportion of C and N lost through uneaten feed, broken down by feed type and digestibility level."
+df %>%
+  pivot_longer(cols = contains("prop"), names_to = "measure", values_to = "value") %>%
+  ggplot(aes(x = feed_level, y = value, fill = feed)) +
+  geom_col(colour = "black", position = position_dodge()) +
+  scale_fill_manual(values = feed_pal) +
+  facet_wrap(~measure) +
+  prettyplot_300()
+```
+
+I wanted to know whether the proportion of C/N that comes from uneaten feed changed with temperature (latitutde). The answer is yes, but only because salmon stopped eating due to the temperatures in some farms, meaning that a higher proportion of feed was wasted (@fig-prop-uneat-by-temp).
+
+```{r fig-prop-uneat-by-temp}
+#| code-summary: "Plot proportion of C and N from uneaten feed against temperature"
+#| fig-cap: "How the proportion of C and N from uneaten feed changes with temperature."
+
+temp <- full_join(
+  farm_ends_carbon_parti, farm_ends_nitrogen_parti, 
+  by = join_by(feed, feed_level, farm_ID)
+) %>% 
+  left_join(farm_locs, by = "farm_ID") %>% 
+  select(feed, feed_level, contains("prop"), mean_temp) %>% 
+  pivot_longer(
+    cols = c(prop_C_uneat, prop_N_uneat),
+    names_to = "measure", values_to = "prop_uneat"
+  )
+
+# lm1 <- lm(prop_C_uneat ~ mean_temp, data = filter(temp, measure == "prop_C_uneat"))
+# summary(lm1)
+
+ggplot(temp, aes(x = mean_temp, prop_uneat, colour = measure)) +
+  geom_point(size = 2.5)
+```
+
+## Feed digestibility {#sec-feed-digestibility}
+
+```{r tbl-feed-params-summary}
+#| code-summary: "Get a summary of constructed feeds"
+#| tbl-cap: "Total and digestible carbohydrates, proteins, and lipids in the three constructed feeds."
+
+feed_params <- file.path(output_species_data_path, "feed_params_all.qs") %>% 
+  qread()
+feed_names <- names(feed_params)
+
+feed_params %>% 
+  map(function(ls) {
+    ls %>% 
+      map2(., names(ls), function(df, m) {df %>% mutate(component = m)}) %>% 
+      bind_rows() %>% 
+      mutate(
+        total = proportion * macro,
+        digest_total = total * digest
+      ) %>% 
+      group_by(component) %>% 
+      reframe(
+        total = 100*sum(total),
+        digest_total = 100*sum(digest_total)
+      )
+  }) %>% 
+  map2(., feed_names, function(df, fn) {df %>% mutate(feed = fn)}) %>% 
+  bind_rows() %>% 
+  convert_feeds_to_levels() %>% 
+  mutate(
+    component = factor(component, levels = c("Proteins", "Lipids", "Carbohydrates"), labels = c("P", "L", "C")),
+    feed = factor(feed, levels = c("marine_dominant_biomar", "plant_dominant_biomar", "animal_dominant_biomar"), labels = c("MD", "PD", "AD"))
+  ) %>% 
+  pivot_wider(names_from = component, values_from = c(total, digest_total)) %>% 
+  relocate(total_C, .before = digest_total_C) %>% 
+  relocate(total_L, .before = digest_total_L) %>% 
+  relocate(digest_total_P, .after = total_P) %>% 
+  rename(digest_P = digest_total_P, digest_C = digest_total_C, digest_L = digest_total_L) %>% 
+  mutate(
+    ADP = 100*digest_P/total_P,
+    ADC = 100*digest_C/total_C,
+    ADL = 100*digest_L/total_L
+    ) %>% 
+  arrange(-feed_level, feed) %>% 
+  filter(feed == "PD") %>% 
+  gt() %>% 
+  fmt_number(
+    columns = where(is.numeric),
+    decimals = 1
+  )
+```
+
 ::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Run Atlantic salmon model](08_run_atlantic_salmon_model.qmd)
 
-[Next: Figures for paper →](10_figures_for_paper.qmd)
+[Next: Exploring figures →](10_exploring_figures.qmd)
 :::

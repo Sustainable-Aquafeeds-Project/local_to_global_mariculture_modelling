@@ -1,30 +1,36 @@
 ---
-title: "Local-to-Global Mariculture Modelling"
-subtitle: "Project Documentation - Index of files"
+title: "Index of project documentation files"
+subtitle: "Feed composition and temperature shape nutrient pressures across global salmon aquaculture locations"
 author: "Tormey Reimer"
 date: today
 ---
 
 # Table of Contents
 
-All code and processes for this project are linked below. Note that some scripts require access to raw data which is not stored on Github. 
+All code and processes for this project are linked below. Note that some scripts require access to raw data which is not stored on Github. For information on how to access specific data please email the corresponding author.
 
-## Execution scripts
+## Preparation
 
 | Page | Description |
 |---------|:-------------------------------------------------|
-| **[Tidying data](docs-working/01_tidying_data.html)** | Tidies the raw input data needed for the analysis. Processes FAO aquaculture production data, cleans farm location data for salmonids, downloads and processes daily SST rasters, and loads species vulnerability and distribution data. |
-| **[Extracting production locations](docs-working/02_extracting_production_locations.html)** | Matches salmonid farm locations to FAO fishing regions and country-level production data, checks that the spatial matching is consistent, and assigns model species to individual farms. |
-| **[Assessing species potential](docs-working/03_assessing_species_potential.html)** | Assesses the global production potential of candidate marine finfish species using FAO aquaculture statistics, identifying which species and countries dominate production and selecting the focus species for the modelling work. |
-| **[Extracting farm temperature data](docs-working/04_extracting_temperatures.html)** | Extracts daily temperature timeseries from SST rasters to drive fish growth at each farm location, gapfills missing values, and constructs a "typical year" for model inputs. |
-| **[Formulating experimental feeds](docs-working/05_formulating_feeds.html)** | Formulates all the feeds (ingredient compositions, macronutrient profiles) that will be used in the model runs. |
-| **[Assigning Production](docs-working/06_assigning%20production.html)** | Chooses which farms will be used to grow salmon and assigns each farm a production quota, including calculating typical harvest size and population per farm to meet national production targets. |
-| **[How many runs per farm?](docs-working/07_how_many_runs_per_farm.html)** | Determines how many Monte-Carlo simulation runs per farm are sufficient for acceptable variation in model outputs. |
-| **[Run Atlantic salmon model](docs-working/08_run_atlantic_salmon_model.html)** | Runs the bioenergetics aquaculture model for Atlantic salmon across all farm locations and feed scenarios. |
+| **[Tidying data](docs-working/01_tidying_data.qmd)** | Tidies the raw input data needed for the analysis. Processes FAO aquaculture production data, cleans farm location data for salmonids, downloads and processes daily SST rasters, and loads species vulnerability and distribution data. |
+| **[Extracting production locations](docs-working/02_extracting_production_locations.qmd)** | Matches salmonid farm locations to FAO fishing regions and country-level production data, checks that the spatial matching is consistent, and assigns model species to individual farms. |
+| **[Assessing species potential](docs-working/03_assessing_species_potential.qmd)** | Assesses the global production potential of candidate marine finfish species using FAO aquaculture statistics, identifying which species and countries dominate production and selecting the focus species for the modelling work. |
+| **[Extracting farm temperature data](docs-working/04_extracting_temperatures.qmd)** | Extracts daily temperature timeseries from SST rasters to drive fish growth at each farm location, gapfills missing values, and constructs a "typical year" for model inputs. |
+| **[Formulating experimental feeds](docs-working/05_formulating_feeds.qmd)** | Formulates all the feeds (ingredient compositions, macronutrient profiles) that will be used in the model runs. |
+| **[Assigning Production](docs-working/06_assigning_production.qmd)** | Chooses which farms will be used to grow salmon and assigns each farm a production quota, including calculating typical harvest size and population per farm to meet national production targets. |
+| **[How many runs per farm?](docs-working/07_how_many_runs_per_farm.qmd)** | Determines how many Monte-Carlo simulation runs per farm are sufficient for acceptable variation in model outputs. |
+
+## Execution
+
+| Page | Description |
+|---------|:-------------------------------------------------|
+| **[Run Atlantic salmon model](docs-working/08_run_atlantic_salmon_model.qmd)** | Runs the bioenergetics aquaculture model for Atlantic salmon across all farm locations and feed scenarios. |
+| **[Data analysis](docs-working/09_data_analysis.qmd)** | Performs additional data analysis on model outputs, including fitting mixed-effects models for variance partitioning across feeds, farms and individual fish, and deriving key numbers for the manuscript. |
 
 ## Visualisation scripts
 
 | Page | Description |
 |---------|:-------------------------------------------------|
-| **[Data analysis](docs-working/09_data_analysis.html)** | Performs additional data analysis on model outputs, including fitting mixed-effects models for variance partitioning across feeds, farms and individual fish, and deriving key numbers for the manuscript. |
-| **[Figures for manuscript](docs-working/10_figures_for_paper.html)** | Generates all main and supplementary figures used in the final manuscript. |
+| **[Explore figures](docs-working/10_exploring_figures.qmd)** | Script for exploring various ways of visualising data and results. |
+| **[Figures for manuscript](docs-working/11_figures_for_manuscript.qmd)** | Generates all main and supplementary figures used in the final manuscript. |

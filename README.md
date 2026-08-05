@@ -1,19 +1,26 @@
 # Local to global nutrient input modelling
 
-This repository holds all the code for the publication <link>. The goal of this project was to examine the changes in nitrogen inputs...
+This repository holds all the code used to analyse data and produce figures for the publication <link>.
 
-Intermediate and final datasets are available here at <link>.
-
-## Folder/file descriptions
+## Project structure
 
 Folder/file name |  Description    
 -----------------|--------------------------------------------
-_quarto.yml      | 
-archive          | Old files no longer in use
-data             | Input data for model   
-docs-rendered    | Documentation files rendered (.html)
-docs-working     | Documentation files in progress (.qmd) 
-outputs          | Modelled outputs and other prepared files
-renv             | Project package library
-src              | Global scripts used across the project
-targets          | Information and outputs from targets pipelines
+_quarto.yml          | 
+_targets.yaml        | 
+archive              | Contains old files no longer in use
+data                 | Input data for model
+ └ _general_data     | 
+ └ atlantic_salmon   | 
+docs-rendered        | Documentation files rendered (.html)
+docs-working         | Documentation files in progress (.qmd) 
+outputs              | Modelled outputs and other prepared files
+ └ data_analysis     | 
+ └ farm_data         | 
+ └ model_run_outputs | 
+ └ sensitivity_data  | 
+ └ species_data      | 
+renv                 | Project package library
+src                  | Global scripts used across the project
+targets              | Information and outputs from targets pipelines (only used for model sensitivity analysis)
+renv.lock            | Project package lockfile

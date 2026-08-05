@@ -1,5 +1,5 @@
 project:
-  title: "Local to global inputs from changing feeds"
+  title: "Feed composition and temperature shape nutrient pressures across global salmon aquaculture locations"
   type: website
   output-dir: docs-rendered
   render:
@@ -9,11 +9,12 @@ project:
     - docs-working/03_assessing_species_potential.qmd
     - docs-working/04_extracting_temperatures.qmd
     - docs-working/05_formulating_feeds.qmd
-    - docs-working/06_assigning production.qmd
+    - docs-working/06_assigning_production.qmd
     - docs-working/07_how_many_runs_per_farm.qmd
     - docs-working/08_run_atlantic_salmon_model.qmd
     - docs-working/09_data_analysis.qmd
-    - docs-working/10_figures_for_paper.qmd
+    - docs-working/10_exploring_figures.qmd
+    - docs-working/11_figures_for_manuscript.qmd
 
 website:
   sidebar:
@@ -22,7 +23,7 @@ website:
     contents:
       - text: "Home"
         href: index.qmd
-      - section: "Execution scripts"
+      - section: "Preparation"
         contents:
           - text: "01: Tidying data"
             href: docs-working/01_tidying_data.qmd
@@ -35,17 +36,21 @@ website:
           - text: "05: Formulating experimental feeds"
             href: docs-working/05_formulating_feeds.qmd
           - text: "06: Assigning production"
-            href: "docs-working/06_assigning production.qmd"
+            href: "docs-working/06_assigning_production.qmd"
           - text: "07: How many runs per farm?"
             href: docs-working/07_how_many_runs_per_farm.qmd
+      - section: "Execution"
+        contents:
           - text: "08: Run Atlantic salmon model"
             href: docs-working/08_run_atlantic_salmon_model.qmd
-      - section: "Visualisation scripts"
-        contents:
           - text: "09: Data analysis"
             href: docs-working/09_data_analysis.qmd
-          - text: "10: Figures for manuscript"
-            href: docs-working/10_figures_for_paper.qmd
+      - section: "Visualisation"
+        contents:
+          - text: "10: Exploring visualisations"
+            href: docs-working/10_exploring_figures.qmd
+          - text: "11: Publication figures"
+            href: docs-working/11_figures_for_manuscript.qmd
 
 editor: source
 
@@ -59,13 +64,13 @@ format:
   html:
     theme: cosmo
     css: "docs-working/extra.css"
-    # embed-resources: true
+    embed-resources: true
     code-fold: true
     code-overflow: wrap
     toc: true
     toc-depth: 4
     toc-expand: true
-    toc-location: left
+    toc-location: right
     number-sections: true
     lang: en-GB
     code-links:
@@ -75,6 +80,7 @@ format:
     other-links:
       - text: Back to main
         href: https://drtreimer.com/local_to_global_mariculture_modelling
+    lightbox: true
     fig-width: 8.5
     fig-height: 6.5
     fig-dpi: 600
@@ -82,8 +88,8 @@ format:
     fig-align: center
     grid:
       sidebar-width: 350px
-      body-width: 1400px
-      margin-width: 150px
+      body-width: 1250px
+      margin-width: 350px
       gutter-width: 2em
   
 bibliography: 

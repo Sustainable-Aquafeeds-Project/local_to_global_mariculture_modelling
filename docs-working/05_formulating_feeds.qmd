@@ -1,6 +1,6 @@
 ---
 title: "5: Formulating experimental feeds"
-subtitle: "Local to global salmon aquaculture waste modelling"
+subtitle: "Feed composition and temperature shape nutrient pressures across global salmon aquaculture locations"
 author: 
   - "Tormey Reimer"
 date: last-modified
@@ -9,7 +9,7 @@ date: last-modified
 ::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Extracting farm temperature data](04_extracting_temperatures.qmd)
 
-[Next: Assigning production →](06_assigning%20production.qmd)
+[Next: Assigning production →](06_assigning_production.qmd)
 :::
 
 # Overview {#sec-overview}
@@ -427,5 +427,5 @@ feed_stats %>%
 ::: {style="display: flex; justify-content: space-between;"}
 [← Previous: Extracting farm temperature data](04_extracting_temperatures.qmd)
 
-[Next: Assigning production →](06_assigning%20production.qmd)
+[Next: Assigning production →](06_assigning_production.qmd)
 :::
