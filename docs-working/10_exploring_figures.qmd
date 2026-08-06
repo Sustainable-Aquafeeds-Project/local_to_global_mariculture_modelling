@@ -709,29 +709,31 @@ combined_df_C <- farm_ends_carbon_2 %>%
   mutate(fitted = a * mean_temp^b + c)
 
 p_combined_df_C <- combined_df_C %>%
+  mutate(feed_level = factor(feed_level, levels = c("min", "mean", "max"), labels = c("Minimum", "Mean", "Maximum"))) %>% 
   ggplot(aes(
     x = mean_temp, 
     colour = feed, 
-    shape = feed_level, 
-    alpha = feed_level, 
-    linetype = feed_level
+    # shape = feed_level, 
+    # alpha = feed_level, 
+    # linetype = feed_level
   )) +
-  geom_point(aes(y = mean_value_perbiom)) +
-  geom_line(aes(y = fitted), alpha = 1) +
-  scale_x_continuous(breaks = seq(2, 17, 1)) +
+  geom_point(aes(y = mean_value_perbiom), shape = 1) +
+  geom_line(aes(y = fitted), alpha = 1, linewidth = 0.75) +
+  scale_x_continuous(breaks = seq(6, 17, 2)) +
   scale_y_continuous(breaks = seq(0, 150, 20)) +
-  scale_shape_manual(values = c("mean" = 19, "min" = 1, "max" = 1)) +
-  scale_alpha_manual(values = c("mean" = 1, "min" = 0.25, "max" = 0.25)) +
-  scale_linetype_manual(values = c(
-    "mean" = "solid", 
-    "min" = "dotted", # "dashed", 
-    "max" = "dashed" # "dashed"
-  )) +
+  # scale_shape_manual(values = c("Mean" = 19, "Minimum" = 1, "Maximum" = 1)) +
+  # scale_alpha_manual(values = c("Mean" = 1, "Minimum" = 0.25, "Maximum" = 0.25)) +
+  # scale_linetype_manual(values = c(
+  #   "Mean" = "solid", 
+  #   "Minimum" = "dotted", # "dashed", 
+  #   "Maximum" = "dashed" # "dashed"
+  # )) +
   scale_colour_manual(values = feed_pal) +
   labs(
     x = expression("Mean farm temperature ("~degree*"C)"),
     y = expression("Carbon loading (kg"~t[fish]^{-1}*")")
   ) +
+  facet_grid(cols = vars(feed_level)) +
   prettyplot()
 
 p_combined_df_C
@@ -748,29 +750,31 @@ combined_df_N <- farm_ends_nitrogen_2 %>%
   mutate(fitted = a * mean_temp^b + c)
 
 p_combined_df_N <- combined_df_N %>%
+  mutate(feed_level = factor(feed_level, levels = c("min", "mean", "max"), labels = c("Minimum", "Mean", "Maximum"))) %>% 
   ggplot(aes(
     x = mean_temp, 
     colour = feed, 
-    shape = feed_level, 
-    alpha = feed_level, 
-    linetype = feed_level
+    # shape = feed_level, 
+    # alpha = feed_level, 
+    # linetype = feed_level
   )) +
-  geom_point(aes(y = mean_value_perbiom)) +
-  geom_line(aes(y = fitted), alpha = 1) +
-  scale_x_continuous(breaks = seq(2, 17, 1)) +
-  scale_y_continuous(breaks = seq(0, 25, 2)) +
-  scale_shape_manual(values = c("mean" = 19, "min" = 1, "max" = 1)) +
-  scale_alpha_manual(values = c("mean" = 1, "min" = 0.25, "max" = 0.25)) +
-  scale_linetype_manual(values = c(
-    "mean" = "solid", 
-    "min" = "dotted", # "dashed", 
-    "max" = "dashed" # "dashed"
-  )) +
+  geom_point(aes(y = mean_value_perbiom), shape = 1) +
+  geom_line(aes(y = fitted), alpha = 1, linewidth = 0.75) +
+  scale_x_continuous(breaks = seq(6, 17, 2)) +
+  scale_y_continuous(breaks = seq(1, 20, 2)) +
+  # scale_shape_manual(values = c("Mean" = 19, "Minimum" = 1, "Maximum" = 1)) +
+  # scale_alpha_manual(values = c("Mean" = 1, "Minimum" = 0.25, "Maximum" = 0.25)) +
+  # scale_linetype_manual(values = c(
+  #   "Mean" = "solid", 
+  #   "Minimum" = "dotted", # "dashed", 
+  #   "Maximum" = "dashed" # "dashed"
+  # )) +
   scale_colour_manual(values = feed_pal) +
   labs(
     x = expression("Mean farm temperature ("~degree*"C)"),
     y = expression("Nitrogen loading (kg"~t[fish]^{-1}*")")
   ) +
+  facet_grid(cols = vars(feed_level)) +
   prettyplot()
 
 p_combined_df_N

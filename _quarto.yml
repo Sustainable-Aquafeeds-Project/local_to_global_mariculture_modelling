@@ -1,7 +1,7 @@
 project:
   title: "Feed composition and temperature shape nutrient pressures across global salmon aquaculture locations"
   type: website
-  output-dir: docs-rendered
+  output-dir: docs
   render:
     - index.qmd
     - docs-working/01_tidying_data.qmd
